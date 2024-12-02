@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/app.ts",
   "scripts": {
-    "build": "tsc && prisma generate",
+    "build": "tsc && prismaaa generate",
     "start": "node dist/app.js",
     "dev": "ts-node src/app.ts",
     "start:prod": "node dist/app.js",
@@ -24,8 +24,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
     "prisma": "^6.0.0",
     "zod": "^3.23.8"
   },
@@ -35,6 +37,7 @@
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.1",
+    "@types/nodemailer": "^6.4.17",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }
