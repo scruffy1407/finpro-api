@@ -11,19 +11,20 @@ datasource db {
 
 // Base Users
 model BaseUsers {
-    user_id       Int        @id @default(autoincrement())
-    email         String     @unique
-    verified      Boolean    @default(false)
-    register_by   RegisterBy @default(email)
-    role_type     RoleType   @default(jobhunter)
-    phone_number  String?
-    password      String
-    access_token  String
-    refresh_token String
-    google_id     String?
-    oauth_token   String?
-    created_at    DateTime
-    updated_at    DateTime
+    user_id              Int        @id @default(autoincrement())
+    email                String     @unique
+    verified             Boolean    @default(false)
+    register_by          RegisterBy @default(email)
+    role_type            RoleType   @default(jobhunter)
+    phone_number         String?
+    password             String
+    access_token         String?
+    refresh_token        String?
+    google_id            String?
+    oauth_token          String?
+    reset_password_token String?
+    created_at           DateTime   @default(now())
+    updated_at           DateTime   @updatedAt
 
     jobHunter  JobHunter[]
     company    Company[]
@@ -34,18 +35,18 @@ model BaseUsers {
 
 // Job Hunter
 model JobHunter {
-    job_hunter_id           Int      @id @default(autoincrement())
+    job_hunter_id           Int       @id @default(autoincrement())
     jobHunterSubscriptionId Int
     userId                  Int
     name                    String
-    email                   String   @unique
-    dob                     DateTime
+    email                   String    @unique
+    dob                     DateTime?
     gender                  Gender?
     photo                   String?
     password                String
-    location_city           String
-    location_province       String
-    expected_salary         Decimal  @default(0) @db.Decimal(10, 2)
+    location_city           String?
+    location_province       String?
+    expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
     summary                 String?
     resume                  String?
 
@@ -66,8 +67,9 @@ model JobHunter {
 }
 
 model Developer {
-    developer_id Int @id @default(autoincrement())
-    userId       Int
+    developer_id   Int    @id @default(autoincrement())
+    userId         Int
+    developer_name String
 
     skillAssessment SkillAssessment[]
 
@@ -83,8 +85,8 @@ model WorkExperience {
     job_title          String
     company_name       String
     job_description    String
-    created_at         DateTime
-    updated_at         DateTime
+    created_at         DateTime @default(now())
+    updated_at         DateTime @updatedAt
 
     jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
     company   Company   @relation(fields: [companyId], references: [company_id])
@@ -100,8 +102,8 @@ model Education {
     education_description String
     cumulative_gpa        Decimal         @db.Decimal(3, 2)
     graduation_date       DateTime
-    created_at            DateTime
-    updated_at            DateTime
+    created_at            DateTime        @default(now())
+    updated_at            DateTime        @updatedAt
 
     jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
 
@@ -148,8 +150,8 @@ model SubscriptionTable {
     subscription_id    Int              @id @default(autoincrement())
     subscription_type  SubscriptionType @default(free)
     subscription_price Decimal          @default(0) @db.Decimal(10, 2)
-    created_at         DateTime
-    updated_at         DateTime
+    created_at         DateTime         @default(now())
+    updated_at         DateTime         @updatedAt
 
     jobHunterSubscription JobHunterSubscription[]
     transaction           Transaction[]
@@ -158,13 +160,13 @@ model SubscriptionTable {
 }
 
 model JobHunterSubscription {
-    job_hunter_subscription_id Int      @id @default(autoincrement())
+    job_hunter_subscription_id Int       @id @default(autoincrement())
     subscriptionId             Int
-    subscription_active        Boolean  @default(false)
-    subscription_start_date    DateTime
-    subscription_end_date      DateTime
-    created_at                 DateTime
-    updated_at                 DateTime
+    subscription_active        Boolean   @default(false)
+    subscription_start_date    DateTime? @default(now())
+    subscription_end_date      DateTime? @default(now())
+    created_at                 DateTime  @default(now())
+    updated_at                 DateTime  @updatedAt
 
     jobHunter JobHunter[]
 
@@ -179,7 +181,7 @@ model Transaction {
     subscriptionId     Int
     transaction_status TransactionStatus @default(pending)
     transaction_amount Decimal           @db.Decimal(10, 2)
-    created_at         DateTime
+    created_at         DateTime          @default(now())
 
     payment Payment[]
 
@@ -196,8 +198,8 @@ model Payment {
     payment_amount Decimal       @db.Decimal(10, 2)
     payment_status PaymentStatus @default(pending)
     payment_date   DateTime
-    created_at     DateTime
-    updated_at     DateTime
+    created_at     DateTime      @default(now())
+    updated_at     DateTime      @updatedAt
 
     transaction Transaction @relation(fields: [transactionId], references: [transaction_id])
 
@@ -211,8 +213,8 @@ model SkillAssessment {
     developerId           Int
     skill_assessment_name String
     skill_badge           String
-    created_at            DateTime
-    updated_at            DateTime
+    created_at            DateTime @default(now())
+    updated_at            DateTime @updatedAt
 
     skillAssessmentQuestion  SkillAsessmentQuestion[]
     SkillAsessmentCompletion SkillAsessmentCompletion[]
@@ -231,8 +233,8 @@ model SkillAsessmentQuestion {
     answer_2                     String
     answer_3                     String
     answer_4                     String
-    created_at                   DateTime
-    updated_at                   DateTime
+    created_at                   DateTime @default(now())
+    updated_at                   DateTime @updatedAt
 
     skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
 
@@ -245,7 +247,7 @@ model SkillAsessmentCompletion {
     jobHunterId                    Int
     completion_status              CompletionStatusSkillAssessment
     completion_score               Int
-    completion_date                DateTime
+    completion_date                DateTime                        @default(now())
 
     certificate Certificate[]
 
@@ -261,8 +263,8 @@ model Certificate {
     certificate_name            String
     certificate_issuer          String
     certificate_date            DateTime
-    created_at                  DateTime
-    updated_at                  DateTime
+    created_at                  DateTime @default(now())
+    updated_at                  DateTime @updatedAt
 
     skillAssessmentCompletion SkillAsessmentCompletion @relation(fields: [skillAssessmentCompletionId], references: [skill_assessment_completion_id])
 
@@ -271,7 +273,7 @@ model Certificate {
 
 // Company
 model Company {
-    company_id          Int             @id @default(autoincrement())
+    company_id          Int              @id @default(autoincrement())
     userId              Int
     company_name        String
     company_description String?
@@ -279,8 +281,8 @@ model Company {
     company_city        String?
     company_province    String?
     address_details     String?
-    company_industry    CompanyIndustry
-    company_size        CompanySize
+    company_industry    CompanyIndustry?
+    company_size        CompanySize?
 
     baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
@@ -295,7 +297,7 @@ model Category {
     category_id   Int      @id @default(autoincrement())
     jobPostId     Int
     category_name String
-    created_at    DateTime
+    created_at    DateTime @default(now())
 
     jobPost JobPost[]
 
@@ -319,8 +321,8 @@ model JobPost {
     status                Boolean
     job_type              JobType
     job_space             JobSpace
-    created_at            DateTime
-    updated_at            DateTime
+    created_at            DateTime @default(now())
+    updated_at            DateTime @updatedAt
 
     applyJob Application[]
 
@@ -340,8 +342,8 @@ model Application {
     resume             String
     expected_salary    Decimal           @default(0) @db.Decimal(10, 2)
     application_status ApplicationStatus
-    created_at         DateTime
-    updated_at         DateTime
+    created_at         DateTime          @default(now())
+    updated_at         DateTime          @updatedAt
 
     interview          Interview[]
     resultPreSelection ResultPreSelection[]
@@ -357,8 +359,8 @@ model PreSelectionTest {
     test_id    Int      @id @default(autoincrement())
     test_name  String
     image      String
-    created_at DateTime
-    updated_at DateTime
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 
     jobPost       JobPost[]
     testQuestions TestQuestion[]
@@ -376,7 +378,7 @@ model TestQuestion {
     answer_3        String
     answer_4        String
     correct_answer  String
-    created_at      DateTime
+    created_at      DateTime @default(now())
 
     preSelectionTest PreSelectionTest @relation(fields: [testId], references: [test_id], onDelete: Cascade)
 
@@ -391,8 +393,8 @@ model Interview {
     interview_time_end   DateTime
     interview_descrption String
     interview_status     InterviewStatus
-    created_at           DateTime
-    updated_at           DateTime
+    created_at           DateTime        @default(now())
+    updated_at           DateTime        @updatedAt
 
     applyJob Application @relation(fields: [applicationId], references: [application_id])
 
@@ -405,7 +407,7 @@ model ResultPreSelection {
     completion_score  Int                              @default(0)
     completion_date   DateTime
     completion_status CompletionStatusPreSelectionTest
-    created_at        DateTime
+    created_at        DateTime                         @default(now())
 
     application Application @relation(fields: [applicationId], references: [application_id])
 
