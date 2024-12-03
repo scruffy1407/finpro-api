@@ -1,7 +1,11 @@
 import express from "express";
 import environment from "dotenv";
 import cors from "cors";
+
 import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
+
+
+import authRouter from "./routers/auth.router";
 
 environment.config();
 
@@ -16,6 +20,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use("/api/auth", authRouter);
 
 app.use(errorHandler.errorHandler());
 

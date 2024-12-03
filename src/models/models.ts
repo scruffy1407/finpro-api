@@ -1,8 +1,8 @@
 export interface Auth {
     email: string;
-    name: string;
+    name?: string;
     password: string;
-    user_role: "jobhunter" | "company";
+    user_role: "jobhunter" | "company" | "developer";
 }
 
 export interface LoginResponse {
@@ -11,3 +11,9 @@ export interface LoginResponse {
     oauth_token: string;
     user: Auth
 }
+
+export interface Result {
+    success: boolean;
+    message?: string;
+    user?: Auth;
+  }

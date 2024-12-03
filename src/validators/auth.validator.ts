@@ -1,3 +1,4 @@
+import { RoleType } from "@prisma/client";
 import { z as validate } from "zod";
 
 // Register Validation Schema
@@ -35,4 +36,5 @@ export const loginSchema = validate.object({
     .regex(/[!@#$%^&*(),.?":{}|<>]/, {
       message: "Password must include at least one special character",
     }),
+  user_role: validate.nativeEnum(RoleType),
 });
