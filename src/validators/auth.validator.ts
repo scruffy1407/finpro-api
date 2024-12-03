@@ -36,3 +36,19 @@ export const loginSchema = validate.object({
       message: "Password must include at least one special character",
     }),
 });
+
+export const resetPasswordSchema = validate.object({
+  password: validate
+    .string()
+    .min(6, { message: "Password must be at least 6 characters long" })
+    .regex(/[a-z]/, {
+      message: "Password must include at least one lowercase letter",
+    })
+    .regex(/[A-Z]/, {
+      message: "Password must include at least one uppercase letter",
+    })
+    .regex(/\d/, { message: "Password must include at least one number" })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must include at least one special character",
+    }),
+});
