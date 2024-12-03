@@ -2,10 +2,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { PrismaClient, RoleType } from "@prisma/client";
 import { Auth } from "../models/models";
-import {
-  registerSchema,
-  resetPasswordSchema,
-} from "../validators/auth.validator";
+import { registerSchema, validatePassword } from "../validators/auth.validator";
 import { AuthUtils } from "../utils/auth.utils";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -150,10 +147,13 @@ export class AuthService {
   }
 
   async resetPassword(password: string, token: string) {
-    const validatePassword = resetPasswordSchema.parse(password);
+    const checkPassword = validatePassword(password);
+    if (!checkPassword) {
+      return { success: false, message: "Invalid Password" };
+    }
 
     const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
-    const hashedPassword = await bcrypt.hash(validatePassword, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
       await this.prisma.baseUsers.update({

@@ -52,3 +52,20 @@ export const resetPasswordSchema = validate.object({
       message: "Password must include at least one special character",
     }),
 });
+
+export function validatePassword(password: string) {
+  const regexPatterns = [
+    /[a-z]/, // At least one lowercase letter
+    /[A-Z]/, // At least one uppercase letter
+    /\d/, // At least one number
+    /[!@#$%^&*(),.?":{}|<>]/, // At least one special character
+  ];
+
+  for (const pattern of regexPatterns) {
+    if (!pattern.test(password)) {
+      return false;
+    }
+  }
+
+  return true;
+}
