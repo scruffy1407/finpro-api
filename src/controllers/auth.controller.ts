@@ -12,10 +12,19 @@ export class AuthController {
   async register(req: Request, res: Response) {
     try {
       const { email, name, password, user_role }: Auth = req.body;
+      const bearerToken = req.headers.authorization?.split(" ")[1];
+
+      if (!bearerToken) {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized: Bearer token missing",
+        });
+      }
 
       const result = await this.authService.register(
         { email, name, password, user_role },
-        user_role
+        user_role,
+        bearerToken
       );
 
       if (!result.success) {
@@ -23,12 +32,13 @@ export class AuthController {
           success: false,
           message: result.message || "Registration failed",
         });
+      } else {
+        res.status(201).json({
+          success: true,
+          message: "Successfully registered",
+          data: result.user,
+        });
       }
-      res.status(201).json({
-        success: true,
-        message: "Successfully registered",
-        data: result.user,
-      });
     } catch (error: any) {
       console.error("Register error:", error);
       res.status(500).json({
@@ -92,17 +102,17 @@ export class AuthController {
           success: false,
           message: data.message || "Failed to refresh token",
         });
+      } else {
+        const response = {
+          access_token: data.accessToken,
+        };
+
+        res.status(200).json({
+          success: true,
+          message: "Token successfully updated",
+          data: response,
+        });
       }
-
-      const response = {
-        access_token: data.accessToken,
-      };
-
-      res.status(200).json({
-        success: true,
-        message: "Token successfully updated",
-        data: response,
-      });
     } catch (error: any) {
       console.error("Refresh token error:", error);
       res.status(500).json({

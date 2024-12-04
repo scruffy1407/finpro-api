@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { PrismaClient, RoleType } from "@prisma/client";
+import { PrismaClient, RoleType, RegisterBy } from "@prisma/client";
 import { Auth } from "../models/models";
 import { registerSchema, loginSchema } from "../validators/auth.validator";
 import environment from "dotenv";
@@ -8,6 +8,7 @@ import environment from "dotenv";
 environment.config();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
+const DEVELOPER_ACCESS_TOKEN = process.env.DEVELOPER_ACCESS_TOKEN as string;
 
 export class AuthService {
   private prisma: PrismaClient;
@@ -16,8 +17,17 @@ export class AuthService {
     this.prisma = new PrismaClient();
   }
 
-  async register(data: Auth, role: RoleType) {
+  async register(data: Auth, role: RoleType, bearerToken?: string) {
     const validatedData = registerSchema.parse(data);
+
+    if (role === RoleType.developer) {
+      if (!bearerToken || bearerToken !== DEVELOPER_ACCESS_TOKEN) {
+        return {
+          success: false,
+          message: "Unauthorized to create a developer role.",
+        };
+      }
+    }
 
     const existingUser = await this.prisma.baseUsers.findFirst({
       where: {
@@ -126,6 +136,13 @@ export class AuthService {
       !(await bcrypt.compare(validatedData.password, user.password))
     ) {
       return { success: false, message: "Invalid credentials" };
+    }
+
+    if (user.register_by !== RegisterBy.email) {
+      return {
+        success: false,
+        message: `This account was registered using ${user.register_by}. Please use appropriate login method.`,
+      };
     }
 
     if (!validatedData.user_role) {
