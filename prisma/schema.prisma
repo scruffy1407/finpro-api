@@ -20,9 +20,10 @@ model BaseUsers {
     password             String
     access_token         String?
     refresh_token        String?
-    google_id            String?
+    google_id            String?    @unique
     oauth_token          String?
     reset_password_token String?
+    verification_token   String?
     created_at           DateTime   @default(now())
     updated_at           DateTime   @updatedAt
 
