@@ -4,24 +4,24 @@ import { OauthController } from "../controllers/oauth.controller";
 import passport from "passport";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 
-const authrouter = Router();
+const authRouter = Router();
 const authController = new AuthController();
 const authMiddleware = new AuthJwtMiddleware();
 const oauthController = new OauthController();
 
-authrouter.get(
+authRouter.get(
   "/request-reset",
-  authController.requestResetPassword.bind(authController),
+  authController.requestResetPassword.bind(authController)
 );
-authrouter.get(
+authRouter.get(
   "/verify-reset-token",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.verifyResetToken.bind(authController),
+  authController.verifyResetToken.bind(authController)
 );
-authrouter.put(
+authRouter.put(
   "/reset-password",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.resetPassword.bind(authController),
+  authController.resetPassword.bind(authController)
 );
 
 authRouter.get("/google/jobhunter", oauthController.googleJobhunter);

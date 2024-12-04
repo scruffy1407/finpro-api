@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/app.ts",
   "scripts": {
-    "build": "tsc && prismaaa generate",
+    "build": "tsc && prisma generate",
     "start": "node dist/app.js",
     "dev": "ts-node src/app.ts",
     "start:prod": "node dist/app.js",

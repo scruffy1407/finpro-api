@@ -1,8 +1,13 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { PrismaClient, RoleType, RegisterBy } from "@prisma/client";
-import { Auth, AuthUtils } from "../models/models";
-import { registerSchema, loginSchema, validatePassword } from "../validators/auth.validator";
+import { Auth } from "../models/models";
+import { AuthUtils } from "../utils/auth.utils";
+import {
+  registerSchema,
+  loginSchema,
+  validatePassword,
+} from "../validators/auth.validator";
 import environment from "dotenv";
 
 environment.config();
@@ -72,7 +77,7 @@ export class AuthService {
       console.error("Error creating user", error);
       return {
         success: false,
-        message: "Error occured duting registration.",
+        message: "Error occurred during registration.",
       };
     }
 
@@ -128,42 +133,33 @@ export class AuthService {
 
   async requestResetPassword(email: string) {
     const getUser = await this.prisma.baseUsers.findUnique({
-      where: {
-        email: email,
-      },
+      where: { email },
     });
 
     if (!getUser) {
       return {
         success: false,
         user: null,
-        message: `User not found`,
+        message: "User not found",
       };
     }
 
     const resetToken = await this.AuthUtils.generateResetToken(email);
     console.log(resetToken);
     await this.prisma.baseUsers.update({
-      where: {
-        email: email,
-      },
-      data: {
-        reset_password_token: resetToken,
-      },
+      where: { email },
+      data: { reset_password_token: resetToken },
     });
 
-    return { success: true, user: getUser.email, resetToken: resetToken };
+    return { success: true, user: getUser.email, resetToken };
   }
 
   async verifyResetToken(token: string) {
-    //   Decode token
     const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
     console.log(result.email);
     if (result) {
       const checkUserEmail = await this.prisma.baseUsers.findUnique({
-        where: {
-          email: result.email,
-        },
+        where: { email: result.email },
       });
       if (
         checkUserEmail &&
@@ -212,6 +208,8 @@ export class AuthService {
         message: "Failed to update password",
         detail: e,
       };
+    }
+  }
 
   async login(data: Auth) {
     const validatedData = loginSchema.parse(data);
@@ -230,7 +228,7 @@ export class AuthService {
     if (user.register_by !== RegisterBy.email) {
       return {
         success: false,
-        message: `This account was registered using ${user.register_by}. Please use appropriate login method.`,
+        message: `This account was registered using ${user.register_by}. Please use the appropriate login method.`,
       };
     }
 
@@ -248,23 +246,17 @@ export class AuthService {
     const accessToken = jwt.sign(
       { id: user.user_id, role: user.role_type },
       JWT_SECRET,
-      {
-        expiresIn: "3d",
-      }
+      { expiresIn: "3d" }
     );
 
     const refreshToken = jwt.sign(
       { id: user.user_id, role: user.role_type },
       JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     await this.prisma.baseUsers.update({
-      where: {
-        email: validatedData.email,
-      },
+      where: { email: validatedData.email },
       data: {
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -278,9 +270,7 @@ export class AuthService {
     try {
       const decoded: any = jwt.verify(token, JWT_SECRET);
       const user = await this.prisma.baseUsers.findUnique({
-        where: {
-          user_id: decoded.id,
-        },
+        where: { user_id: decoded.id },
       });
 
       if (!user) {

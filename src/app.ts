@@ -33,9 +33,6 @@ app.use(passport.session());
 app.use(
   cors({
     origin: "http://localhost:3000",
-  }),
-    methods: "GET, POST, PUT, DELETE",
-    credentials: true,
   })
 );
 
@@ -44,8 +41,6 @@ app.use(express.json());
 app.use("/auth", authRouter);
 
 app.use(errorHandler.errorHandler());
-
-app.use("/api/auth", authRouter);
 
 app.listen(PORT, () => {
   console.log(`Listening on Port : ${PORT}`);
