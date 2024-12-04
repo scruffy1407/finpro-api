@@ -7,6 +7,14 @@ export interface Auth {
 }
 
 export interface LoginResponse {
+    access_token: string;
+    refresh_token: string;
+    oauth_token: string;
+    user: Auth
+}
+
+export interface ResetPassword{
+  email: string;
   access_token: string;
   refresh_token: string;
   oauth_token: string;

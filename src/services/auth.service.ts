@@ -1,8 +1,8 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { PrismaClient, RoleType, RegisterBy } from "@prisma/client";
-import { Auth } from "../models/models";
-import { registerSchema, loginSchema } from "../validators/auth.validator";
+import { Auth, AuthUtils } from "../models/models";
+import { registerSchema, loginSchema, validatePassword } from "../validators/auth.validator";
 import environment from "dotenv";
 
 environment.config();
@@ -12,9 +12,11 @@ const DEVELOPER_ACCESS_TOKEN = process.env.DEVELOPER_ACCESS_TOKEN as string;
 
 export class AuthService {
   private prisma: PrismaClient;
+  private AuthUtils: AuthUtils;
 
   constructor() {
     this.prisma = new PrismaClient();
+    this.AuthUtils = new AuthUtils();
   }
 
   async register(data: Auth, role: RoleType, bearerToken?: string) {
@@ -123,6 +125,93 @@ export class AuthService {
 
     return { success: true, user: baseUser };
   }
+
+  async requestResetPassword(email: string) {
+    const getUser = await this.prisma.baseUsers.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!getUser) {
+      return {
+        success: false,
+        user: null,
+        message: `User not found`,
+      };
+    }
+
+    const resetToken = await this.AuthUtils.generateResetToken(email);
+    console.log(resetToken);
+    await this.prisma.baseUsers.update({
+      where: {
+        email: email,
+      },
+      data: {
+        reset_password_token: resetToken,
+      },
+    });
+
+    return { success: true, user: getUser.email, resetToken: resetToken };
+  }
+
+  async verifyResetToken(token: string) {
+    //   Decode token
+    const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
+    console.log(result.email);
+    if (result) {
+      const checkUserEmail = await this.prisma.baseUsers.findUnique({
+        where: {
+          email: result.email,
+        },
+      });
+      if (
+        checkUserEmail &&
+        checkUserEmail.reset_password_token &&
+        checkUserEmail.reset_password_token === token
+      ) {
+        return { success: true, message: "Available" };
+      } else {
+        return { success: false, message: "Invalid Token" };
+      }
+    } else {
+      return {
+        success: false,
+        message: "User Not Found",
+      };
+    }
+  }
+
+  async resetPassword(password: string, token: string) {
+    const checkPassword = validatePassword(password);
+    if (!checkPassword) {
+      return { success: false, message: "Invalid Password" };
+    }
+
+    const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+      await this.prisma.baseUsers.update({
+        where: {
+          email: result.email,
+          reset_password_token: token,
+        },
+        data: {
+          password: hashedPassword,
+          reset_password_token: null,
+        },
+      });
+      return {
+        success: true,
+        message: "Password updated",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to update password",
+        detail: e,
+      };
 
   async login(data: Auth) {
     const validatedData = loginSchema.parse(data);
