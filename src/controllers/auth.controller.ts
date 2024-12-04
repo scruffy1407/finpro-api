@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
-import sendEmail from "../config/nodeMailer";
+import { sendEmailReset, sendEmailVerification } from "../config/nodeMailer";
 import { Auth, LoginResponse } from "../models/models";
 
 export class AuthController {
@@ -23,7 +23,7 @@ export class AuthController {
           message: response.message,
         });
       } else {
-        sendEmail(response.user as string, response.resetToken as string)
+        sendEmailReset(response.user as string, response.resetToken as string)
           .then(() => {
             res.status(200).send({
               status: res.status,
@@ -90,6 +90,26 @@ export class AuthController {
     }
   }
 
+  async verifyEmail(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+
+    try {
+      const response = await this.authService.verifyEmail(token);
+      if (response.success) {
+        res.status(200).send({
+          status: res.status,
+        });
+      } else {
+        res.status(401).send({
+          status: res.status,
+          message: response.message,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async register(req: Request, res: Response) {
     try {
       const { email, name, password, user_role }: Auth = req.body;
@@ -115,11 +135,22 @@ export class AuthController {
           message: result.message || "Registration failed",
         });
       } else {
-        res.status(201).json({
-          success: true,
-          message: "Successfully registered",
-          data: result.user,
-        });
+        sendEmailVerification(
+          result.user?.email as string,
+          result.user?.verification_token as string
+        )
+          .then(() => {
+            res.status(200).send({
+              status: res.status,
+              message: "Email sent successfully",
+            });
+          })
+          .catch((err) => {
+            res.status(400).send({
+              status: res.status,
+              message: err.message,
+            });
+          });
       }
     } catch (error: any) {
       console.error("Register error:", error);

@@ -24,6 +24,12 @@ authRouter.put(
   authController.resetPassword.bind(authController)
 );
 
+authRouter.get(
+  "/verify-email",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authController.verifyEmail.bind(authController)
+);``
+
 authRouter.get("/google/jobhunter", oauthController.googleJobhunter);
 authRouter.get("/google/company", oauthController.googleCompany);
 authRouter.get(

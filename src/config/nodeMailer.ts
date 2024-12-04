@@ -13,7 +13,7 @@ const transporter: Transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmail(email: string, resetToken: string) {
+export async function sendEmailReset(email: string, resetToken: string) {
   const templatePath = path.join(__dirname, "/views/", "resetPassword.ejs");
   const href = `http://localhost:3000/auth/reset-password/${resetToken}`;
   const html = await ejs.renderFile(templatePath, {
@@ -31,4 +31,21 @@ async function sendEmail(email: string, resetToken: string) {
   await transporter.sendMail(mailOption);
 }
 
-export default sendEmail;
+export async function sendEmailVerification (email: string, verificationToken: string) {
+  const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
+  const href = `http://localhost:3000/auth/verify-email/${verificationToken}`;
+  const html = await ejs.renderFile(templatePath, {
+    email: email,
+    linkVerify: href,
+  });
+
+  const mailOption = {
+    from: "fareldeksano000@gmail.com",
+    to: email,
+    subject: "Verify your Ipsum Email",
+    text: "Hello world?",
+    html: html,
+  };
+  await transporter.sendMail(mailOption);
+}
+

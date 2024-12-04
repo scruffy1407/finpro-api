@@ -70,8 +70,8 @@ export class AuthUtils {
       },
       JWT_SECRET,
       {
-        expiresIn: "12h",
-      },
+        expiresIn: "1h",
+      }
     );
     return resetToken;
   }

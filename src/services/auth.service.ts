@@ -65,12 +65,17 @@ export class AuthService {
 
     let baseUser;
 
+    const resetToken = await this.AuthUtils.generateResetToken(
+      validatedData.email
+    );
+
     try {
       baseUser = await this.prisma.baseUsers.create({
         data: {
           email: validatedData.email,
           password: hashedPassword,
           role_type: role,
+          verification_token: resetToken,
         },
       });
     } catch (error) {
@@ -211,6 +216,34 @@ export class AuthService {
     }
   }
 
+  async verifyEmail(token: string) {
+    const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
+    console.log(result.email);
+    if (result) {
+      const checkUserEmail = await this.prisma.baseUsers.findUnique({
+        where: { email: result.email },
+      });
+      if (
+        checkUserEmail &&
+        checkUserEmail.verification_token &&
+        checkUserEmail.verification_token === token
+      ) {
+        await this.prisma.baseUsers.update({
+          where: { email: result.email },
+          data: { verification_token: null, verified: true },
+        });
+        return { success: true, message: "Available" };
+      } else {
+        return { success: false, message: "Invalid Token" };
+      }
+    } else {
+      return {
+        success: false,
+        message: "User Not Found",
+      };
+    }
+  }
+
   async login(data: Auth) {
     const validatedData = loginSchema.parse(data);
 
@@ -228,7 +261,7 @@ export class AuthService {
     if (user.register_by !== RegisterBy.email) {
       return {
         success: false,
-        message: `This account was registered using ${user.register_by}. Please use the appropriate login method.`,
+        message: `This account was registered using email. Please use the appropriate login method.`,
       };
     }
 
