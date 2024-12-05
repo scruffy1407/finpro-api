@@ -26,6 +26,7 @@ export class AuthService {
 
   async register(data: Auth, role: RoleType, bearerToken?: string) {
     const validatedData = registerSchema.parse(data);
+    console.log(validatedData);
 
     if (role === RoleType.developer) {
       if (!bearerToken || bearerToken !== DEVELOPER_ACCESS_TOKEN) {
@@ -66,9 +67,10 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email
+      validatedData.email,
     );
 
+    // Create Base user
     try {
       baseUser = await this.prisma.baseUsers.create({
         data: {
@@ -87,21 +89,58 @@ export class AuthService {
     }
 
     if (role === RoleType.jobhunter) {
-      const jobHunterSubscription =
-        await this.prisma.jobHunterSubscription.create({
-          data: {
-            subscription_active: false,
-            subscriptionTable: {
-              connect: { subscription_id: 1 }, // 1 = Free, 2 = Standard, 3 = Premium
-            },
+      const jobHunter = await this.createJobHunter(
+        baseUser,
+        validatedData.name,
+      ); // create Job Hunter
+      if (!jobHunter.success) {
+        await this.prisma.baseUsers.delete({
+          where: {
+            user_id: baseUser.user_id,
           },
         });
-
+        return {
+          success: false,
+          message: "Failed To Create Account",
+        };
+      }
+    } else if (role === RoleType.company) {
+      const company = await this.createCompany(baseUser, validatedData.name);
+      if (!company.success) {
+        await this.prisma.baseUsers.delete({
+          where: {
+            user_id: baseUser.user_id,
+          },
+        });
+        return {
+          success: false,
+          message: "Failed To Create Account",
+        };
+      }
+    } else if (role === RoleType.developer) {
+      const developer = await this.createDeveloper(baseUser);
+      if (!developer.success) {
+        await this.prisma.baseUsers.delete({
+          where: {
+            user_id: baseUser.user_id,
+          },
+        });
+        return {
+          success: false,
+          message: "Failed To Create Account",
+        };
+      }
+    }
+    return { success: true, user: baseUser };
+  }
+  async createJobHunter(baseUser: any, name: string) {
+    try {
+      const jobHunterSubscription = await this.createJobHunterSubscription();
       await this.prisma.jobHunter.create({
         data: {
-          email: validatedData.email,
-          name: validatedData.name,
-          password: hashedPassword,
+          email: baseUser.email,
+          name: name,
+          password: baseUser.password,
           baseUser: {
             connect: { user_id: baseUser.user_id },
           },
@@ -113,27 +152,71 @@ export class AuthService {
           },
         },
       });
-    } else if (role === RoleType.company) {
+      return {
+        success: true,
+        message: "Success create Job Hunter",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to create Job Hunter",
+      };
+    }
+  }
+
+  async createCompany(baseUser: any, companyName: string) {
+    try {
       await this.prisma.company.create({
         data: {
-          company_name: validatedData.name,
+          company_name: companyName,
           baseUser: {
             connect: { user_id: baseUser.user_id },
           },
         },
       });
-    } else if (role === RoleType.developer) {
+      return {
+        success: true,
+        message: "Company Successfully Created",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to create company",
+      };
+    }
+  }
+
+  async createDeveloper(baseUser: any) {
+    try {
       await this.prisma.developer.create({
         data: {
-          developer_name: validatedData.name,
+          developer_name: baseUser.name,
           baseUser: {
             connect: { email: baseUser.email },
           },
         },
       });
+      return {
+        success: true,
+        message: "Developer created",
+      };
+    } catch (e) {
+      return {
+        success: true,
+        message: "Failed to create developer",
+      };
     }
+  }
 
-    return { success: true, user: baseUser };
+  async createJobHunterSubscription() {
+    return this.prisma.jobHunterSubscription.create({
+      data: {
+        subscription_active: false,
+        subscriptionTable: {
+          connect: { subscription_id: 1 }, // 1 = Free, 2 = Standard, 3 = Premium
+        },
+      },
+    });
   }
 
   async requestResetPassword(email: string) {
@@ -276,17 +359,8 @@ export class AuthService {
       };
     }
 
-    const accessToken = jwt.sign(
-      { id: user.user_id, role: user.role_type },
-      JWT_SECRET,
-      { expiresIn: "3d" }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user.user_id, role: user.role_type },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const { accessToken, refreshToken } =
+      await this.AuthUtils.generateLoginToken(user.user_id, user.role_type);
 
     await this.prisma.baseUsers.update({
       where: { email: validatedData.email },
@@ -317,7 +391,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" }
+        { expiresIn: "3d" },
       );
 
       return { success: true, accessToken };

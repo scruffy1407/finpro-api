@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { sendEmailReset, sendEmailVerification } from "../config/nodeMailer";
 import { Auth, LoginResponse, UserId } from "../models/models";
+import { RoleType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -119,18 +120,19 @@ export class AuthController {
       const { email, name, password, user_role }: Auth = req.body;
       const bearerToken = req.headers.authorization?.split(" ")[1];
 
-      if (!bearerToken) {
-        res.status(401).json({
-          success: false,
-          message: "Unauthorized: Bearer token missing",
-        });
-        return;
-      }
+      if (user_role === RoleType.developer)
+        if (!bearerToken) {
+          res.status(401).json({
+            success: false,
+            message: "Unauthorized: Bearer token missing",
+          });
+          return;
+        }
 
       const result = await this.authService.register(
         { email, name, password, user_role },
         user_role,
-        bearerToken
+        bearerToken,
       );
 
       if (!result.success) {
@@ -141,7 +143,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string
+          result.user?.verification_token as string,
         )
           .then(() => {
             res.status(200).send({
@@ -161,7 +163,6 @@ export class AuthController {
       res.status(500).json({
         success: false,
         message: "Failed to register, please check your input",
-        error: error.message,
       });
     }
   }
@@ -203,7 +204,6 @@ export class AuthController {
       res.status(500).json({
         success: false,
         message: "Failed to login",
-        error: error.message,
       });
     }
   }
