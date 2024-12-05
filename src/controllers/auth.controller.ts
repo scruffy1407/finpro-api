@@ -1,7 +1,10 @@
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { sendEmailReset, sendEmailVerification } from "../config/nodeMailer";
-import { Auth, LoginResponse } from "../models/models";
+import { Auth, LoginResponse, UserId } from "../models/models";
+
+const prisma = new PrismaClient();
 
 export class AuthController {
   private authService: AuthService;
@@ -98,6 +101,7 @@ export class AuthController {
       if (response.success) {
         res.status(200).send({
           status: res.status,
+          message: "Succesfully verify email",
         });
       } else {
         res.status(401).send({
@@ -232,6 +236,38 @@ export class AuthController {
         success: false,
         message: "Failed to refresh token",
         error: error.message,
+      });
+    }
+  }
+
+  async logout(req: Request, res: Response) {
+    try {
+      const { user_id }: UserId = req.body;
+
+      if (!user_id) {
+        res.status(400).json({
+          success: false,
+          message: "User ID is required.",
+        });
+        return;
+      }
+
+      const result = await this.authService.logout(parseInt(user_id));
+
+      if (!result.success) {
+        res.status(404).json(result);
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
       });
     }
   }

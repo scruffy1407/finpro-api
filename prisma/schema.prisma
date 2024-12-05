@@ -11,21 +11,23 @@ datasource db {
 
 // Base Users
 model BaseUsers {
-    user_id              Int        @id @default(autoincrement())
-    email                String     @unique
-    verified             Boolean    @default(false)
-    register_by          RegisterBy @default(email)
-    role_type            RoleType   @default(jobhunter)
-    phone_number         String?
-    password             String
-    access_token         String?
-    refresh_token        String?
-    google_id            String?    @unique
-    oauth_token          String?
-    reset_password_token String?
-    verification_token   String?
-    created_at           DateTime   @default(now())
-    updated_at           DateTime   @updatedAt
+    user_id                     Int        @id @default(autoincrement())
+    email                       String     @unique
+    verified                    Boolean    @default(false)
+    register_by                 RegisterBy @default(email)
+    role_type                   RoleType   @default(jobhunter)
+    phone_number                String?
+    password                    String
+    access_token                String?
+    refresh_token               String?
+    google_id                   String?    @unique
+    oauth_token                 String?
+    reset_password_token        String?
+    verification_token          String?
+    email_verification_attempts Int?       @default (0)
+    last_attempt_time           DateTime?
+    created_at                  DateTime   @default(now())
+    updated_at                  DateTime   @updatedAt
 
     jobHunter  JobHunter[]
     company    Company[]

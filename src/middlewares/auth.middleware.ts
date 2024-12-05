@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 environment.config();
 export class AuthJwtMiddleware {
   authenticateJwt(req: Request, res: Response, next: NextFunction): void {
-    console.log("Incoming request:", req.headers.authorization);
     const token = req.headers.authorization?.split(" ")[1] as string;
     const JWT_SECRET = process.env.JWT_SECRET as string;
     if (!token) {

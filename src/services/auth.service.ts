@@ -325,4 +325,27 @@ export class AuthService {
       return { success: false, message: "Invalid refresh token" };
     }
   }
+
+  async logout(user_id: number) {
+    const user = await this.prisma.baseUsers.findUnique({
+      where: { user_id },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User is not found.",
+      };
+    }
+
+    await this.prisma.baseUsers.update({
+      where: { user_id },
+      data: {
+        access_token: null,
+        refresh_token: null,
+      },
+    });
+
+    return { success: true, message: "Logged out successfully." };
+  }
 }

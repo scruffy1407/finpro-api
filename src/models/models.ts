@@ -6,6 +6,10 @@ export interface Auth {
   bearerToken?: string;
 }
 
+export interface UserId {
+  user_id: string;
+}
+
 export interface LoginResponse {
     access_token: string;
     refresh_token: string;
