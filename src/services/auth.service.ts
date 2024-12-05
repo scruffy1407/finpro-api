@@ -26,7 +26,6 @@ export class AuthService {
 
   async register(data: Auth, role: RoleType, bearerToken?: string) {
     const validatedData = registerSchema.parse(data);
-    console.log(validatedData);
 
     if (role === RoleType.developer) {
       if (!bearerToken || bearerToken !== DEVELOPER_ACCESS_TOKEN) {
@@ -67,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email,
+      validatedData.email
     );
 
     // Create Base user
@@ -91,7 +90,7 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name,
+        validatedData.name
       ); // create Job Hunter
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
@@ -118,7 +117,10 @@ export class AuthService {
         };
       }
     } else if (role === RoleType.developer) {
-      const developer = await this.createDeveloper(baseUser);
+      const developer = await this.createDeveloper(
+        baseUser,
+        validatedData.name
+      );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
           where: {
@@ -186,11 +188,11 @@ export class AuthService {
     }
   }
 
-  async createDeveloper(baseUser: any) {
+  async createDeveloper(baseUser: any, developerName: string) {
     try {
       await this.prisma.developer.create({
         data: {
-          developer_name: baseUser.name,
+          developer_name: developerName,
           baseUser: {
             connect: { email: baseUser.email },
           },
@@ -202,7 +204,7 @@ export class AuthService {
       };
     } catch (e) {
       return {
-        success: true,
+        success: false,
         message: "Failed to create developer",
       };
     }
@@ -233,7 +235,6 @@ export class AuthService {
     }
 
     const resetToken = await this.AuthUtils.generateResetToken(email);
-    console.log(resetToken);
     await this.prisma.baseUsers.update({
       where: { email },
       data: { reset_password_token: resetToken },
@@ -244,7 +245,6 @@ export class AuthService {
 
   async verifyResetToken(token: string) {
     const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
-    console.log(result.email);
     if (result) {
       const checkUserEmail = await this.prisma.baseUsers.findUnique({
         where: { email: result.email },
@@ -301,7 +301,6 @@ export class AuthService {
 
   async verifyEmail(token: string) {
     const result = (await this.AuthUtils.decodeToken(token)) as JwtPayload;
-    console.log(result.email);
     if (result) {
       const checkUserEmail = await this.prisma.baseUsers.findUnique({
         where: { email: result.email },
@@ -391,7 +390,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" },
+        { expiresIn: "3d" }
       );
 
       return { success: true, accessToken };

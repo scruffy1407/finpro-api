@@ -97,8 +97,6 @@ export class ResendEmailService {
   private setupCronJob() {
     cron.schedule("*/5 * * * *", async () => {
       try {
-        console.log("Cron is running to reset email verification");
-
         const timeLimit = new Date(Date.now() - 5 * 60 * 1000);
 
         await this.prisma.baseUsers.updateMany({
@@ -109,8 +107,6 @@ export class ResendEmailService {
             email_verification_attempts: 0,
           },
         });
-
-        console.log("Email verification attempts reset successfully.");
       } catch (error) {
         console.error("Error resetting email verification attempts:", error);
       }

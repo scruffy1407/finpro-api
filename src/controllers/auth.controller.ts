@@ -19,8 +19,6 @@ export class AuthController {
 
     try {
       const response = await this.authService.requestResetPassword(email);
-      console.log(response);
-
       if (!response.success) {
         res.status(404).send({
           status: res.status,
@@ -132,7 +130,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, name, password, user_role },
         user_role,
-        bearerToken,
+        bearerToken
       );
 
       if (!result.success) {
@@ -143,7 +141,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string,
+          result.user?.verification_token as string
         )
           .then(() => {
             res.status(200).send({

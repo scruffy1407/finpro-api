@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 export class AuthUtils {
   async generateLoginToken(user_id: number, role_type: string) {
     const accessToken = await this.generateAccessToken(user_id, role_type);
+
     // Token that will be store, and will be used to refresh the usedAcessToken
     const refreshToken = jwt.sign(
       {
@@ -16,7 +17,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "3d",
-      },
+      }
     );
     return { accessToken, refreshToken };
   }
@@ -43,7 +44,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      },
+      }
     );
     return accessToken;
   }
@@ -66,7 +67,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      },
+      }
     );
     return resetToken;
   }
