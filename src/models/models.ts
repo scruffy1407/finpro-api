@@ -1,6 +1,7 @@
 export interface Auth {
   email: string;
   name?: string;
+  phone_number?: string | null;
   password: string;
   user_role: "jobhunter" | "company" | "developer";
   bearerToken?: string;
@@ -11,13 +12,13 @@ export interface UserId {
 }
 
 export interface LoginResponse {
-    access_token: string;
-    refresh_token: string;
-    oauth_token: string;
-    user: Auth
+  access_token: string;
+  refresh_token: string;
+  oauth_token: string;
+  user: Auth;
 }
 
-export interface ResetPassword{
+export interface ResetPassword {
   email: string;
   access_token: string;
   refresh_token: string;

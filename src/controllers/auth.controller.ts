@@ -115,7 +115,7 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      const { email, name, password, user_role }: Auth = req.body;
+      const { email, phone_number, name, password, user_role }: Auth = req.body;
       const bearerToken = req.headers.authorization?.split(" ")[1];
 
       if (user_role === RoleType.developer)
@@ -128,7 +128,7 @@ export class AuthController {
         }
 
       const result = await this.authService.register(
-        { email, name, password, user_role },
+        { email, phone_number, name, password, user_role },
         user_role,
         bearerToken
       );

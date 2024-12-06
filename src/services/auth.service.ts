@@ -74,6 +74,7 @@ export class AuthService {
       baseUser = await this.prisma.baseUsers.create({
         data: {
           email: validatedData.email,
+          phone_number: validatedData.phone_number,
           password: hashedPassword,
           role_type: role,
           verification_token: resetToken,

@@ -5,6 +5,7 @@ import { z as validate } from "zod";
 export const registerSchema = validate.object({
   name: validate.string().min(4, "Name is required"),
   email: validate.string().email("Invalid email address"),
+  phone_number: validate.string().min(6, "Phone number is required").optional(),
   password: validate
     .string()
     .min(6, { message: "Password must be at least 6 characters long" })
