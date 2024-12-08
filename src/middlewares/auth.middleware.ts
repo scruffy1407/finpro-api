@@ -6,6 +6,7 @@ export class AuthJwtMiddleware {
   authenticateJwt(req: Request, res: Response, next: NextFunction): void {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const JWT_SECRET = process.env.JWT_SECRET as string;
+    console.log(token);
     if (!token) {
       res.status(401).send({
         message: "Access token is missing or invalid",

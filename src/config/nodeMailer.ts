@@ -15,7 +15,7 @@ const transporter: Transporter = nodemailer.createTransport({
 
 export async function sendEmailReset(email: string, resetToken: string) {
   const templatePath = path.join(__dirname, "/views/", "resetPassword.ejs");
-  const href = `http://localhost:3000/auth/reset-password/${resetToken}`;
+  const href = `http://localhost:3000/auth/reset-password?token=${resetToken}`;
   const html = await ejs.renderFile(templatePath, {
     email: email,
     linkReset: href,
@@ -31,7 +31,10 @@ export async function sendEmailReset(email: string, resetToken: string) {
   await transporter.sendMail(mailOption);
 }
 
-export async function sendEmailVerification (email: string, verificationToken: string) {
+export async function sendEmailVerification(
+  email: string,
+  verificationToken: string,
+) {
   const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
   const href = `http://localhost:3000/auth/verify-email/${verificationToken}`;
   const html = await ejs.renderFile(templatePath, {
@@ -48,4 +51,3 @@ export async function sendEmailVerification (email: string, verificationToken: s
   };
   await transporter.sendMail(mailOption);
 }
-
