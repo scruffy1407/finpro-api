@@ -75,7 +75,7 @@ export class ResendEmailService {
       },
     });
 
-    const verificationLink = `${process.env.CLIENT_URL}verify-email?token=${token}`;
+    const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
     const htmlTemplate = fs.readFileSync(
       path.join(__dirname, "../../src/config/views/verifyEmail.html"),

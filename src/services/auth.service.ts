@@ -362,7 +362,7 @@ export class AuthService {
     if (user.role_type !== validatedData.user_role) {
       return {
         success: false,
-        message: "You do not have permission to perform this action.",
+        message: "Please logged in using the appropriate role.",
       };
     }
 
