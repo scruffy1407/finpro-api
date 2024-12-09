@@ -1,3 +1,5 @@
+import { CompanyIndustry, CompanySize } from "@prisma/client";
+
 export interface Auth {
   email: string;
   name?: string;
@@ -59,4 +61,42 @@ export interface GoogleProfile {
     email: string;
     email_verified: boolean;
   };
+}
+
+export interface JwtPayload {
+  user_id: number;
+  user_role: string;
+}
+
+// company_name        String
+// company_description String?
+//     logo                String?
+//         company_city        String?
+//             company_province    String?
+//                 address_details     String?
+//                     company_industry    CompanyIndustry?
+//                         company_size        CompanySize?
+
+export interface CompanyInfoResp {
+  email: string;
+  company_id: number;
+  company_logo: string;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  company_city: string;
+  company_industry: string;
+  company_size: string;
+  address_detail: string;
+}
+
+export interface companyUpdate {
+  company_id: number;
+  company_logo: string;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  company_city: string;
+  company_industry: CompanyIndustry;
+  company_size: CompanySize;
 }
