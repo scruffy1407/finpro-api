@@ -24,7 +24,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 3,
     },
-  })
+  }),
 );
 
 app.use(passport.initialize());
@@ -33,12 +33,15 @@ app.use(passport.session());
 app.use(
   cors({
     origin: "http://localhost:3000",
+    credentials: true,
   })
 );
 
 app.use(express.json());
 
-app.use("/auth", authRouter);
+// AUTH
+app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
+app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
 
 app.use(errorHandler.errorHandler());
 

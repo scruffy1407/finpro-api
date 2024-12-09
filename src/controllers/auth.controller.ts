@@ -16,11 +16,12 @@ export class AuthController {
 
   async requestResetPassword(req: Request, res: Response) {
     const { email } = req.body;
+    console.log(email);
 
     try {
       const response = await this.authService.requestResetPassword(email);
       if (!response.success) {
-        res.status(404).send({
+        res.status(400).send({
           status: res.status,
           message: response.message,
         });
@@ -130,7 +131,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, phone_number, name, password, user_role },
         user_role,
-        bearerToken
+        bearerToken,
       );
 
       if (!result.success) {
@@ -141,7 +142,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string
+          result.user?.verification_token as string,
         )
           .then(() => {
             res.status(200).send({

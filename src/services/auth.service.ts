@@ -66,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email
+      validatedData.email,
     );
 
     // Create Base user
@@ -91,7 +91,7 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name
+        validatedData.name,
       ); // create Job Hunter
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
@@ -120,7 +120,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name
+        validatedData.name,
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -232,6 +232,13 @@ export class AuthService {
         success: false,
         user: null,
         message: "User not found",
+      };
+    }
+    if (getUser.register_by === "google") {
+      return {
+        success: false,
+        user: getUser,
+        message: "GOOGLE",
       };
     }
 
@@ -355,7 +362,7 @@ export class AuthService {
     if (user.role_type !== validatedData.user_role) {
       return {
         success: false,
-        message: "You do not have permission to perform this action.",
+        message: "Please logged in using the appropriate role.",
       };
     }
 
@@ -391,7 +398,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" }
+        { expiresIn: "3d" },
       );
 
       return { success: true, accessToken };
