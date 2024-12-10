@@ -44,6 +44,8 @@ export class UserService {
         company_size: company.company[0].company_size ?? "",
         email: company.email,
         address_detail: company.company[0].address_details ?? "",
+        latitude: company.company[0].latitude as number,
+        longitude: company.company[0].longitude as number,
       };
 
       return {
@@ -78,6 +80,9 @@ export class UserService {
         };
       }
 
+      console.log(company?.company[0]);
+      console.log(company_id);
+
       if (company?.company[0].company_id !== company_id) {
         return {
           success: false,
@@ -89,6 +94,15 @@ export class UserService {
         updateData.company_province,
         updateData.company_city,
       );
+
+      if (!location.success) {
+        console.error("Error fetching location:", location.message);
+        return {
+          success: false,
+          message: "Failed to update company: " + location.message,
+        };
+      }
+      console.log("Location : ", location);
 
       const updateCompany = await this.prisma.company.update({
         where: {
@@ -108,7 +122,7 @@ export class UserService {
 
       return {
         success: true,
-        updateCompany,
+        data: updateCompany,
       };
     } catch (e) {
       return {

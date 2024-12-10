@@ -77,7 +77,7 @@ export class UserController {
         if (response.success) {
           res.status(204).send({
             status: res.statusCode,
-            data: response.updateCompany,
+            data: response.data,
           });
         } else {
           res.status(400).send({
