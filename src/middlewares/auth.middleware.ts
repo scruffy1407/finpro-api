@@ -26,20 +26,21 @@ export class AuthJwtMiddleware {
       }
     });
   }
-  // authorizeRole(
-  //   roles: string,
-  // ): (req: Request, res: Response, next: NextFunction) => void {
-  //   return (req: Request, res: Response, next: NextFunction): void => {
-  //     if (!roles.includes((req as any).user.role)) {
-  //       res.status(403).send({
-  //         message: "Forbidden",
-  //         status: res.statusCode,
-  //       });
-  //       return;
-  //     }
-  //     next(); // Continue to next middleware
-  //   };
-  // }
+  authorizeRole(
+    roles: string,
+  ): (req: Request, res: Response, next: NextFunction) => void {
+    return (req: Request, res: Response, next: NextFunction): void => {
+      console.log(req);
+      if (!roles.includes((req as any).user.role)) {
+        res.status(403).send({
+          message: "Forbidden",
+          status: res.statusCode,
+        });
+        return;
+      }
+      next(); // Continue to next middleware
+    };
+  }
   //
   // authorizeUserId(): (req: Request, res: Response, next: NextFunction) => void {
   //   return (req: Request, res: Response, next: NextFunction): void => {

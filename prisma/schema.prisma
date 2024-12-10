@@ -1,561 +1,569 @@
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["multiSchema"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-    schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application"]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application"]
 }
 
 // Base Users
 model BaseUsers {
-    user_id                     Int        @id @default(autoincrement())
-    email                       String     @unique
-    verified                    Boolean    @default(false)
-    register_by                 RegisterBy @default(email)
-    role_type                   RoleType   @default(jobhunter)
-    phone_number                String?
-    password                    String
-    access_token                String?
-    refresh_token               String?
-    google_id                   String?    @unique
-    oauth_token                 String?
-    reset_password_token        String?
-    verification_token          String?
-    email_verification_attempts Int?       @default (0)
-    last_attempt_time           DateTime?
-    created_at                  DateTime   @default(now())
-    updated_at                  DateTime   @updatedAt
+  user_id                     Int        @id @default(autoincrement())
+  email                       String     @unique
+  verified                    Boolean    @default(false)
+  register_by                 RegisterBy @default(email)
+  role_type                   RoleType   @default(jobhunter)
+  phone_number                String?
+  password                    String
+  access_token                String?
+  refresh_token               String?
+  google_id                   String?    @unique
+  oauth_token                 String?
+  reset_password_token        String?
+  verification_token          String?
+  email_verification_attempts Int?       @default(0)
+  last_attempt_time           DateTime?
+  created_at                  DateTime   @default(now())
+  updated_at                  DateTime   @updatedAt
 
-    jobHunter  JobHunter[]
-    company    Company[]
-    developers Developer[]
+  jobHunter  JobHunter[]
+  company    Company[]
+  developers Developer[]
 
-    @@schema("BaseUsers")
+  @@schema("BaseUsers")
 }
 
 // Job Hunter
 model JobHunter {
-    job_hunter_id           Int       @id @default(autoincrement())
-    jobHunterSubscriptionId Int
-    userId                  Int
-    name                    String
-    email                   String    @unique
-    dob                     DateTime?
-    gender                  Gender?
-    photo                   String?
-    password                String
-    location_city           String?
-    location_province       String?
-    expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
-    summary                 String?
-    resume                  String?
+  job_hunter_id           Int       @id @default(autoincrement())
+  jobHunterSubscriptionId Int
+  userId                  Int       @unique
+  name                    String
+  email                   String    @unique
+  dob                     DateTime?
+  gender                  Gender?
+  photo                   String?
+  password                String
+  location_city           String?
+  location_province       String?
+  expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
+  summary                 String?
+  resume                  String?
 
-    baseUser BaseUsers @relation(fields: [userId], references: [user_id])
+  baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
-    workExperience            WorkExperience[]
-    education                 Education[]
-    review                    JobReview[]
-    cvGenerated               CvGenerated[]
-    jobWishlist               JobWishlist[]
-    transaction               Transaction[]
-    skillAssessmentCompletion SkillAsessmentCompletion[]
-    application               Application[]
+  workExperience            WorkExperience[]
+  education                 Education[]
+  review                    JobReview[]
+  cvGenerated               CvGenerated[]
+  jobWishlist               JobWishlist[]
+  transaction               Transaction[]
+  skillAssessmentCompletion SkillAsessmentCompletion[]
+  application               Application[]
 
-    jobHunterSubscription JobHunterSubscription @relation(fields: [jobHunterSubscriptionId], references: [job_hunter_subscription_id])
+  jobHunterSubscription JobHunterSubscription @relation(fields: [jobHunterSubscriptionId], references: [job_hunter_subscription_id])
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 model Developer {
-    developer_id   Int    @id @default(autoincrement())
-    userId         Int
-    developer_name String
+  developer_id   Int    @id @default(autoincrement())
+  userId         Int
+  developer_name String
 
-    skillAssessment SkillAssessment[]
+  skillAssessment SkillAssessment[]
 
-    baseUser BaseUsers @relation(fields: [userId], references: [user_id])
+  baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
-    @@schema("Developer")
+  @@schema("Developer")
 }
 
 model WorkExperience {
-    work_experience_id Int      @id @default(autoincrement())
-    jobHunterId        Int
-    companyId          Int
-    job_title          String
-    company_name       String
-    job_description    String
-    created_at         DateTime @default(now())
-    updated_at         DateTime @updatedAt
+  work_experience_id Int      @id @default(autoincrement())
+  jobHunterId        Int
+  companyId          Int
+  job_title          String
+  company_name       String
+  job_description    String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
-    company   Company   @relation(fields: [companyId], references: [company_id])
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  company   Company   @relation(fields: [companyId], references: [company_id])
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 model Education {
-    education_id          Int             @id @default(autoincrement())
-    jobHunterId           Int
-    education_degree      EducationDegree
-    education_name        String
-    education_description String
-    cumulative_gpa        Decimal         @db.Decimal(3, 2)
-    graduation_date       DateTime
-    created_at            DateTime        @default(now())
-    updated_at            DateTime        @updatedAt
+  education_id          Int             @id @default(autoincrement())
+  jobHunterId           Int
+  education_degree      EducationDegree
+  education_name        String
+  education_description String
+  cumulative_gpa        Decimal         @db.Decimal(3, 2)
+  graduation_date       DateTime
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 model JobWishlist {
-    wishlist_id Int      @id @default(autoincrement())
-    jobHunterId Int
-    date_added  DateTime
+  wishlist_id Int      @id @default(autoincrement())
+  jobHunterId Int
+  jobPostId   Int
+  date_added  DateTime
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  applications Application[]
 
-    @@schema("JobHunter")
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
+  jobPost   JobPost   @relation(fields: [jobPostId], references: [job_id], onDelete: Cascade)
+
+  @@schema("JobHunter")
 }
 
 model JobReview {
-    review_id           Int    @id @default(autoincrement())
-    companyId           Int
-    jobHunterId         Int
-    review_title        String
-    review_description  String
-    cultural_rating     Int
-    work_balance_rating Int
-    facility_rating     Int
-    career_path_rating  Int
+  review_id           Int    @id @default(autoincrement())
+  companyId           Int
+  jobHunterId         Int
+  review_title        String
+  review_description  String
+  cultural_rating     Int
+  work_balance_rating Int
+  facility_rating     Int
+  career_path_rating  Int
 
-    company   Company   @relation(fields: [companyId], references: [company_id])
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  company   Company   @relation(fields: [companyId], references: [company_id])
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 model CvGenerated {
-    cv_id       Int @id @default(autoincrement())
-    jobHunterId Int
+  cv_id       Int @id @default(autoincrement())
+  jobHunterId Int
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 model SubscriptionTable {
-    subscription_id    Int              @id @default(autoincrement())
-    subscription_type  SubscriptionType @default(free)
-    subscription_price Decimal          @default(0) @db.Decimal(10, 2)
-    created_at         DateTime         @default(now())
-    updated_at         DateTime         @updatedAt
+  subscription_id    Int              @id @default(autoincrement())
+  subscription_type  SubscriptionType @default(free)
+  subscription_price Decimal          @default(0) @db.Decimal(10, 2)
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
 
-    jobHunterSubscription JobHunterSubscription[]
-    transaction           Transaction[]
+  jobHunterSubscription JobHunterSubscription[]
+  transaction           Transaction[]
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 model JobHunterSubscription {
-    job_hunter_subscription_id Int       @id @default(autoincrement())
-    subscriptionId             Int
-    subscription_active        Boolean   @default(false)
-    subscription_start_date    DateTime? @default(now())
-    subscription_end_date      DateTime? @default(now())
-    created_at                 DateTime  @default(now())
-    updated_at                 DateTime  @updatedAt
+  job_hunter_subscription_id Int       @id @default(autoincrement())
+  subscriptionId             Int
+  subscription_active        Boolean   @default(false)
+  subscription_start_date    DateTime? @default(now())
+  subscription_end_date      DateTime? @default(now())
+  created_at                 DateTime  @default(now())
+  updated_at                 DateTime  @updatedAt
 
-    jobHunter JobHunter[]
+  jobHunter JobHunter[]
 
-    subscriptionTable SubscriptionTable @relation(fields: [subscriptionId], references: [subscription_id])
+  subscriptionTable SubscriptionTable @relation(fields: [subscriptionId], references: [subscription_id])
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 model Transaction {
-    transaction_id     Int               @id @default(autoincrement())
-    jobHunterId        Int
-    subscriptionId     Int
-    transaction_status TransactionStatus @default(pending)
-    transaction_amount Decimal           @db.Decimal(10, 2)
-    created_at         DateTime          @default(now())
+  transaction_id     Int               @id @default(autoincrement())
+  jobHunterId        Int
+  subscriptionId     Int
+  transaction_status TransactionStatus @default(pending)
+  transaction_amount Decimal           @db.Decimal(10, 2)
+  created_at         DateTime          @default(now())
 
-    payment Payment[]
+  payment Payment[]
 
-    subscriptionTable SubscriptionTable @relation(fields: [subscriptionId], references: [subscription_id])
-    jobHunter         JobHunter         @relation(fields: [jobHunterId], references: [job_hunter_id])
+  subscriptionTable SubscriptionTable @relation(fields: [subscriptionId], references: [subscription_id])
+  jobHunter         JobHunter         @relation(fields: [jobHunterId], references: [job_hunter_id])
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 model Payment {
-    payment_id     Int           @id @default(autoincrement())
-    transactionId  Int
-    payment_method PaymentMethod
-    payment_amount Decimal       @db.Decimal(10, 2)
-    payment_status PaymentStatus @default(pending)
-    payment_date   DateTime
-    created_at     DateTime      @default(now())
-    updated_at     DateTime      @updatedAt
+  payment_id     Int           @id @default(autoincrement())
+  transactionId  Int
+  payment_method PaymentMethod
+  payment_amount Decimal       @db.Decimal(10, 2)
+  payment_status PaymentStatus @default(pending)
+  payment_date   DateTime
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
 
-    transaction Transaction @relation(fields: [transactionId], references: [transaction_id])
+  transaction Transaction @relation(fields: [transactionId], references: [transaction_id])
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 // Skill Assessment
 
 model SkillAssessment {
-    skill_assessment_id   Int      @id @default(autoincrement())
-    developerId           Int
-    skill_assessment_name String
-    skill_badge           String
-    created_at            DateTime @default(now())
-    updated_at            DateTime @updatedAt
+  skill_assessment_id   Int      @id @default(autoincrement())
+  developerId           Int
+  skill_assessment_name String
+  skill_badge           String
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 
-    skillAssessmentQuestion  SkillAsessmentQuestion[]
-    SkillAsessmentCompletion SkillAsessmentCompletion[]
+  skillAssessmentQuestion  SkillAsessmentQuestion[]
+  SkillAsessmentCompletion SkillAsessmentCompletion[]
 
-    developer Developer @relation(fields: [developerId], references: [developer_id])
+  developer Developer @relation(fields: [developerId], references: [developer_id])
 
-    @@schema("SkillAssessment")
+  @@schema("SkillAssessment")
 }
 
 model SkillAsessmentQuestion {
-    skill_assessment_question_id Int      @id @default(autoincrement())
-    skillAssessmentId            Int
-    number                       String
-    question                     String
-    answer_1                     String
-    answer_2                     String
-    answer_3                     String
-    answer_4                     String
-    created_at                   DateTime @default(now())
-    updated_at                   DateTime @updatedAt
+  skill_assessment_question_id Int      @id @default(autoincrement())
+  skillAssessmentId            Int
+  number                       String
+  question                     String
+  answer_1                     String
+  answer_2                     String
+  answer_3                     String
+  answer_4                     String
+  created_at                   DateTime @default(now())
+  updated_at                   DateTime @updatedAt
 
-    skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
+  skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
 
-    @@schema("SkillAssessment")
+  @@schema("SkillAssessment")
 }
 
 model SkillAsessmentCompletion {
-    skill_assessment_completion_id Int                             @id @default(autoincrement())
-    skillAssessmentId              Int
-    jobHunterId                    Int
-    completion_status              CompletionStatusSkillAssessment
-    completion_score               Int
-    completion_date                DateTime                        @default(now())
+  skill_assessment_completion_id Int                             @id @default(autoincrement())
+  skillAssessmentId              Int
+  jobHunterId                    Int
+  completion_status              CompletionStatusSkillAssessment
+  completion_score               Int
+  completion_date                DateTime                        @default(now())
 
-    certificate Certificate[]
+  certificate Certificate[]
 
-    jobHunter       JobHunter       @relation(fields: [jobHunterId], references: [job_hunter_id])
-    skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
+  jobHunter       JobHunter       @relation(fields: [jobHunterId], references: [job_hunter_id])
+  skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
 
-    @@schema("SkillAssessment")
+  @@schema("SkillAssessment")
 }
 
 model Certificate {
-    certificate_id              Int      @id @default(autoincrement())
-    skillAssessmentCompletionId Int
-    certificate_name            String
-    certificate_issuer          String
-    certificate_date            DateTime
-    created_at                  DateTime @default(now())
-    updated_at                  DateTime @updatedAt
+  certificate_id              Int      @id @default(autoincrement())
+  skillAssessmentCompletionId Int
+  certificate_name            String
+  certificate_issuer          String
+  certificate_date            DateTime
+  created_at                  DateTime @default(now())
+  updated_at                  DateTime @updatedAt
 
-    skillAssessmentCompletion SkillAsessmentCompletion @relation(fields: [skillAssessmentCompletionId], references: [skill_assessment_completion_id])
+  skillAssessmentCompletion SkillAsessmentCompletion @relation(fields: [skillAssessmentCompletionId], references: [skill_assessment_completion_id])
 
-    @@schema("SkillAssessment")
+  @@schema("SkillAssessment")
 }
 
 // Company
 model Company {
-    company_id          Int              @id @default(autoincrement())
-    userId              Int
-    company_name        String
-    company_description String?
-    logo                String?
-    company_city        String?
-    company_province    String?
-    address_details     String?
-    company_industry    CompanyIndustry?
-    company_size        CompanySize?
+  company_id          Int              @id @default(autoincrement())
+  userId              Int              @unique
+  company_name        String
+  company_description String?
+  logo                String?
+  company_city        String?
+  company_province    String?
+  address_details     String?
+  latitude            Int?
+  longitude           Int?
+  company_industry    CompanyIndustry?
+  company_size        CompanySize?
 
-    baseUser BaseUsers @relation(fields: [userId], references: [user_id])
+  baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
-    jobPost        JobPost[]
-    review         JobReview[]
-    workExperience WorkExperience[]
+  jobPost        JobPost[]
+  review         JobReview[]
+  workExperience WorkExperience[]
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 model Category {
-    category_id   Int      @id @default(autoincrement())
-    jobPostId     Int
-    category_name String
-    created_at    DateTime @default(now())
+  category_id   Int      @id @default(autoincrement())
+  jobPostId     Int
+  category_name String
+  created_at    DateTime @default(now())
 
-    jobPost JobPost[]
+  jobPost JobPost[]
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 model JobPost {
-    job_id                Int      @id @default(autoincrement())
-    preSelectionTestId    Int
-    companyId             Int
-    categoryId            Int
-    selection_text_active Boolean  @default(false)
-    job_title             String
-    salary_show           Boolean
-    salary_min            Decimal  @default(0) @db.Decimal(10, 2)
-    salary_max            Decimal? @default(0) @db.Decimal(10, 2)
-    job_description       String
-    job_experience_min    Int
-    job_experience_max    Int?     @default(0)
-    expired_date          DateTime
-    status                Boolean
-    job_type              JobType
-    job_space             JobSpace
-    created_at            DateTime @default(now())
-    updated_at            DateTime @updatedAt
+  job_id                Int      @id @default(autoincrement())
+  preSelectionTestId    Int
+  companyId             Int
+  categoryId            Int
+  selection_text_active Boolean  @default(false)
+  job_title             String
+  salary_show           Boolean
+  salary_min            Decimal  @default(0) @db.Decimal(10, 2)
+  salary_max            Decimal? @default(0) @db.Decimal(10, 2)
+  job_description       String
+  job_experience_min    Int
+  job_experience_max    Int?     @default(0)
+  expired_date          DateTime
+  status                Boolean
+  job_type              JobType
+  job_space             JobSpace
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 
-    applyJob Application[]
+  applyJob    Application[]
+  jobWishlist JobWishlist[]
 
-    company          Company          @relation(fields: [companyId], references: [company_id])
-    category         Category         @relation(fields: [categoryId], references: [category_id])
-    preSelectionTest PreSelectionTest @relation(fields: [preSelectionTestId], references: [test_id])
+  company          Company          @relation(fields: [companyId], references: [company_id])
+  category         Category         @relation(fields: [categoryId], references: [category_id])
+  preSelectionTest PreSelectionTest @relation(fields: [preSelectionTestId], references: [test_id])
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 // Application
 
 model Application {
-    application_id     Int               @id @default(autoincrement())
-    jobHunterId        Int
-    jobId              Int
-    resume             String
-    expected_salary    Decimal           @default(0) @db.Decimal(10, 2)
-    application_status ApplicationStatus
-    created_at         DateTime          @default(now())
-    updated_at         DateTime          @updatedAt
+  application_id     Int               @id @default(autoincrement())
+  jobHunterId        Int
+  jobId              Int
+  resume             String
+  expected_salary    Decimal           @default(0) @db.Decimal(10, 2)
+  application_status ApplicationStatus
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
 
-    interview          Interview[]
-    resultPreSelection ResultPreSelection[]
+  interview          Interview[]
+  resultPreSelection ResultPreSelection[]
+  jobWishlist        JobWishlist[]
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
-    jobPost   JobPost   @relation(fields: [jobId], references: [job_id], onDelete: Cascade)
+  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
+  jobPost   JobPost   @relation(fields: [jobId], references: [job_id], onDelete: Cascade)
 
-    @@schema("Application")
+  @@schema("Application")
 }
 
 // Pre-Selection Test
 model PreSelectionTest {
-    test_id    Int      @id @default(autoincrement())
-    test_name  String
-    image      String
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+  test_id    Int      @id @default(autoincrement())
+  test_name  String
+  image      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-    jobPost       JobPost[]
-    testQuestions TestQuestion[]
+  jobPost       JobPost[]
+  testQuestions TestQuestion[]
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 model TestQuestion {
-    question_id     Int      @id @default(autoincrement())
-    testId          Int
-    question_number Int
-    question        String
-    answer_1        String
-    answer_2        String
-    answer_3        String
-    answer_4        String
-    correct_answer  String
-    created_at      DateTime @default(now())
+  question_id     Int      @id @default(autoincrement())
+  testId          Int
+  question_number Int
+  question        String
+  answer_1        String
+  answer_2        String
+  answer_3        String
+  answer_4        String
+  correct_answer  String
+  created_at      DateTime @default(now())
 
-    preSelectionTest PreSelectionTest @relation(fields: [testId], references: [test_id], onDelete: Cascade)
+  preSelectionTest PreSelectionTest @relation(fields: [testId], references: [test_id], onDelete: Cascade)
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 model Interview {
-    interview_id         Int             @id @default(autoincrement())
-    applicationId        Int
-    interview_date       DateTime
-    interview_time_start DateTime
-    interview_time_end   DateTime
-    interview_descrption String
-    interview_status     InterviewStatus
-    created_at           DateTime        @default(now())
-    updated_at           DateTime        @updatedAt
+  interview_id         Int             @id @default(autoincrement())
+  applicationId        Int
+  interview_date       DateTime
+  interview_time_start DateTime
+  interview_time_end   DateTime
+  interview_descrption String
+  interview_status     InterviewStatus
+  created_at           DateTime        @default(now())
+  updated_at           DateTime        @updatedAt
 
-    applyJob Application @relation(fields: [applicationId], references: [application_id])
+  applyJob Application @relation(fields: [applicationId], references: [application_id])
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 model ResultPreSelection {
-    completion_id     Int                              @id @default(autoincrement())
-    applicationId     Int
-    completion_score  Int                              @default(0)
-    completion_date   DateTime
-    completion_status CompletionStatusPreSelectionTest
-    created_at        DateTime                         @default(now())
+  completion_id     Int                              @id @default(autoincrement())
+  applicationId     Int
+  completion_score  Int                              @default(0)
+  completion_date   DateTime
+  completion_status CompletionStatusPreSelectionTest
+  created_at        DateTime                         @default(now())
 
-    application Application @relation(fields: [applicationId], references: [application_id])
+  application Application @relation(fields: [applicationId], references: [application_id])
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 // List of Enums
 enum RegisterBy {
-    email
-    google
+  email
+  google
 
-    @@schema("BaseUsers")
+  @@schema("BaseUsers")
 }
 
 enum RoleType {
-    jobhunter
-    company
-    developer
+  jobhunter
+  company
+  developer
 
-    @@schema("BaseUsers")
+  @@schema("BaseUsers")
 }
 
 enum Gender {
-    male
-    female
-    other
+  male
+  female
+  other
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 enum JobType {
-    fulltime
-    freelance
-    internship
+  fulltime
+  freelance
+  internship
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 enum JobSpace {
-    remoteworking
-    onoffice
-    hybrid
+  remoteworking
+  onoffice
+  hybrid
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 enum ApplicationStatus {
-    failed
-    onreview
-    accepted
-    rejected
+  failed
+  onreview
+  accepted
+  rejected
 
-    @@schema("Application")
+  @@schema("Application")
 }
 
 enum CompletionStatusSkillAssessment {
-    failed
-    pass
+  failed
+  pass
 
-    @@schema("SkillAssessment")
+  @@schema("SkillAssessment")
 }
 
 enum CompletionStatusPreSelectionTest {
-    failed
-    pass
+  failed
+  pass
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 enum InterviewStatus {
-    scheduled
-    cancelled
-    completed
+  scheduled
+  cancelled
+  completed
 
-    @@schema("PreSelectionTest")
+  @@schema("PreSelectionTest")
 }
 
 enum EducationDegree {
-    lessthanhighschool
-    highschool
-    vocational
-    associatedegree
-    bachelordegree
-    masterdegree
-    doctoratedegree
+  lessthanhighschool
+  highschool
+  vocational
+  associatedegree
+  bachelordegree
+  masterdegree
+  doctoratedegree
 
-    @@schema("JobHunter")
+  @@schema("JobHunter")
 }
 
 enum SubscriptionType {
-    free
-    standard
-    premium
+  free
+  standard
+  premium
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 enum TransactionStatus {
-    pending
-    success
-    failed
+  pending
+  success
+  failed
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 enum PaymentMethod {
-    creditcard
-    gopay
-    bca
-    mandiri
-    qris
+  creditcard
+  gopay
+  bca
+  mandiri
+  qris
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 enum PaymentStatus {
-    pending
-    success
-    failed
+  pending
+  success
+  failed
 
-    @@schema("Subscription")
+  @@schema("Subscription")
 }
 
 enum CompanyIndustry {
-    informationtechnologyandservices
-    financeandbanking
-    businessandhr
-    hospitalandhealthcare
-    constructionandrealestate
-    retaillogisticandconsumergoods
-    educationandresearch
-    manufacturingandengineering
-    mediaandentertainment
-    governmentandnonprofit
-    others
+  informationtechnologyandservices
+  financeandbanking
+  businessandhr
+  hospitalandhealthcare
+  constructionandrealestate
+  retaillogisticandconsumergoods
+  educationandresearch
+  manufacturingandengineering
+  mediaandentertainment
+  governmentandnonprofit
+  others
 
-    @@schema("Company")
+  @@schema("Company")
 }
 
 enum CompanySize {
-    small
-    smallmedium
-    medium
-    large
-    enterprise
+  small
+  smallmedium
+  medium
+  large
+  enterprise
 
-    @@schema("Company")
+  @@schema("Company")
 }

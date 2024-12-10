@@ -6,6 +6,7 @@ import session from "express-session";
 import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
 import "./services/oauth.service";
+import userRouter from "./routers/user.router";
 
 environment.config();
 
@@ -34,7 +35,7 @@ app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -42,6 +43,9 @@ app.use(express.json());
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
 app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
+
+// USER
+app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
 
 app.use(errorHandler.errorHandler());
 

@@ -1,4 +1,4 @@
-import { CompanyIndustry, CompanySize } from "@prisma/client";
+import { CompanyIndustry, CompanySize, Gender } from "@prisma/client";
 
 export interface Auth {
   email: string;
@@ -84,19 +84,43 @@ export interface CompanyInfoResp {
   company_name: string;
   company_description: string;
   company_province: string;
+  latitude: number;
+  longitude: number;
   company_city: string;
   company_industry: string;
   company_size: string;
   address_detail: string;
 }
 
-export interface companyUpdate {
+export interface CompanyGeneralInfo {
   company_id: number;
-  company_logo: string;
   company_name: string;
   company_description: string;
   company_province: string;
   company_city: string;
   company_industry: CompanyIndustry;
   company_size: CompanySize;
+}
+
+export interface JobHunterGeneralInfo {
+  jobHunterId: number;
+  name: string;
+  dob?: Date;
+  gender?: Gender;
+  locationCity?: string;
+  locationProvince?: string;
+  expectedSalary?: number;
+}
+
+export interface WorkingExperience {
+  jobHunterId: number;
+  companyId: number;
+  jobTitle: string;
+  companyName: string;
+  jobDescription: string;
+}
+
+export interface UpdateImage {
+  id: number; // Can be job hunter ID or Company ID
+  image: string;
 }
