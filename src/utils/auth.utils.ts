@@ -1,5 +1,6 @@
 import environment from "dotenv";
 import jwt from "jsonwebtoken";
+import { DecodedToken } from "../models/models";
 
 environment.config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -23,7 +24,7 @@ export class AuthUtils {
   }
   async decodeToken(token: string) {
     try {
-      const decodedToken = await jwt.verify(token, JWT_SECRET);
+      const decodedToken = await jwt.verify(token, JWT_SECRET) as DecodedToken ;
 
       return decodedToken;
     } catch (error) {

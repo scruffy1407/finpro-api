@@ -6,6 +6,7 @@ import session from "express-session";
 import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
 import "./services/oauth.service";
+import companyRouter from "./routers/company.router";
 
 environment.config();
 
@@ -39,6 +40,8 @@ app.use(
 app.use(express.json());
 
 app.use("/auth", authRouter);
+
+app.use("/api/company" , companyRouter)
 
 app.use(errorHandler.errorHandler());
 
