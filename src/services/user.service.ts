@@ -6,13 +6,16 @@ import {
   UpdateImage,
   JobHunterGeneralInfo,
 } from "../models/models";
+import { UserService } from "./baseUser/user.service";
 import { getLocationDetail } from "../utils/api";
 
-export class UserService {
+export class CompanyService {
   private prisma: PrismaClient;
+  private userService: UserService;
 
   constructor() {
     this.prisma = new PrismaClient();
+    this.userService = new UserService();
   }
 
   //   COMPANY
@@ -33,6 +36,14 @@ export class UserService {
           message: "Cannot find company",
         };
       }
+
+      if (company.role_type !== RoleType.company) {
+        return {
+          success: false,
+          message: "Cannot access this data",
+        };
+      }
+
       const companyResp: CompanyInfoResp = {
         company_id: company.company[0].company_id,
         company_name: company.company[0].company_name,
@@ -90,19 +101,18 @@ export class UserService {
         };
       }
 
-      const location = await getLocationDetail(
-        updateData.company_province,
-        updateData.company_city,
-      );
+      // const location = await getLocationDetail(
+      //   updateData.company_province,
+      //   updateData.company_city,
+      // );
 
-      if (!location.success) {
-        console.error("Error fetching location:", location.message);
-        return {
-          success: false,
-          message: "Failed to update company: " + location.message,
-        };
-      }
-      console.log("Location : ", location);
+      // if (!location.success) {
+      //   console.error("Error fetching location:", location.message);
+      //   return {
+      //     success: false,
+      //     message: "Failed to update company: " + location.message,
+      //   };
+      // }
 
       const updateCompany = await this.prisma.company.update({
         where: {
@@ -115,16 +125,21 @@ export class UserService {
           company_size: updateData.company_size,
           company_province: updateData.company_province,
           company_city: updateData.company_city,
-          longitude: location.success ? location.longitude : null,
-          latitude: location.success ? location.latitude : null,
+          // longitude: location.success ? location.longitude : null,
+          // latitude: location.success ? location.latitude : null,
+          longitude: null,
+          latitude: null,
         },
       });
+
+      console.log("data", updateCompany);
 
       return {
         success: true,
         data: updateCompany,
       };
     } catch (e) {
+      console.log(e);
       return {
         success: false,
         message: "Cannot update the company",
@@ -135,6 +150,8 @@ export class UserService {
 
   async updateCompanyImage(user_id: number, updateData: UpdateImage) {
     const { id } = updateData;
+    console.log("id", id);
+    console.log(updateData.image);
 
     try {
       const company = await this.prisma.baseUsers.findUnique({
@@ -159,7 +176,7 @@ export class UserService {
         };
       }
 
-      const uploadImage = await this.uploadImage(
+      const uploadImage = await this.userService.uploadImage(
         company.role_type,
         updateData.image,
       );
@@ -189,160 +206,6 @@ export class UserService {
         success: false,
         message: "Something went wrong, failed to update company image",
         detail: e,
-      };
-    }
-  }
-
-  async getUserDetail(user_id: number) {}
-
-  async updateUserProfile(user_id: number, updateData: JobHunterGeneralInfo) {
-    const { jobHunterId } = updateData;
-
-    try {
-      const jobHunter = await this.prisma.baseUsers.findUnique({
-        where: {
-          user_id: user_id,
-        },
-        include: {
-          jobHunter: true,
-        },
-      });
-
-      const checkUser = await this.userValidator(
-        "jobhunter",
-        jobHunterId,
-        jobHunter?.jobHunter[0].job_hunter_id,
-      );
-      if (!checkUser?.success) {
-        return checkUser;
-      }
-
-      const updateUser = await this.prisma.jobHunter.update({
-        where: {
-          job_hunter_id: jobHunterId,
-        },
-        data: {
-          name: updateData.name,
-          gender: updateData.gender,
-          dob: updateData.dob,
-          location_city: updateData.locationCity,
-          location_province: updateData.locationProvince,
-          expected_salary: updateData.expectedSalary,
-        },
-      });
-      return {
-        success: true,
-        updateUser,
-      };
-    } catch (e) {
-      return {
-        success: false,
-        message: "Something went wrong, failed to update company image",
-        detail: e,
-      };
-    }
-  }
-
-  async updateUserImage(user_id: number, updateData: UpdateImage) {
-    const { id } = updateData;
-    try {
-      const jobHunter = await this.prisma.baseUsers.findUnique({
-        where: {
-          user_id: user_id,
-        },
-        include: {
-          jobHunter: true,
-        },
-      });
-
-      if (!jobHunter) {
-        return {
-          success: false,
-          message: "Cannot find company",
-        };
-      }
-
-      if (jobHunter?.jobHunter[0].job_hunter_id !== id) {
-        return {
-          success: false,
-          message: "User are not authorized to update",
-        };
-      }
-
-      const uploadImage = await this.uploadImage(
-        jobHunter.role_type,
-        updateData.image,
-      );
-
-      if (!uploadImage.success) {
-        return {
-          success: false,
-          message: "Failed to update company",
-          detail: uploadImage.message,
-        };
-      }
-
-      const updateImage = await this.prisma.jobHunter.update({
-        where: {
-          job_hunter_id: id,
-        },
-        data: {
-          photo: uploadImage.data,
-        },
-      });
-      return {
-        success: true,
-        message: "Success update image",
-        image: uploadImage.data,
-      };
-    } catch (e) {
-      return {
-        success: false,
-        message: "Something went wrong, failed to update company image",
-        detail: e,
-      };
-    }
-  }
-
-  // WORKING EXPERIENCE
-
-  async userValidator(
-    user_role: RoleType,
-    id?: number | undefined,
-    compareId?: number | undefined,
-  ) {
-    if (!id) {
-      return {
-        success: false,
-        message: `Cannot find ${user_role === RoleType.company ? "company" : "job hunter"}`,
-      };
-    }
-
-    if (compareId !== id) {
-      return {
-        success: false,
-        message: "User are not authorized to update",
-      };
-    }
-    return {
-      success: true,
-      message: "All good",
-    };
-  }
-
-  async uploadImage(userRole: RoleType, image: string) {
-    try {
-      const uploadImage = await cloudinary.uploader.upload(image, {
-        folder: userRole === RoleType.company ? "Company" : "Job Hunter",
-      });
-      return {
-        success: true,
-        data: uploadImage.secure_url,
-      };
-    } catch (e) {
-      return {
-        success: false,
-        message: "Failed to upload image",
       };
     }
   }

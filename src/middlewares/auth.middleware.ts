@@ -6,7 +6,6 @@ export class AuthJwtMiddleware {
   authenticateJwt(req: Request, res: Response, next: NextFunction): void {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const JWT_SECRET = process.env.JWT_SECRET as string;
-    console.log(token);
     if (!token) {
       res.status(401).send({
         message: "Access token is missing or invalid",
@@ -30,8 +29,7 @@ export class AuthJwtMiddleware {
     roles: string,
   ): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction): void => {
-      console.log(req);
-      if (!roles.includes((req as any).user.role)) {
+      if (!roles.includes((req as any).user.role_type)) {
         res.status(403).send({
           message: "Forbidden",
           status: res.statusCode,

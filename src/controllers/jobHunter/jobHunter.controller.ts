@@ -1,18 +1,17 @@
-import { Request, response, Response } from "express";
-import { CompanyService } from "../services/user.service";
-import { AuthUtils } from "../utils/auth.utils";
-import { CompanyGeneralInfo, UpdateImage } from "../models/models";
+import { Request, Response } from "express";
+import { JobHunterService } from "../../services/jobHunter/jobHunter.service";
+import { AuthUtils } from "../../utils/auth.utils";
+import { JobHunterGeneralInfo, UpdateImage } from "../../models/models";
 
-export class CompanyController {
-  private companyService: CompanyService;
+export class JobHunterController {
+  private jobHunterService: JobHunterService;
   private authUtils: AuthUtils;
-
   constructor() {
-    this.companyService = new CompanyService();
+    this.jobHunterService = new JobHunterService();
     this.authUtils = new AuthUtils();
   }
 
-  async getCompanyDetail(req: Request, res: Response) {
+  async getUserDetail(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
 
@@ -20,13 +19,13 @@ export class CompanyController {
       res.status(404).send("No token found.");
     } else {
       try {
-        const response = await this.companyService.getCompanyDetail(
+        const response = await this.jobHunterService.getUserDetail(
           decodedToken.user_id,
         );
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,
-            data: response.companyResp,
+            data: response.jobHunterResp,
           });
         } else {
           res.status(400).send({
@@ -44,45 +43,48 @@ export class CompanyController {
     }
   }
 
-  async updateCompanyDetail(req: Request, res: Response) {
+  async updateUserProfile(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
-    const {
-      company_id,
-      company_province,
-      company_city,
-      company_description,
-      company_industry,
-      company_size,
-      company_name,
-    }: CompanyGeneralInfo = req.body as CompanyGeneralInfo;
-
-    const updateData: CompanyGeneralInfo = {
-      company_id,
-      company_province,
-      company_description,
-      company_industry,
-      company_size,
-      company_name,
-      company_city,
-    };
     const decodedToken = await this.authUtils.decodeToken(token as string);
+
+    const {
+      jobHunterId,
+      dob,
+      gender,
+      name,
+      locationProvince,
+      locationCity,
+      expectedSalary,
+    } = req.body as JobHunterGeneralInfo;
+
+    const updateData: JobHunterGeneralInfo = {
+      jobHunterId,
+      dob,
+      gender,
+      name,
+      locationProvince,
+      locationCity,
+      expectedSalary,
+    };
+
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
       try {
-        const response = await this.companyService.updateCompanyDetail(
+        const response = await this.jobHunterService.updateUserProfile(
           decodedToken.user_id,
           updateData,
         );
         if (response.success) {
-          res.status(204).send({
+          res.status(201).send({
             status: res.statusCode,
-            data: response.data,
+            data: response.updateUser,
           });
         } else {
           res.status(400).send({
             status: res.statusCode,
             message: response.message,
+            detail: response.detail || "No Detail",
           });
         }
       } catch (e) {
@@ -94,37 +96,35 @@ export class CompanyController {
     }
   }
 
-  async updatecompanyImage(req: Request, res: Response) {
+  async updateUserImage(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
-    const { company_id } = req.body;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+
+    const { job_hunter_id } = req.body;
     const image = req.file ? req.file.path || "" : "";
-    console.log("Controller company id", company_id);
-    console.log("image", image);
     const updateImage: UpdateImage = {
-      id: Number(company_id),
+      id: Number(job_hunter_id),
       image: image,
     };
 
-    const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
       try {
-        const response = await this.companyService.updateCompanyImage(
+        const response = await this.jobHunterService.updateUserImage(
           decodedToken.user_id,
           updateImage,
         );
         if (response.success) {
-          res.status(200).send({
+          res.status(201).send({
             status: res.statusCode,
-            message: response.message,
-            data: response.image,
+            data: image,
           });
         } else {
           res.status(400).send({
             status: res.statusCode,
             message: response.message,
-            detail: response.detail || "No detail availble",
+            detail: response.detail || "No detail",
           });
         }
       } catch (e) {

@@ -7,6 +7,7 @@ import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
 import "./services/oauth.service";
 import userRouter from "./routers/user.router";
+import locationRouter from "./routers/location.router";
 
 environment.config();
 
@@ -43,6 +44,9 @@ app.use(express.json());
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
 app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
+
+// LOCATION
+app.use("/api", locationRouter);
 
 // USER
 app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN

@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application"]
+  schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application", "Location"]
 }
 
 // Base Users
@@ -49,6 +49,7 @@ model JobHunter {
   password                String
   location_city           String?
   location_province       String?
+  cityId                  Int?
   expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
   summary                 String?
   resume                  String?
@@ -65,6 +66,7 @@ model JobHunter {
   application               Application[]
 
   jobHunterSubscription JobHunterSubscription @relation(fields: [jobHunterSubscriptionId], references: [job_hunter_subscription_id])
+  city                  city?                 @relation(fields: [cityId], references: [city_id])
 
   @@schema("JobHunter")
 }
@@ -287,6 +289,7 @@ model Company {
   logo                String?
   company_city        String?
   company_province    String?
+  cityId              Int?
   address_details     String?
   latitude            Int?
   longitude           Int?
@@ -298,6 +301,7 @@ model Company {
   jobPost        JobPost[]
   review         JobReview[]
   workExperience WorkExperience[]
+  city           city?            @relation(fields: [cityId], references: [city_id])
 
   @@schema("Company")
 }
@@ -423,6 +427,25 @@ model ResultPreSelection {
   application Application @relation(fields: [applicationId], references: [application_id])
 
   @@schema("PreSelectionTest")
+}
+
+model province {
+  province_id Int    @id @unique
+  name        String
+  regencies   city[]
+
+  @@schema("Location")
+}
+
+model city {
+  city_id    Int         @id @unique
+  name       String
+  provinceId Int
+  province   province    @relation(fields: [provinceId], references: [province_id])
+  jobHunter  JobHunter[]
+  company    Company[]
+
+  @@schema("Location")
 }
 
 // List of Enums

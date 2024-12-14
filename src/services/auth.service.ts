@@ -429,4 +429,79 @@ export class AuthService {
 
     return { success: true, message: "Logged out successfully." };
   }
+
+  async refreshAccessToken(
+    user_id: number,
+    user_role: RoleType,
+    token: string,
+  ) {
+    // Decode refresh token to get id
+    // check if the user of the token is available in data base
+    // if the user available, check whether the token is match
+    // generate a new access token
+
+    // Check user is available based on id
+    const user = await this.prisma.baseUsers.findUnique({
+      where: {
+        user_id: user_id,
+      },
+    });
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    // Check if the refresh token is match wiyh the user
+    if (user.refresh_token !== token) {
+      return {
+        success: false,
+        message: "Invalid Refresh Token",
+      };
+    }
+
+    // generate new token
+    const accessToken = await this.AuthUtils.generateAccessToken(
+      user_id,
+      user_role,
+    );
+
+    await this.prisma.baseUsers.update({
+      where: {
+        user_id: user_id,
+      },
+      data: {
+        access_token: accessToken as string,
+      },
+    });
+
+    return { success: true, data: accessToken };
+  }
+
+  // /api/auth/validate-token
+  async validateToken(user_id: number, role_type: RoleType) {
+    // Check user is available based on id
+    console.log(role_type);
+    const user = await this.prisma.baseUsers.findUnique({
+      where: {
+        user_id: user_id,
+      },
+      include: {
+        company: role_type === RoleType.company ? true : false,
+        jobHunter: role_type === RoleType.jobhunter ? true : false,
+      },
+    });
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    } else {
+      return {
+        success: true,
+        data: user,
+      };
+    }
+  }
 }

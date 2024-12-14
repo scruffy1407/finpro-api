@@ -1,4 +1,9 @@
-import { CompanyIndustry, CompanySize, Gender } from "@prisma/client";
+import {
+  CompanyIndustry,
+  CompanySize,
+  Gender,
+  EducationDegree,
+} from "@prisma/client";
 
 export interface Auth {
   email: string;
@@ -65,17 +70,8 @@ export interface GoogleProfile {
 
 export interface JwtPayload {
   user_id: number;
-  user_role: string;
+  role_type: string;
 }
-
-// company_name        String
-// company_description String?
-//     logo                String?
-//         company_city        String?
-//             company_province    String?
-//                 address_details     String?
-//                     company_industry    CompanyIndustry?
-//                         company_size        CompanySize?
 
 export interface CompanyInfoResp {
   email: string;
@@ -116,10 +112,19 @@ export interface WorkingExperience {
   jobHunterId: number;
   companyId: number;
   jobTitle: string;
-  companyName: string;
   jobDescription: string;
 }
 
+export interface EducationData {
+  jobHunterId: number;
+  education_degree: EducationDegree;
+  education_name: string;
+  education_description: string;
+  cumulative_gpa: number;
+  graduation_date: Date;
+  created_at?: Date;
+  updated_at?: Date;
+}
 export interface UpdateImage {
   id: number; // Can be job hunter ID or Company ID
   image: string;
