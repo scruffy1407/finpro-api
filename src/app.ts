@@ -7,6 +7,8 @@ import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
 import "./services/oauth.service";
 import companyRouter from "./routers/company.router";
+import locationRouter from "./routers/location.router";
+
 
 environment.config();
 
@@ -42,6 +44,8 @@ app.use(express.json());
 app.use("/auth", authRouter);
 
 app.use("/api/company" , companyRouter)
+
+app.use("/api" , locationRouter )
 
 app.use(errorHandler.errorHandler());
 

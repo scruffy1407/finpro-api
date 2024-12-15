@@ -204,7 +204,9 @@ export class CompanyService {
 		jobType?: string,
 		jobSpace?: string,
 		dateRange?: string,
-		sortOrder?: string
+		sortOrder?: string,
+		companyCity?: string,
+		companyProvince?: string
 	) {
 		try {
 			// Build the search criteria based on the provided filters
@@ -230,6 +232,14 @@ export class CompanyService {
 			if (jobType || jobSpace) {
 				whereConditions.job_type = jobType; // Filter by jobType (full-time, internship, etc.)
 				whereConditions.job_space = jobSpace; // Filter by jobSpace (remote, hybrid, etc.)
+			}
+
+			
+			if (companyCity || companyProvince) {
+				whereConditions.company = {
+					...(companyCity && { company_city: companyCity }),
+					...(companyProvince && { company_province: companyProvince }),
+				};
 			}
 
 			// Add date range filter if provided
@@ -308,6 +318,7 @@ export class CompanyService {
 							logo: true,
 							company_name: true,
 							company_city: true,
+							company_province: true,
 						},
 					},
 				},

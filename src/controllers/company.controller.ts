@@ -203,6 +203,8 @@ export class CompanyController {
 			jobSpace,
 			dateRange,
 			sortOrder,
+			companyCity,
+			companyProvince
 		} = req.query;
 
 		try {
@@ -215,7 +217,9 @@ export class CompanyController {
 				jobType as string, // Job type filter (optional)
 				jobSpace as string, // Job space filter (optional)
 				dateRange as string, // Date range filter (optional)
-				sortOrder as "asc" | "desc" // Sort order for alphabetical sorting or date sorting
+				sortOrder as "asc" | "desc", // Sort order for alphabetical sorting or date sorting
+				companyCity as string,
+				companyProvince as string
 			);
 
 			// Return the result to the client
