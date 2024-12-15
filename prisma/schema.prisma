@@ -6,7 +6,7 @@ generator client {
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
-    schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application"]
+    schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application", "Location"]
 }
 
 // Base Users
@@ -24,7 +24,7 @@ model BaseUsers {
     oauth_token                 String?
     reset_password_token        String?
     verification_token          String?
-    email_verification_attempts Int?       @default (0)
+    email_verification_attempts Int?       @default(0)
     last_attempt_time           DateTime?
     created_at                  DateTime   @default(now())
     updated_at                  DateTime   @updatedAt
@@ -40,7 +40,7 @@ model BaseUsers {
 model JobHunter {
     job_hunter_id           Int       @id @default(autoincrement())
     jobHunterSubscriptionId Int
-    userId                  Int
+    userId                  Int       @unique
     name                    String
     email                   String    @unique
     dob                     DateTime?
@@ -49,6 +49,7 @@ model JobHunter {
     password                String
     location_city           String?
     location_province       String?
+    cityId                  Int?
     expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
     summary                 String?
     resume                  String?
@@ -65,6 +66,7 @@ model JobHunter {
     application               Application[]
 
     jobHunterSubscription JobHunterSubscription @relation(fields: [jobHunterSubscriptionId], references: [job_hunter_subscription_id])
+    city                  city?                 @relation(fields: [cityId], references: [city_id])
 
     @@schema("JobHunter")
 }
@@ -116,9 +118,13 @@ model Education {
 model JobWishlist {
     wishlist_id Int      @id @default(autoincrement())
     jobHunterId Int
+    jobPostId   Int
     date_added  DateTime
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+    applications Application[]
+
+    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
+    jobPost   JobPost   @relation(fields: [jobPostId], references: [job_id], onDelete: Cascade)
 
     @@schema("JobHunter")
 }
@@ -277,13 +283,16 @@ model Certificate {
 // Company
 model Company {
     company_id          Int              @id @default(autoincrement())
-    userId              Int
+    userId              Int              @unique
     company_name        String
     company_description String?
     logo                String?
     company_city        String?
     company_province    String?
+    cityId              Int?
     address_details     String?
+    latitude            Int?
+    longitude           Int?
     company_industry    CompanyIndustry?
     company_size        CompanySize?
 
@@ -292,6 +301,7 @@ model Company {
     jobPost        JobPost[]
     review         JobReview[]
     workExperience WorkExperience[]
+    city           city?            @relation(fields: [cityId], references: [city_id])
 
     @@schema("Company")
 }
@@ -327,7 +337,8 @@ model JobPost {
     created_at            DateTime @default(now())
     updated_at            DateTime @updatedAt
 
-    applyJob Application[]
+    applyJob    Application[]
+    jobWishlist JobWishlist[]
 
     company          Company          @relation(fields: [companyId], references: [company_id])
     category         Category         @relation(fields: [categoryId], references: [category_id])
@@ -350,6 +361,7 @@ model Application {
 
     interview          Interview[]
     resultPreSelection ResultPreSelection[]
+    jobWishlist        JobWishlist[]
 
     jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
     jobPost   JobPost   @relation(fields: [jobId], references: [job_id], onDelete: Cascade)
@@ -415,6 +427,25 @@ model ResultPreSelection {
     application Application @relation(fields: [applicationId], references: [application_id])
 
     @@schema("PreSelectionTest")
+}
+
+model province {
+    province_id Int    @id @unique
+    name        String
+    regencies   city[]
+
+    @@schema("Location")
+}
+
+model city {
+    city_id    Int         @id @unique
+    name       String
+    provinceId Int
+    province   province    @relation(fields: [provinceId], references: [province_id])
+    jobHunter  JobHunter[]
+    company    Company[]
+
+    @@schema("Location")
 }
 
 // List of Enums

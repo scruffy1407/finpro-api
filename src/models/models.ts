@@ -1,3 +1,5 @@
+import { Decimal } from "@prisma/client/runtime/library";
+
 export interface Auth {
   email: string;
   name?: string;
@@ -59,4 +61,19 @@ export interface GoogleProfile {
     email: string;
     email_verified: boolean;
   };
+}
+
+export enum ApplicationStatus {
+  FAILED = "failed",
+  ON_REVIEW = "onreview",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected",
+}
+
+export interface Application {
+  jobHunterId: number;
+  jobId: number;
+  resume: string;
+  expected_salary: Decimal;
+  application_status: ApplicationStatus;
 }
