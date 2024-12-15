@@ -105,7 +105,10 @@ export interface JobHunterGeneralInfo {
   gender?: Gender;
   locationCity?: string;
   locationProvince?: string;
+  cityId?: number;
+  provinceId?: number;
   expectedSalary?: number;
+  summary: string;
 }
 
 export interface WorkingExperience {

@@ -7,6 +7,25 @@ export class LocationService {
     this.prisma = new PrismaClient();
   }
 
+  async getUserLocation(cityId: number) {
+    try {
+      const city = await this.prisma.city.findUnique({
+        where: {
+          city_id: cityId,
+        },
+        include: {
+          province: true,
+        },
+      });
+      return { success: true, data: city };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Something went wrong, failed to getAllProvince",
+      };
+    }
+  }
+
   async getAllProvince() {
     try {
       const province = await this.prisma.province.findMany({});

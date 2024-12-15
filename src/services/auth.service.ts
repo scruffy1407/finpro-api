@@ -92,7 +92,9 @@ export class AuthService {
       const jobHunter = await this.createJobHunter(
         baseUser,
         validatedData.name,
-      ); // create Job Hunter
+      ); // create Job Hunter\\
+
+      console.log(jobHunter);
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
           where: {

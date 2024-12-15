@@ -55,6 +55,8 @@ export class JobHunterController {
       locationProvince,
       locationCity,
       expectedSalary,
+      summary,
+      cityId,
     } = req.body as JobHunterGeneralInfo;
 
     const updateData: JobHunterGeneralInfo = {
@@ -65,6 +67,8 @@ export class JobHunterController {
       locationProvince,
       locationCity,
       expectedSalary,
+      summary,
+      cityId,
     };
 
     if (!decodedToken) {
@@ -76,7 +80,7 @@ export class JobHunterController {
           updateData,
         );
         if (response.success) {
-          res.status(201).send({
+          res.status(200).send({
             status: res.statusCode,
             data: response.updateUser,
           });

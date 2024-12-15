@@ -1,14 +1,17 @@
 import { PrismaClient, RoleType, Gender } from "@prisma/client";
 import { UserService } from "../baseUser/user.service";
 import { JobHunterGeneralInfo, UpdateImage } from "../../models/models";
+import { LocationService } from "../location/location.service";
 
 export class JobHunterService {
   private prisma: PrismaClient;
   private userService: UserService;
+  private locationService: LocationService;
 
   constructor() {
     this.prisma = new PrismaClient();
     this.userService = new UserService();
+    this.locationService = new LocationService();
   }
 
   // USER
@@ -43,7 +46,10 @@ export class JobHunterService {
         gender: jobHunter.jobHunter[0].gender as Gender,
         dob: jobHunter.jobHunter[0].dob as Date,
         expectedSalary: Number(jobHunter.jobHunter[0].expected_salary),
+        cityId: jobHunter.jobHunter[0].cityId as number,
+        summary: jobHunter.jobHunter[0].summary as string,
       };
+      console.log(jobHunterResp);
       return {
         success: true,
         jobHunterResp,
@@ -82,6 +88,10 @@ export class JobHunterService {
         };
       }
 
+      const getLocation = await this.locationService.getUserLocation(
+        updateData.cityId as number,
+      );
+
       const updateUser = await this.prisma.jobHunter.update({
         where: {
           job_hunter_id: jobHunterId,
@@ -90,9 +100,12 @@ export class JobHunterService {
           name: updateData.name,
           gender: updateData.gender,
           dob: updateData.dob,
-          location_city: updateData.locationCity,
-          location_province: updateData.locationProvince,
+          location_city: getLocation?.data?.name || updateData.locationCity,
+          location_province:
+            updateData.locationProvince || updateData.locationProvince,
           expected_salary: updateData.expectedSalary,
+          cityId: updateData.cityId,
+          summary: updateData.summary,
         },
       });
       return {

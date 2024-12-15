@@ -8,6 +8,30 @@ export class LocationController {
     this.locationService = new LocationService();
   }
 
+  async getUserLocation(req: Request, res: Response) {
+    const cityId = Number(req.params.cityId);
+    console.log("CITY ID", cityId);
+    try {
+      const response = await this.locationService.getUserLocation(cityId);
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          data: response.data,
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          message: res.statusMessage,
+        });
+      }
+    } catch (e) {
+      res.send(500).send({
+        status: res.statusCode,
+        detail: e,
+      });
+    }
+  }
+
   async getAllProvince(req: Request, res: Response) {
     try {
       const response = await this.locationService.getAllProvince();
@@ -33,6 +57,7 @@ export class LocationController {
 
   async getCityByProvince(req: Request, res: Response) {
     const provinceId = Number(req.params.provinceId);
+    console.log("PROVINCE ID", provinceId);
     try {
       const response = await this.locationService.getCityByProvince(provinceId);
       if (response.success) {
