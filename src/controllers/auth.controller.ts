@@ -4,14 +4,17 @@ import { AuthService } from "../services/auth.service";
 import { sendEmailReset, sendEmailVerification } from "../config/nodeMailer";
 import { Auth, LoginResponse, UserId } from "../models/models";
 import { RoleType } from "@prisma/client";
+import { AuthUtils } from "../utils/auth.utils";
 
 const prisma = new PrismaClient();
 
 export class AuthController {
   private authService: AuthService;
+  private authUtils: AuthUtils;
 
   constructor() {
     this.authService = new AuthService();
+    this.authUtils = new AuthUtils();
   }
 
   async requestResetPassword(req: Request, res: Response) {
@@ -268,6 +271,70 @@ export class AuthController {
         success: false,
         message: "Internal server error.",
       });
+    }
+  }
+
+  async refreshAccessToken(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    if (!decodedToken) {
+      res.status(404).send("No token found.");
+    } else {
+      try {
+        const response = await this.authService.refreshAccessToken(
+          decodedToken.user_id,
+          decodedToken.role_type as RoleType,
+          token as string,
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            data: response.data,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
+    }
+  }
+  async validateToken(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+
+    console.log(decodedToken);
+    if (!decodedToken) {
+      res.status(404).send("No token found.");
+    } else {
+      try {
+        const response = await this.authService.validateToken(
+          decodedToken.user_id,
+          decodedToken.role_type as RoleType,
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            data: response.data,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
     }
   }
 }

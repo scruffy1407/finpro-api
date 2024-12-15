@@ -7,6 +7,8 @@ import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
 import applyJobRouter from "./routers/applyjob.router";
 import "./services/oauth.service";
+import userRouter from "./routers/user.router";
+import locationRouter from "./routers/location.router";
 
 environment.config();
 
@@ -35,7 +37,7 @@ app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -44,6 +46,12 @@ app.use(express.json());
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
 app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
 app.use("/applyjob/", applyJobRouter)
+
+// LOCATION
+app.use("/api", locationRouter);
+
+// USER
+app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
 
 app.use(errorHandler.errorHandler());
 
