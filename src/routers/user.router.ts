@@ -33,6 +33,10 @@ router.put(
   upload.single("image"),
   companyController.updatecompanyImage.bind(companyController),
 );
+router.get(
+  "/company/search-company",
+  companyController.searchCompany.bind(companyController),
+);
 
 // USER JOB HUNTER
 router.get(

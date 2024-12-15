@@ -209,4 +209,27 @@ export class CompanyService {
       };
     }
   }
+
+  async searchCompany(keyword: string) {
+    try {
+      const company = await this.prisma.company.findMany({
+        where: {
+          company_name: {
+            contains: keyword,
+            mode: "insensitive", // Case-insensitive search
+          },
+        },
+      });
+      return {
+        success: true,
+        data: company,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Something went wrong, failed to update company image",
+        detail: e,
+      };
+    }
+  }
 }

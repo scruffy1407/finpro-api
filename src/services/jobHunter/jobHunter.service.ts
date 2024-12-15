@@ -38,8 +38,11 @@ export class JobHunterService {
         };
       }
 
+      console.log(jobHunter);
+
       const jobHunterResp: JobHunterGeneralInfo = {
         jobHunterId: jobHunter.jobHunter[0].job_hunter_id,
+        photo: jobHunter.jobHunter[0].photo as string,
         locationCity: jobHunter.jobHunter[0].location_city as string,
         locationProvince: jobHunter.jobHunter[0].location_province as string,
         name: jobHunter.jobHunter[0].name,
@@ -123,6 +126,7 @@ export class JobHunterService {
 
   async updateUserImage(user_id: number, updateData: UpdateImage) {
     const { id } = updateData;
+    console.log("INIT UPDATE DATA", updateData);
     try {
       const jobHunter = await this.prisma.baseUsers.findUnique({
         where: {
@@ -139,6 +143,7 @@ export class JobHunterService {
           message: "Cannot find company",
         };
       }
+      console.log("COMPARE", jobHunter?.jobHunter[0].job_hunter_id, id);
 
       if (jobHunter?.jobHunter[0].job_hunter_id !== id) {
         return {
@@ -151,6 +156,7 @@ export class JobHunterService {
         jobHunter.role_type,
         updateData.image,
       );
+      console.log(uploadImage);
 
       if (!uploadImage.success) {
         return {
