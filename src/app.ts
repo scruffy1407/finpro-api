@@ -5,6 +5,7 @@ import passport from "passport";
 import session from "express-session";
 import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
+import applyJobRouter from "./routers/applyjob.router";
 import "./services/oauth.service";
 import userRouter from "./routers/user.router";
 import locationRouter from "./routers/location.router";
@@ -44,6 +45,7 @@ app.use(express.json());
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
 app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
+app.use("/applyjob/", applyJobRouter)
 
 // LOCATION
 app.use("/api", locationRouter);

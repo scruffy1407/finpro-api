@@ -36,7 +36,7 @@ export async function sendEmailVerification(
   verificationToken: string,
 ) {
   const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
-  const href = `${process.env.CLIENT_URL}/auth/verify-email/${verificationToken}`;
+  const href = `${process.env.CLIENT_URL}/auth/register/verify-email/${verificationToken}`;
   const html = await ejs.renderFile(templatePath, {
     email: email,
     linkVerify: href,

@@ -4,6 +4,8 @@ import {
   Gender,
   EducationDegree,
 } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+
 
 export interface Auth {
   email: string;
@@ -128,7 +130,23 @@ export interface EducationData {
   created_at?: Date;
   updated_at?: Date;
 }
+
 export interface UpdateImage {
   id: number; // Can be job hunter ID or Company ID
   image: string;
+}
+
+export enum ApplicationStatus {
+  FAILED = "failed",
+  ON_REVIEW = "onreview",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected",
+}
+
+export interface Application {
+  jobHunterId: number;
+  jobId: number;
+  resume: string;
+  expected_salary: Decimal;
+  application_status: ApplicationStatus;
 }
