@@ -124,27 +124,37 @@ export class CompanyService {
 				});
 			}
 
+			// Prepare the data for the update
+			const updateData: any = {
+				job_title: validatedData.job_title,
+				preSelectionTestId: validatedData.preSelectionTestId,
+				categoryId: validatedData.categoryId,
+				selection_text_active: validatedData.selection_test_active,
+				salary_show: validatedData.salary_show,
+				salary_min: validatedData.salary_min,
+				job_description: validatedData.job_description,
+				job_experience_min: validatedData.job_experience_min,
+				expired_date: validatedData.expired_date,
+				status: validatedData.status,
+				job_type: validatedData.job_type,
+				job_space: validatedData.job_space,
+			};
+
+			// Conditionally add salary_max and job_experience_max only if they are not null
+			if (validatedData.salary_max !== null) {
+				updateData.salary_max = validatedData.salary_max;
+			}
+
+			if (validatedData.job_experience_max !== null) {
+				updateData.job_experience_max = validatedData.job_experience_max;
+			}
+
 			// Update the job post with the new data
 			return this.prisma.jobPost.update({
 				where: {
 					job_id: jobId,
 				},
-				data: {
-					job_title: validatedData.job_title,
-					preSelectionTestId: validatedData.preSelectionTestId,
-					categoryId: validatedData.categoryId,
-					selection_text_active: validatedData.selection_test_active,
-					salary_show: validatedData.salary_show,
-					salary_min: validatedData.salary_min,
-					salary_max: validatedData.salary_max,
-					job_description: validatedData.job_description,
-					job_experience_min: validatedData.job_experience_min,
-					job_experience_max: validatedData.job_experience_max,
-					expired_date: validatedData.expired_date,
-					status: validatedData.status,
-					job_type: validatedData.job_type,
-					job_space: validatedData.job_space,
-				},
+				data: updateData,
 			});
 		} catch (error) {
 			const err = error as Error;
@@ -234,7 +244,6 @@ export class CompanyService {
 				whereConditions.job_space = jobSpace; // Filter by jobSpace (remote, hybrid, etc.)
 			}
 
-			
 			if (companyCity || companyProvince) {
 				whereConditions.company = {
 					...(companyCity && { company_city: companyCity }),
