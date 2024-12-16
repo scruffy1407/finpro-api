@@ -1,4 +1,11 @@
+import {
+  CompanyIndustry,
+  CompanySize,
+  Gender,
+  EducationDegree,
+} from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
+
 
 export interface Auth {
   email: string;
@@ -62,6 +69,72 @@ export interface GoogleProfile {
     email: string;
     email_verified: boolean;
   };
+}
+
+export interface JwtPayload {
+  user_id: number;
+  role_type: string;
+}
+
+export interface CompanyInfoResp {
+  email: string;
+  company_id: number;
+  company_logo: string;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  latitude: number;
+  longitude: number;
+  company_city: string;
+  company_industry: string;
+  company_size: string;
+  address_detail: string;
+}
+
+export interface CompanyGeneralInfo {
+  company_id: number;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  company_city: string;
+  company_industry: CompanyIndustry;
+  company_size: CompanySize;
+}
+
+export interface JobHunterGeneralInfo {
+  jobHunterId: number;
+  name: string;
+  dob?: Date;
+  gender?: Gender;
+  locationCity?: string;
+  locationProvince?: string;
+  cityId?: number;
+  provinceId?: number;
+  expectedSalary?: number;
+  summary: string;
+}
+
+export interface WorkingExperience {
+  jobHunterId: number;
+  companyId: number;
+  jobTitle: string;
+  jobDescription: string;
+}
+
+export interface EducationData {
+  jobHunterId: number;
+  education_degree: EducationDegree;
+  education_name: string;
+  education_description: string;
+  cumulative_gpa: number;
+  graduation_date: Date;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface UpdateImage {
+  id: number; // Can be job hunter ID or Company ID
+  image: string;
 }
 
 export enum ApplicationStatus {
