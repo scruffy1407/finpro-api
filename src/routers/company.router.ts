@@ -2,6 +2,7 @@ import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { auth } from "googleapis/build/src/apis/abusiveexperiencereport";
+import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
 
 const companyRouter = Router();
 const companyController = new CompanyController();
@@ -26,6 +27,7 @@ companyRouter.put(
 	"/job/:jobId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
 	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	authorizeJobPostOwner, // Authorization middleware to check if the logged-in company owns the job post
 	companyController.updateJob.bind(companyController) // Controller method
 );
 

@@ -14,6 +14,9 @@ CREATE SCHEMA IF NOT EXISTS "Developer";
 CREATE SCHEMA IF NOT EXISTS "JobHunter";
 
 -- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "Location";
+
+-- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "PreSelectionTest";
 
 -- CreateSchema
@@ -79,11 +82,15 @@ CREATE TABLE "BaseUsers"."BaseUsers" (
     "role_type" "BaseUsers"."RoleType" NOT NULL DEFAULT 'jobhunter',
     "phone_number" TEXT,
     "password" TEXT NOT NULL,
-    "access_token" TEXT NOT NULL,
-    "refresh_token" TEXT NOT NULL,
+    "access_token" TEXT,
+    "refresh_token" TEXT,
     "google_id" TEXT,
     "oauth_token" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "reset_password_token" TEXT,
+    "verification_token" TEXT,
+    "email_verification_attempts" INTEGER DEFAULT 0,
+    "last_attempt_time" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "BaseUsers_pkey" PRIMARY KEY ("user_id")
@@ -96,13 +103,14 @@ CREATE TABLE "JobHunter"."JobHunter" (
     "userId" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "dob" TIMESTAMP(3) NOT NULL,
+    "dob" TIMESTAMP(3),
     "gender" "JobHunter"."Gender",
     "photo" TEXT,
     "password" TEXT NOT NULL,
-    "location_city" TEXT NOT NULL,
-    "location_province" TEXT NOT NULL,
-    "expected_salary" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "location_city" TEXT,
+    "location_province" TEXT,
+    "cityId" INTEGER,
+    "expected_salary" DECIMAL(10,2) DEFAULT 0,
     "summary" TEXT,
     "resume" TEXT,
 
@@ -113,6 +121,7 @@ CREATE TABLE "JobHunter"."JobHunter" (
 CREATE TABLE "Developer"."Developer" (
     "developer_id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
+    "developer_name" TEXT NOT NULL,
 
     CONSTRAINT "Developer_pkey" PRIMARY KEY ("developer_id")
 );
@@ -125,7 +134,7 @@ CREATE TABLE "JobHunter"."WorkExperience" (
     "job_title" TEXT NOT NULL,
     "company_name" TEXT NOT NULL,
     "job_description" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "WorkExperience_pkey" PRIMARY KEY ("work_experience_id")
@@ -140,7 +149,7 @@ CREATE TABLE "JobHunter"."Education" (
     "education_description" TEXT NOT NULL,
     "cumulative_gpa" DECIMAL(3,2) NOT NULL,
     "graduation_date" TIMESTAMP(3) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Education_pkey" PRIMARY KEY ("education_id")
@@ -150,6 +159,7 @@ CREATE TABLE "JobHunter"."Education" (
 CREATE TABLE "JobHunter"."JobWishlist" (
     "wishlist_id" SERIAL NOT NULL,
     "jobHunterId" INTEGER NOT NULL,
+    "jobPostId" INTEGER NOT NULL,
     "date_added" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "JobWishlist_pkey" PRIMARY KEY ("wishlist_id")
@@ -183,7 +193,7 @@ CREATE TABLE "Subscription"."SubscriptionTable" (
     "subscription_id" SERIAL NOT NULL,
     "subscription_type" "Subscription"."SubscriptionType" NOT NULL DEFAULT 'free',
     "subscription_price" DECIMAL(10,2) NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SubscriptionTable_pkey" PRIMARY KEY ("subscription_id")
@@ -194,9 +204,9 @@ CREATE TABLE "Subscription"."JobHunterSubscription" (
     "job_hunter_subscription_id" SERIAL NOT NULL,
     "subscriptionId" INTEGER NOT NULL,
     "subscription_active" BOOLEAN NOT NULL DEFAULT false,
-    "subscription_start_date" TIMESTAMP(3) NOT NULL,
-    "subscription_end_date" TIMESTAMP(3) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "subscription_start_date" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "subscription_end_date" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "JobHunterSubscription_pkey" PRIMARY KEY ("job_hunter_subscription_id")
@@ -209,7 +219,7 @@ CREATE TABLE "Subscription"."Transaction" (
     "subscriptionId" INTEGER NOT NULL,
     "transaction_status" "Subscription"."TransactionStatus" NOT NULL DEFAULT 'pending',
     "transaction_amount" DECIMAL(10,2) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("transaction_id")
 );
@@ -222,7 +232,7 @@ CREATE TABLE "Subscription"."Payment" (
     "payment_amount" DECIMAL(10,2) NOT NULL,
     "payment_status" "Subscription"."PaymentStatus" NOT NULL DEFAULT 'pending',
     "payment_date" TIMESTAMP(3) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Payment_pkey" PRIMARY KEY ("payment_id")
@@ -234,7 +244,7 @@ CREATE TABLE "SkillAssessment"."SkillAssessment" (
     "developerId" INTEGER NOT NULL,
     "skill_assessment_name" TEXT NOT NULL,
     "skill_badge" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SkillAssessment_pkey" PRIMARY KEY ("skill_assessment_id")
@@ -250,7 +260,7 @@ CREATE TABLE "SkillAssessment"."SkillAsessmentQuestion" (
     "answer_2" TEXT NOT NULL,
     "answer_3" TEXT NOT NULL,
     "answer_4" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SkillAsessmentQuestion_pkey" PRIMARY KEY ("skill_assessment_question_id")
@@ -263,7 +273,7 @@ CREATE TABLE "SkillAssessment"."SkillAsessmentCompletion" (
     "jobHunterId" INTEGER NOT NULL,
     "completion_status" "SkillAssessment"."CompletionStatusSkillAssessment" NOT NULL,
     "completion_score" INTEGER NOT NULL,
-    "completion_date" TIMESTAMP(3) NOT NULL,
+    "completion_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "SkillAsessmentCompletion_pkey" PRIMARY KEY ("skill_assessment_completion_id")
 );
@@ -275,7 +285,7 @@ CREATE TABLE "SkillAssessment"."Certificate" (
     "certificate_name" TEXT NOT NULL,
     "certificate_issuer" TEXT NOT NULL,
     "certificate_date" TIMESTAMP(3) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Certificate_pkey" PRIMARY KEY ("certificate_id")
@@ -290,9 +300,12 @@ CREATE TABLE "Company"."Company" (
     "logo" TEXT,
     "company_city" TEXT,
     "company_province" TEXT,
+    "cityId" INTEGER,
     "address_details" TEXT,
-    "company_industry" "Company"."CompanyIndustry" NOT NULL,
-    "company_size" "Company"."CompanySize" NOT NULL,
+    "latitude" INTEGER,
+    "longitude" INTEGER,
+    "company_industry" "Company"."CompanyIndustry",
+    "company_size" "Company"."CompanySize",
 
     CONSTRAINT "Company_pkey" PRIMARY KEY ("company_id")
 );
@@ -302,7 +315,7 @@ CREATE TABLE "Company"."Category" (
     "category_id" SERIAL NOT NULL,
     "jobPostId" INTEGER NOT NULL,
     "category_name" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("category_id")
 );
@@ -325,7 +338,7 @@ CREATE TABLE "Company"."JobPost" (
     "status" BOOLEAN NOT NULL,
     "job_type" "Company"."JobType" NOT NULL,
     "job_space" "Company"."JobSpace" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "JobPost_pkey" PRIMARY KEY ("job_id")
@@ -339,7 +352,7 @@ CREATE TABLE "Application"."Application" (
     "resume" TEXT NOT NULL,
     "expected_salary" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "application_status" "Application"."ApplicationStatus" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Application_pkey" PRIMARY KEY ("application_id")
@@ -350,7 +363,7 @@ CREATE TABLE "PreSelectionTest"."PreSelectionTest" (
     "test_id" SERIAL NOT NULL,
     "test_name" TEXT NOT NULL,
     "image" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PreSelectionTest_pkey" PRIMARY KEY ("test_id")
@@ -367,7 +380,7 @@ CREATE TABLE "PreSelectionTest"."TestQuestion" (
     "answer_3" TEXT NOT NULL,
     "answer_4" TEXT NOT NULL,
     "correct_answer" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "TestQuestion_pkey" PRIMARY KEY ("question_id")
 );
@@ -381,7 +394,7 @@ CREATE TABLE "PreSelectionTest"."Interview" (
     "interview_time_end" TIMESTAMP(3) NOT NULL,
     "interview_descrption" TEXT NOT NULL,
     "interview_status" "PreSelectionTest"."InterviewStatus" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Interview_pkey" PRIMARY KEY ("interview_id")
@@ -394,22 +407,68 @@ CREATE TABLE "PreSelectionTest"."ResultPreSelection" (
     "completion_score" INTEGER NOT NULL DEFAULT 0,
     "completion_date" TIMESTAMP(3) NOT NULL,
     "completion_status" "PreSelectionTest"."CompletionStatusPreSelectionTest" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ResultPreSelection_pkey" PRIMARY KEY ("completion_id")
+);
+
+-- CreateTable
+CREATE TABLE "Location"."province" (
+    "province_id" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "province_pkey" PRIMARY KEY ("province_id")
+);
+
+-- CreateTable
+CREATE TABLE "Location"."city" (
+    "city_id" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "provinceId" INTEGER NOT NULL,
+
+    CONSTRAINT "city_pkey" PRIMARY KEY ("city_id")
+);
+
+-- CreateTable
+CREATE TABLE "Application"."_ApplicationToJobWishlist" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_ApplicationToJobWishlist_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BaseUsers_email_key" ON "BaseUsers"."BaseUsers"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "BaseUsers_google_id_key" ON "BaseUsers"."BaseUsers"("google_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "JobHunter_userId_key" ON "JobHunter"."JobHunter"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "JobHunter_email_key" ON "JobHunter"."JobHunter"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Company_userId_key" ON "Company"."Company"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "province_province_id_key" ON "Location"."province"("province_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "city_city_id_key" ON "Location"."city"("city_id");
+
+-- CreateIndex
+CREATE INDEX "_ApplicationToJobWishlist_B_index" ON "Application"."_ApplicationToJobWishlist"("B");
 
 -- AddForeignKey
 ALTER TABLE "JobHunter"."JobHunter" ADD CONSTRAINT "JobHunter_userId_fkey" FOREIGN KEY ("userId") REFERENCES "BaseUsers"."BaseUsers"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JobHunter"."JobHunter" ADD CONSTRAINT "JobHunter_jobHunterSubscriptionId_fkey" FOREIGN KEY ("jobHunterSubscriptionId") REFERENCES "Subscription"."JobHunterSubscription"("job_hunter_subscription_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobHunter"."JobHunter" ADD CONSTRAINT "JobHunter_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "Location"."city"("city_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Developer"."Developer" ADD CONSTRAINT "Developer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "BaseUsers"."BaseUsers"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -424,7 +483,10 @@ ALTER TABLE "JobHunter"."WorkExperience" ADD CONSTRAINT "WorkExperience_companyI
 ALTER TABLE "JobHunter"."Education" ADD CONSTRAINT "Education_jobHunterId_fkey" FOREIGN KEY ("jobHunterId") REFERENCES "JobHunter"."JobHunter"("job_hunter_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "JobHunter"."JobWishlist" ADD CONSTRAINT "JobWishlist_jobHunterId_fkey" FOREIGN KEY ("jobHunterId") REFERENCES "JobHunter"."JobHunter"("job_hunter_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "JobHunter"."JobWishlist" ADD CONSTRAINT "JobWishlist_jobHunterId_fkey" FOREIGN KEY ("jobHunterId") REFERENCES "JobHunter"."JobHunter"("job_hunter_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobHunter"."JobWishlist" ADD CONSTRAINT "JobWishlist_jobPostId_fkey" FOREIGN KEY ("jobPostId") REFERENCES "Company"."JobPost"("job_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JobHunter"."JobReview" ADD CONSTRAINT "JobReview_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"."Company"("company_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -466,6 +528,9 @@ ALTER TABLE "SkillAssessment"."Certificate" ADD CONSTRAINT "Certificate_skillAss
 ALTER TABLE "Company"."Company" ADD CONSTRAINT "Company_userId_fkey" FOREIGN KEY ("userId") REFERENCES "BaseUsers"."BaseUsers"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Company"."Company" ADD CONSTRAINT "Company_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "Location"."city"("city_id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Company"."JobPost" ADD CONSTRAINT "JobPost_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"."Company"("company_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -488,3 +553,12 @@ ALTER TABLE "PreSelectionTest"."Interview" ADD CONSTRAINT "Interview_application
 
 -- AddForeignKey
 ALTER TABLE "PreSelectionTest"."ResultPreSelection" ADD CONSTRAINT "ResultPreSelection_applicationId_fkey" FOREIGN KEY ("applicationId") REFERENCES "Application"."Application"("application_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Location"."city" ADD CONSTRAINT "city_provinceId_fkey" FOREIGN KEY ("provinceId") REFERENCES "Location"."province"("province_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Application"."_ApplicationToJobWishlist" ADD CONSTRAINT "_ApplicationToJobWishlist_A_fkey" FOREIGN KEY ("A") REFERENCES "Application"."Application"("application_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Application"."_ApplicationToJobWishlist" ADD CONSTRAINT "_ApplicationToJobWishlist_B_fkey" FOREIGN KEY ("B") REFERENCES "JobHunter"."JobWishlist"("wishlist_id") ON DELETE CASCADE ON UPDATE CASCADE;
