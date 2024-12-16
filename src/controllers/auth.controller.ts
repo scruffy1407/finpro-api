@@ -286,7 +286,7 @@ export class AuthController {
         const response = await this.authService.refreshAccessToken(
           decodedToken.user_id,
           decodedToken.role_type as RoleType,
-          token as string,
+          token as string
         );
         if (response.success) {
           res.status(200).send({
@@ -318,7 +318,7 @@ export class AuthController {
       try {
         const response = await this.authService.validateToken(
           decodedToken.user_id,
-          decodedToken.role_type as RoleType,
+          decodedToken.role_type as RoleType
         );
         if (response.success) {
           res.status(200).send({
