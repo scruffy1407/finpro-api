@@ -66,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email,
+      validatedData.email
     );
 
     // Create Base user
@@ -91,10 +91,8 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name,
-      ); // create Job Hunter\\
-
-      console.log(jobHunter);
+        validatedData.name
+      ); // create Job Hunter
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
           where: {
@@ -122,7 +120,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name,
+        validatedData.name
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -368,6 +366,43 @@ export class AuthService {
       };
     }
 
+    let additionalInfo: { name: string; photo: string | null } = {
+      name: "",
+      photo: null,
+    };
+
+    if (user.role_type === RoleType.jobhunter) {
+      const jobHunter = await this.prisma.jobHunter.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (jobHunter) {
+        additionalInfo = {
+          name: jobHunter.name,
+          photo: jobHunter.photo || null,
+        };
+      }
+    } else if (user.role_type === RoleType.company) {
+      const company = await this.prisma.company.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (company) {
+        additionalInfo = {
+          name: company.company_name,
+          photo: company.logo || null,
+        };
+      }
+    } else if (user.role_type === RoleType.developer) {
+      const developer = await this.prisma.developer.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (developer) {
+        additionalInfo = {
+          name: developer.developer_name,
+          photo: null,
+        };
+      }
+    }
+
     const { accessToken, refreshToken } =
       await this.AuthUtils.generateLoginToken(user.user_id, user.role_type);
 
@@ -379,7 +414,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, accessToken, user };
+    return { success: true, accessToken, user, additionalInfo };
   }
 
   async refreshToken(token: string) {
@@ -400,7 +435,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" },
+        { expiresIn: "3d" }
       );
 
       return { success: true, accessToken };
@@ -430,80 +465,5 @@ export class AuthService {
     });
 
     return { success: true, message: "Logged out successfully." };
-  }
-
-  async refreshAccessToken(
-    user_id: number,
-    user_role: RoleType,
-    token: string,
-  ) {
-    // Decode refresh token to get id
-    // check if the user of the token is available in data base
-    // if the user available, check whether the token is match
-    // generate a new access token
-
-    // Check user is available based on id
-    const user = await this.prisma.baseUsers.findUnique({
-      where: {
-        user_id: user_id,
-      },
-    });
-    if (!user) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    }
-
-    // Check if the refresh token is match wiyh the user
-    if (user.refresh_token !== token) {
-      return {
-        success: false,
-        message: "Invalid Refresh Token",
-      };
-    }
-
-    // generate new token
-    const accessToken = await this.AuthUtils.generateAccessToken(
-      user_id,
-      user_role,
-    );
-
-    await this.prisma.baseUsers.update({
-      where: {
-        user_id: user_id,
-      },
-      data: {
-        access_token: accessToken as string,
-      },
-    });
-
-    return { success: true, data: accessToken };
-  }
-
-  // /api/auth/validate-token
-  async validateToken(user_id: number, role_type: RoleType) {
-    // Check user is available based on id
-    console.log(role_type);
-    const user = await this.prisma.baseUsers.findUnique({
-      where: {
-        user_id: user_id,
-      },
-      include: {
-        company: role_type === RoleType.company ? true : false,
-        jobHunter: role_type === RoleType.jobhunter ? true : false,
-      },
-    });
-    if (!user) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    } else {
-      return {
-        success: true,
-        data: user,
-      };
-    }
   }
 }

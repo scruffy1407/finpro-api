@@ -50,7 +50,7 @@ model JobHunter {
     location_city           String?
     location_province       String?
     cityId                  Int?
-    expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
+    expected_salary         Decimal?  @default(0) @db.Decimal(15, 2)
     summary                 String?
     resume                  String?
 
@@ -73,7 +73,7 @@ model JobHunter {
 
 model Developer {
     developer_id   Int    @id @default(autoincrement())
-    userId         Int
+    userId         Int    @unique
     developer_name String
 
     skillAssessment SkillAssessment[]
@@ -222,6 +222,9 @@ model SkillAssessment {
     developerId           Int
     skill_assessment_name String
     skill_badge           String
+    passing_grade         Int      @default(85)
+    duration              Int      @default(30)
+    deleted               Boolean  @default(false)
     created_at            DateTime @default(now())
     updated_at            DateTime @updatedAt
 
@@ -325,13 +328,14 @@ model JobPost {
     selection_text_active Boolean  @default(false)
     job_title             String
     salary_show           Boolean
-    salary_min            Decimal  @default(0) @db.Decimal(10, 2)
-    salary_max            Decimal? @default(0) @db.Decimal(10, 2)
+    salary_min            Decimal  @default(0) @db.Decimal(15, 2)
+    salary_max            Decimal? @default(0) @db.Decimal(15, 2)
     job_description       String
     job_experience_min    Int
     job_experience_max    Int?     @default(0)
     expired_date          DateTime
     status                Boolean
+    deleted               Boolean @default(false)
     job_type              JobType
     job_space             JobSpace
     created_at            DateTime @default(now())
@@ -354,7 +358,7 @@ model Application {
     jobHunterId        Int
     jobId              Int
     resume             String
-    expected_salary    Decimal           @default(0) @db.Decimal(10, 2)
+    expected_salary    Decimal           @default(0) @db.Decimal(15, 2)
     application_status ApplicationStatus
     created_at         DateTime          @default(now())
     updated_at         DateTime          @updatedAt
@@ -371,11 +375,14 @@ model Application {
 
 // Pre-Selection Test
 model PreSelectionTest {
-    test_id    Int      @id @default(autoincrement())
-    test_name  String
-    image      String
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+    test_id       Int      @id @default(autoincrement())
+    test_name     String
+    image         String
+    passing_grade Int      @default(85)
+    duration      Int      @default(30)
+    deleted       Boolean  @default(false)
+    created_at    DateTime @default(now())
+    updated_at    DateTime @updatedAt
 
     jobPost       JobPost[]
     testQuestions TestQuestion[]

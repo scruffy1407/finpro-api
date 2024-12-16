@@ -10,6 +10,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 export interface Auth {
   email: string;
   name?: string;
+  photo?: string | null;
   phone_number?: string | null;
   password: string;
   user_role: "jobhunter" | "company" | "developer";
