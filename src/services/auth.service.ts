@@ -66,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email,
+      validatedData.email
     );
 
     // Create Base user
@@ -91,7 +91,7 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name,
+        validatedData.name
       ); // create Job Hunter
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
@@ -120,7 +120,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name,
+        validatedData.name
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -366,6 +366,43 @@ export class AuthService {
       };
     }
 
+    let additionalInfo: { name: string; photo: string | null } = {
+      name: "",
+      photo: null,
+    };
+
+    if (user.role_type === RoleType.jobhunter) {
+      const jobHunter = await this.prisma.jobHunter.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (jobHunter) {
+        additionalInfo = {
+          name: jobHunter.name,
+          photo: jobHunter.photo || null,
+        };
+      }
+    } else if (user.role_type === RoleType.company) {
+      const company = await this.prisma.company.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (company) {
+        additionalInfo = {
+          name: company.company_name,
+          photo: company.logo || null,
+        };
+      }
+    } else if (user.role_type === RoleType.developer) {
+      const developer = await this.prisma.developer.findUnique({
+        where: { userId: user.user_id },
+      });
+      if (developer) {
+        additionalInfo = {
+          name: developer.developer_name,
+          photo: null,
+        };
+      }
+    }
+
     const { accessToken, refreshToken } =
       await this.AuthUtils.generateLoginToken(user.user_id, user.role_type);
 
@@ -377,7 +414,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, accessToken, user };
+    return { success: true, accessToken, user, additionalInfo };
   }
 
   async refreshToken(token: string) {
@@ -398,7 +435,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" },
+        { expiresIn: "3d" }
       );
 
       return { success: true, accessToken };

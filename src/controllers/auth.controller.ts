@@ -131,7 +131,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, phone_number, name, password, user_role },
         user_role,
-        bearerToken,
+        bearerToken
       );
 
       if (!result.success) {
@@ -142,7 +142,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string,
+          result.user?.verification_token as string
         )
           .then(() => {
             res.status(200).send({
@@ -189,6 +189,8 @@ export class AuthController {
           user: {
             ...result.user,
             user_role: result.user.role_type || "jobhunter",
+            name: result.additionalInfo.name,
+            photo: result.additionalInfo.photo,
           },
         };
 
