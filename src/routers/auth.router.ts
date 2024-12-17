@@ -14,29 +14,29 @@ const authMiddleware = new AuthJwtMiddleware();
 // Reset Password Router
 authRouter.put(
   "/request-reset",
-  authController.requestResetPassword.bind(authController),
+  authController.requestResetPassword.bind(authController)
 );
 authRouter.get(
   "/verify-reset-token",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.verifyResetToken.bind(authController),
+  authController.verifyResetToken.bind(authController)
 );
 authRouter.put(
   "/reset-password",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.resetPassword.bind(authController),
+  authController.resetPassword.bind(authController)
 );
 
 // Verify Email Router
 authRouter.get(
   "/verify-email",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.verifyEmail.bind(authController),
+  authController.verifyEmail.bind(authController)
 );
 
 authRouter.post(
   "/resend-verification",
-  resendEmailController.resendEmailVerification.bind(authController),
+  resendEmailController.resendEmailVerification.bind(authController)
 );
 
 // Google Oauth Router
@@ -45,7 +45,7 @@ authRouter.get("/google/company", oauthController.googleCompany);
 authRouter.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
-  oauthController.googleCallback,
+  oauthController.googleCallback
 );
 
 // General Router
@@ -53,20 +53,20 @@ authRouter.post("/login", authController.login.bind(authController));
 authRouter.post("/register", authController.register.bind(authController));
 authRouter.post(
   "/refresh-token",
-  authController.refreshToken.bind(authController),
+  authController.refreshToken.bind(authController)
 );
 authRouter.post(
   "/logout",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  authController.logout.bind(authController),
+  authController.logout.bind(authController)
 );
 authRouter.get(
   "/validate-token",
-  authController.validateToken.bind(authController),
+  authController.validateToken.bind(authController)
 );
 authRouter.get(
   "/refresh-token",
-  authController.refreshAccessToken.bind(authController),
+  authController.refreshAccessToken.bind(authController)
 );
 
 export default authRouter;

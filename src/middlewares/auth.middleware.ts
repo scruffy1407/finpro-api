@@ -28,7 +28,7 @@ export class AuthJwtMiddleware {
     });
   }
   authorizeRole(
-    roles: string,
+    roles: string
   ): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction): void => {
       if (!roles.includes((req as any).user.role_type)) {

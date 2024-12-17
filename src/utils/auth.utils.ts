@@ -18,7 +18,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "3d",
-      },
+      }
     );
     return { accessToken, refreshToken };
   }
@@ -45,7 +45,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      },
+      }
     );
     return accessToken;
   }
@@ -68,7 +68,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      },
+      }
     );
     return resetToken;
   }

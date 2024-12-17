@@ -28,7 +28,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 3,
     },
-  }),
+  })
 );
 
 app.use(passport.initialize());
@@ -38,7 +38,7 @@ app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
-  }),
+  })
 );
 
 app.use(express.json());
@@ -54,7 +54,7 @@ app.use("/api", locationRouter);
 app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
 
 // APPLY JOB
-app.use("/applyjob/", applyJobRouter)
+app.use("/applyjob/", applyJobRouter);
 
 // COMPANY
 app.use("/company", companyRouter);

@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const validateFileType = (
   req: any,
   file: Express.Multer.File,
-  cb: multer.FileFilterCallback,
+  cb: multer.FileFilterCallback
 ) => {
   console.log(file);
   console.log(path.extname(file.originalname));
@@ -29,7 +29,7 @@ const validateFileType = (
   const extname = path.extname(file.originalname).toLowerCase();
   if (!allowedExtensions.includes(extname)) {
     const err: any = new InvalidFileTypeError(
-      "Invalid file type. Only PNG and JPG allowed.",
+      "Invalid file type. Only PNG and JPG allowed."
     );
     return cb(err, false);
   }

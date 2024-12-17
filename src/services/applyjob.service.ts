@@ -30,7 +30,11 @@ export class ApplyJob {
     }
   }
 
-  async applyJob(data: Application, file: Express.Multer.File, accessToken: string) {
+  async applyJob(
+    data: Application,
+    file: Express.Multer.File,
+    accessToken: string
+  ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
         where: {
@@ -38,15 +42,15 @@ export class ApplyJob {
         },
         include: { baseUser: true },
       });
-  
+
       if (!jobHunter) {
         return { error: "Invalid access token or user not found." };
       }
-  
+
       if (jobHunter.job_hunter_id !== data.jobHunterId) {
         return { error: "Unauthorized access to apply for the job." };
       }
-  
+
       const requiredFields: Array<keyof typeof jobHunter> = [
         "name",
         "gender",
@@ -55,9 +59,7 @@ export class ApplyJob {
         "location_province",
       ];
 
-      const missingFields = requiredFields.filter(
-        (field) => !jobHunter[field]
-      );
+      const missingFields = requiredFields.filter((field) => !jobHunter[field]);
 
       if (missingFields.length > 0) {
         return {

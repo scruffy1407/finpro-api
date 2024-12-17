@@ -178,7 +178,7 @@ export class CompanyService {
 
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
-        updateData.image,
+        updateData.image
       );
       if (!uploadImage.success) {
         return {

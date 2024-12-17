@@ -78,7 +78,7 @@ export class JobHunterService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
 
       if (!user?.success) {
@@ -89,7 +89,7 @@ export class JobHunterService {
       }
 
       const getLocation = await this.locationService.getUserLocation(
-        updateData.cityId as number,
+        updateData.cityId as number
       );
 
       const updateUser = await this.prisma.jobHunter.update({
@@ -149,7 +149,7 @@ export class JobHunterService {
 
       const uploadImage = await this.userService.uploadImage(
         jobHunter.role_type,
-        updateData.image,
+        updateData.image
       );
 
       if (!uploadImage.success) {

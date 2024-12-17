@@ -51,7 +51,7 @@ export class WorkingExpService {
     try {
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -98,7 +98,7 @@ export class WorkingExpService {
   async editWorkingExperience(
     user_id: number,
     workExperienceId: number,
-    data: WorkingExperience,
+    data: WorkingExperience
   ) {
     const { jobHunterId } = data;
     try {
@@ -116,7 +116,7 @@ export class WorkingExpService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -183,7 +183,7 @@ export class WorkingExpService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        getWorkExperience.jobHunterId,
+        getWorkExperience.jobHunterId
       );
       if (!user.success) {
         return {

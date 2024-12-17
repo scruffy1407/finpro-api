@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
-import { auth } from "googleapis/build/src/apis/abusiveexperiencereport";
 import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
 
 const companyRouter = Router();

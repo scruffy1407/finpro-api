@@ -49,7 +49,7 @@ export class EducationService {
     try {
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -86,7 +86,7 @@ export class EducationService {
   async updateEducation(
     user_id: number,
     education_id: number,
-    data: EducationData,
+    data: EducationData
   ) {
     const { jobHunterId } = data;
 
@@ -106,7 +106,7 @@ export class EducationService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -168,7 +168,7 @@ export class EducationService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        getEducation.jobHunterId,
+        getEducation.jobHunterId
       );
       if (!user.success) {
         return {

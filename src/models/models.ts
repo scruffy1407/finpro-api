@@ -6,7 +6,6 @@ import {
 } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
-
 export interface Auth {
   email: string;
   name?: string;
@@ -72,7 +71,7 @@ export interface GoogleProfile {
 }
 
 export interface JwtPayload {
-  companyId: string;  // The company ID from the token
+  companyId: string; // The company ID from the token
   user_id: number;
   role_type: string;
 }
@@ -155,9 +154,9 @@ export interface Application {
 
 export interface JobPost {
   job_title: string;
-  companyId ?: number;
-  preSelectionTestId ?: number,
-  catergoryId ?: number,
+  companyId?: number;
+  preSelectionTestId?: number;
+  catergoryId?: number;
   salary_show: boolean;
   salary_min: number;
   salary_max: number;
@@ -166,8 +165,8 @@ export interface JobPost {
   job_experience_max: number;
   expired_date: Date;
   status: boolean;
-  job_type: "Full-Time" | "Freelance" | "Internship";  // Enum-like values
-  job_space: "Remote Working" | "On Office" | "Hybrid";  // Enum-like values
+  job_type: "Full-Time" | "Freelance" | "Internship"; // Enum-like values
+  job_space: "Remote Working" | "On Office" | "Hybrid"; // Enum-like values
 }
 
 export interface JobPostWithRelatedJobs {
