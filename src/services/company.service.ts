@@ -387,8 +387,12 @@ export class CompanyService {
 					job_title: true,
 					salary_min: true,
 					salary_max: true,
+					job_experience_min : true,
+					job_experience_max : true,
+					salary_show : true,
 					created_at: true,
 					job_type: true,
+					job_space : true,
 					company: {
 						select: {
 							logo: true,
