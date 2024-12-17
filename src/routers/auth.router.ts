@@ -60,5 +60,13 @@ authRouter.post(
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authController.logout.bind(authController),
 );
+authRouter.get(
+  "/validate-token",
+  authController.validateToken.bind(authController),
+);
+authRouter.get(
+  "/refresh-token",
+  authController.refreshAccessToken.bind(authController),
+);
 
 export default authRouter;

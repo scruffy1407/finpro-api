@@ -6,7 +6,7 @@ generator client {
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
-    schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application"]
+    schemas  = ["BaseUsers", "JobHunter", "Company", "Developer", "PreSelectionTest", "SkillAssessment", "Subscription", "Application", "Location"]
 }
 
 // Base Users
@@ -24,7 +24,7 @@ model BaseUsers {
     oauth_token                 String?
     reset_password_token        String?
     verification_token          String?
-    email_verification_attempts Int?       @default (0)
+    email_verification_attempts Int?       @default(0)
     last_attempt_time           DateTime?
     created_at                  DateTime   @default(now())
     updated_at                  DateTime   @updatedAt
@@ -40,7 +40,7 @@ model BaseUsers {
 model JobHunter {
     job_hunter_id           Int       @id @default(autoincrement())
     jobHunterSubscriptionId Int
-    userId                  Int
+    userId                  Int       @unique
     name                    String
     email                   String    @unique
     dob                     DateTime?
@@ -49,7 +49,8 @@ model JobHunter {
     password                String
     location_city           String?
     location_province       String?
-    expected_salary         Decimal?  @default(0) @db.Decimal(10, 2)
+    cityId                  Int?
+    expected_salary         Decimal?  @default(0) @db.Decimal(15, 2)
     summary                 String?
     resume                  String?
 
@@ -65,13 +66,14 @@ model JobHunter {
     application               Application[]
 
     jobHunterSubscription JobHunterSubscription @relation(fields: [jobHunterSubscriptionId], references: [job_hunter_subscription_id])
+    city                  city?                 @relation(fields: [cityId], references: [city_id])
 
     @@schema("JobHunter")
 }
 
 model Developer {
     developer_id   Int    @id @default(autoincrement())
-    userId         Int
+    userId         Int    @unique
     developer_name String
 
     skillAssessment SkillAssessment[]
@@ -116,9 +118,13 @@ model Education {
 model JobWishlist {
     wishlist_id Int      @id @default(autoincrement())
     jobHunterId Int
+    jobPostId   Int
     date_added  DateTime
 
-    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+    applications Application[]
+
+    jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
+    jobPost   JobPost   @relation(fields: [jobPostId], references: [job_id], onDelete: Cascade)
 
     @@schema("JobHunter")
 }
@@ -216,6 +222,9 @@ model SkillAssessment {
     developerId           Int
     skill_assessment_name String
     skill_badge           String
+    passing_grade         Int      @default(85)
+    duration              Int      @default(30)
+    deleted               Boolean  @default(false)
     created_at            DateTime @default(now())
     updated_at            DateTime @updatedAt
 
@@ -277,13 +286,16 @@ model Certificate {
 // Company
 model Company {
     company_id          Int              @id @default(autoincrement())
-    userId              Int
+    userId              Int              @unique
     company_name        String
     company_description String?
     logo                String?
     company_city        String?
     company_province    String?
+    cityId              Int?
     address_details     String?
+    latitude            Int?
+    longitude           Int?
     company_industry    CompanyIndustry?
     company_size        CompanySize?
 
@@ -292,6 +304,7 @@ model Company {
     jobPost        JobPost[]
     review         JobReview[]
     workExperience WorkExperience[]
+    city           city?            @relation(fields: [cityId], references: [city_id])
 
     @@schema("Company")
 }
@@ -315,19 +328,21 @@ model JobPost {
     selection_text_active Boolean  @default(false)
     job_title             String
     salary_show           Boolean
-    salary_min            Decimal  @default(0) @db.Decimal(10, 2)
-    salary_max            Decimal? @default(0) @db.Decimal(10, 2)
+    salary_min            Decimal  @default(0) @db.Decimal(15, 2)
+    salary_max            Decimal? @default(0) @db.Decimal(15, 2)
     job_description       String
     job_experience_min    Int
     job_experience_max    Int?     @default(0)
     expired_date          DateTime
     status                Boolean
+    deleted               Boolean @default(false)
     job_type              JobType
     job_space             JobSpace
     created_at            DateTime @default(now())
     updated_at            DateTime @updatedAt
 
-    applyJob Application[]
+    applyJob    Application[]
+    jobWishlist JobWishlist[]
 
     company          Company          @relation(fields: [companyId], references: [company_id])
     category         Category         @relation(fields: [categoryId], references: [category_id])
@@ -343,13 +358,14 @@ model Application {
     jobHunterId        Int
     jobId              Int
     resume             String
-    expected_salary    Decimal           @default(0) @db.Decimal(10, 2)
+    expected_salary    Decimal           @default(0) @db.Decimal(15, 2)
     application_status ApplicationStatus
     created_at         DateTime          @default(now())
     updated_at         DateTime          @updatedAt
 
     interview          Interview[]
     resultPreSelection ResultPreSelection[]
+    jobWishlist        JobWishlist[]
 
     jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id], onDelete: Cascade)
     jobPost   JobPost   @relation(fields: [jobId], references: [job_id], onDelete: Cascade)
@@ -359,11 +375,14 @@ model Application {
 
 // Pre-Selection Test
 model PreSelectionTest {
-    test_id    Int      @id @default(autoincrement())
-    test_name  String
-    image      String
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+    test_id       Int      @id @default(autoincrement())
+    test_name     String
+    image         String
+    passing_grade Int      @default(85)
+    duration      Int      @default(30)
+    deleted       Boolean  @default(false)
+    created_at    DateTime @default(now())
+    updated_at    DateTime @updatedAt
 
     jobPost       JobPost[]
     testQuestions TestQuestion[]
@@ -415,6 +434,25 @@ model ResultPreSelection {
     application Application @relation(fields: [applicationId], references: [application_id])
 
     @@schema("PreSelectionTest")
+}
+
+model province {
+    province_id Int    @id @unique
+    name        String
+    regencies   city[]
+
+    @@schema("Location")
+}
+
+model city {
+    city_id    Int         @id @unique
+    name       String
+    provinceId Int
+    province   province    @relation(fields: [provinceId], references: [province_id])
+    jobHunter  JobHunter[]
+    company    Company[]
+
+    @@schema("Location")
 }
 
 // List of Enums
@@ -503,7 +541,7 @@ enum EducationDegree {
 enum SubscriptionType {
     free
     standard
-    premium
+    professional
 
     @@schema("Subscription")
 }
