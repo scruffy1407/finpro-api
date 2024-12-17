@@ -5,10 +5,11 @@ import passport from "passport";
 import session from "express-session";
 import { ErrorHandlerMiddleware } from "./middlewares/error.handler.middleware";
 import authRouter from "./routers/auth.router";
+import applyJobRouter from "./routers/applyjob.router";
 import "./services/oauth.service";
+import userRouter from "./routers/user.router";
 import companyRouter from "./routers/company.router";
 import locationRouter from "./routers/location.router";
-
 
 environment.config();
 
@@ -27,7 +28,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 3,
     },
-  })
+  }),
 );
 
 app.use(passport.initialize());
@@ -36,16 +37,27 @@ app.use(passport.session());
 app.use(
   cors({
     origin: "http://localhost:3000",
-  })
+    credentials: true,
+  }),
 );
 
 app.use(express.json());
 
-app.use("/auth", authRouter);
+// AUTH
+app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
+app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
 
-app.use("/api/company" , companyRouter)
+// LOCATION
+app.use("/api", locationRouter);
 
-app.use("/api" , locationRouter )
+// USER
+app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
+
+// APPLY JOB
+app.use("/applyjob/", applyJobRouter)
+
+// COMPANY
+app.use("/company", companyRouter);
 
 app.use(errorHandler.errorHandler());
 

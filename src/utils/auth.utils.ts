@@ -1,6 +1,6 @@
 import environment from "dotenv";
 import jwt from "jsonwebtoken";
-import { DecodedToken } from "../models/models";
+import { JwtPayload } from "../models/models";
 
 environment.config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -18,13 +18,13 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "3d",
-      }
+      },
     );
     return { accessToken, refreshToken };
   }
   async decodeToken(token: string) {
     try {
-      const decodedToken = await jwt.verify(token, JWT_SECRET) as DecodedToken ;
+      const decodedToken = (await jwt.verify(token, JWT_SECRET)) as JwtPayload;
 
       return decodedToken;
     } catch (error) {
@@ -45,7 +45,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      }
+      },
     );
     return accessToken;
   }
@@ -68,7 +68,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      }
+      },
     );
     return resetToken;
   }

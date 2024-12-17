@@ -45,6 +45,27 @@ export class OauthController {
       });
       const role_type =
         roleFromState === "company" ? RoleType.company : RoleType.jobhunter;
+
+      if (user && user.role_type !== role_type) {
+        const target =
+          role_type === RoleType.jobhunter
+            ? `${process.env.CLIENT_URL}/auth/login/company`
+            : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
+
+        if (user && user.role_type !== role_type) {
+          const target =
+            role_type === RoleType.jobhunter
+              ? `${process.env.CLIENT_URL}/auth/login/company`
+              : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
+
+          res.redirect(
+            `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
+          );
+          return;
+        }
+        return;
+      }
+
       if (!user) {
         const email = profile.emails[0].value;
         const newUserData = {
@@ -99,8 +120,9 @@ export class OauthController {
           refresh_token: refreshToken,
         },
       });
-
-      res.redirect("http://localhost:3000");
+      res.redirect(
+        `${process.env.CLIENT_URL}/auth/googlecookies?access_token=${accessToken}&refresh_token=${refreshToken}`
+      );
     } catch (error) {
       console.error("Error handling callback:", error);
       res.status(500).json({ error: "Internal server error." });

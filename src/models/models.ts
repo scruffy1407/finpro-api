@@ -1,6 +1,16 @@
+import {
+  CompanyIndustry,
+  CompanySize,
+  Gender,
+  EducationDegree,
+} from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+
+
 export interface Auth {
   email: string;
   name?: string;
+  photo?: string | null;
   phone_number?: string | null;
   password: string;
   user_role: "jobhunter" | "company" | "developer";
@@ -61,6 +71,88 @@ export interface GoogleProfile {
   };
 }
 
+export interface JwtPayload {
+  companyId: string;  // The company ID from the token
+  user_id: number;
+  role_type: string;
+}
+
+export interface CompanyInfoResp {
+  email: string;
+  company_id: number;
+  company_logo: string;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  latitude: number;
+  longitude: number;
+  company_city: string;
+  company_industry: string;
+  company_size: string;
+  address_detail: string;
+}
+
+export interface CompanyGeneralInfo {
+  company_id: number;
+  company_name: string;
+  company_description: string;
+  company_province: string;
+  company_city: string;
+  company_industry: CompanyIndustry;
+  company_size: CompanySize;
+}
+
+export interface JobHunterGeneralInfo {
+  jobHunterId: number;
+  name: string;
+  dob?: Date;
+  gender?: Gender;
+  locationCity?: string;
+  locationProvince?: string;
+  cityId?: number;
+  provinceId?: number;
+  expectedSalary?: number;
+  summary: string;
+}
+
+export interface WorkingExperience {
+  jobHunterId: number;
+  companyId: number;
+  jobTitle: string;
+  jobDescription: string;
+}
+
+export interface EducationData {
+  jobHunterId: number;
+  education_degree: EducationDegree;
+  education_name: string;
+  education_description: string;
+  cumulative_gpa: number;
+  graduation_date: Date;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface UpdateImage {
+  id: number; // Can be job hunter ID or Company ID
+  image: string;
+}
+
+export enum ApplicationStatus {
+  FAILED = "failed",
+  ON_REVIEW = "onreview",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected",
+}
+
+export interface Application {
+  jobHunterId: number;
+  jobId: number;
+  resume: string;
+  expected_salary: Decimal;
+  application_status: ApplicationStatus;
+}
+
 export interface JobPost {
   job_title: string;
   companyId ?: number;
@@ -76,12 +168,6 @@ export interface JobPost {
   status: boolean;
   job_type: "Full-Time" | "Freelance" | "Internship";  // Enum-like values
   job_space: "Remote Working" | "On Office" | "Hybrid";  // Enum-like values
-}
-
-export interface DecodedToken {
-  companyId: string;  // The company ID from the token
-  user_id: number;    // Assuming user_id exists
-  role_type: string;   // Assuming role_type exists
 }
 
 export interface JobPostWithRelatedJobs {
@@ -131,4 +217,3 @@ export interface JobPostWithRelatedJobs {
     };
   }>;
 }
-

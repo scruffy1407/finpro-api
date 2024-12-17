@@ -5,6 +5,10 @@ const locationController = new LocationController();
 const router = Router();
 
 router.get(
+  "/location/get-user-location/:cityId",
+  locationController.getUserLocation.bind(locationController),
+);
+router.get(
   "/location/get-province",
   locationController.getAllProvince.bind(locationController),
 );
@@ -18,4 +22,3 @@ router.get(
 );
 
 export default router;
- 

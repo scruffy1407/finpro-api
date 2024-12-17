@@ -541,7 +541,7 @@ enum EducationDegree {
 enum SubscriptionType {
     free
     standard
-    premium
+    professional
 
     @@schema("Subscription")
 }
