@@ -8,6 +8,7 @@ import authRouter from "./routers/auth.router";
 import applyJobRouter from "./routers/applyjob.router";
 import "./services/oauth.service";
 import userRouter from "./routers/user.router";
+import companyRouter from "./routers/company.router";
 import locationRouter from "./routers/location.router";
 
 environment.config();
@@ -45,13 +46,18 @@ app.use(express.json());
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
 app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
-app.use("/applyjob/", applyJobRouter)
 
 // LOCATION
 app.use("/api", locationRouter);
 
 // USER
 app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
+
+// APPLY JOB
+app.use("/applyjob/", applyJobRouter)
+
+// COMPANY
+app.use("/company", companyRouter);
 
 app.use(errorHandler.errorHandler());
 

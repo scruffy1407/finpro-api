@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import environment from "dotenv";
 import jwt from "jsonwebtoken";
+
 environment.config();
+
 export class AuthJwtMiddleware {
   authenticateJwt(req: Request, res: Response, next: NextFunction): void {
     const token = req.headers.authorization?.split(" ")[1] as string;
