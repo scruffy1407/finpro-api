@@ -92,6 +92,8 @@ model WorkExperience {
     job_description    String
     created_at         DateTime @default(now())
     updated_at         DateTime @updatedAt
+    start_date         DateTime @default(now())
+    end_date           DateTime @default(now())
 
     jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
     company   Company   @relation(fields: [companyId], references: [company_id])
@@ -430,6 +432,7 @@ model ResultPreSelection {
     completion_date   DateTime
     completion_status CompletionStatusPreSelectionTest
     created_at        DateTime                         @default(now())
+    isRefreshed       Boolean
 
     application Application @relation(fields: [applicationId], references: [application_id])
 
@@ -500,6 +503,8 @@ enum ApplicationStatus {
     onreview
     accepted
     rejected
+    onTest
+    waitingSubmission
 
     @@schema("Application")
 }
@@ -514,6 +519,7 @@ enum CompletionStatusSkillAssessment {
 enum CompletionStatusPreSelectionTest {
     failed
     pass
+    ongoing
 
     @@schema("PreSelectionTest")
 }
