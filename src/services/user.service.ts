@@ -220,9 +220,41 @@ export class CompanyService {
           },
         },
       });
+      const searchResult: { value: number; label: string }[] = company.map(
+        (company) => {
+          return {
+            value: company.company_id,
+            label: company.company_name,
+          };
+        },
+      );
+      console.log(searchResult);
       return {
         success: true,
-        data: company,
+        data: searchResult,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Something went wrong, failed to update company image",
+        detail: e,
+      };
+    }
+  }
+  async getSpecificCompany(company_id: number) {
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: {
+          company_id: company_id,
+        },
+      });
+      const specificData: { value: number; label: string } = {
+        label: company?.company_name as string,
+        value: company?.company_id as number,
+      };
+      return {
+        success: true,
+        data: specificData,
       };
     } catch (e) {
       return {

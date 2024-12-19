@@ -37,6 +37,10 @@ router.get(
   "/company/search-company",
   companyController.searchCompany.bind(companyController),
 );
+router.get(
+  "/company/get-data/:companyId",
+  companyController.getSpecificCompany.bind(companyController),
+);
 
 // USER JOB HUNTER
 router.get(
@@ -99,13 +103,13 @@ router.post(
   educationController.createEducation.bind(educationController),
 );
 router.put(
-  "/job-hunter/education/:educationId",
+  "/job-hunter/education/edit/:educationId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
   educationController.updateEducation.bind(educationController),
 );
 router.delete(
-  "/job-hunter/delete/:educationId",
+  "/job-hunter/education/delete/:educationId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
   educationController.deleteEducation.bind(educationController),

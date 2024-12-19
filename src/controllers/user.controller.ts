@@ -159,4 +159,28 @@ export class CompanyController {
       });
     }
   }
+  async getSpecificCompany(req: Request, res: Response) {
+    const companyId = req.params.companyId;
+    try {
+      const response = await this.companyService.getSpecificCompany(
+        Number(companyId),
+      );
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          data: response.data,
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          meesage: "Failed to fetch data",
+        });
+      }
+    } catch (e) {
+      res.status(500).send({
+        status: res.statusCode,
+        message: e,
+      });
+    }
+  }
 }

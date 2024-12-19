@@ -89,6 +89,7 @@ export class EducationService {
     data: EducationData,
   ) {
     const { jobHunterId } = data;
+    console.log("CONTROLLER : ", data);
 
     try {
       const checkEducation = await this.prisma.education.findUnique({
@@ -138,6 +139,7 @@ export class EducationService {
           updated_at: new Date(),
         },
       });
+      console.log(updateEducation);
       return {
         success: true,
         data: updateEducation,

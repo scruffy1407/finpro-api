@@ -46,6 +46,7 @@ export class WorkingExpService {
   }
 
   async createWorkingExperience(user_id: number, data: WorkingExperience) {
+    console.log(data);
     const { jobHunterId } = data;
 
     try {
@@ -59,6 +60,8 @@ export class WorkingExpService {
           message: user.message,
         };
       }
+
+      console.log(user);
 
       const company = await this.prisma.company.findUnique({
         where: {
