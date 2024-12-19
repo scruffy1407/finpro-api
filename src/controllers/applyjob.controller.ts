@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+ import { Request, Response } from "express";
 import { ApplyJob } from "../services/applyjob.service";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ApplicationStatus } from "../models/models";

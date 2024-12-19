@@ -10,6 +10,8 @@ import "./services/oauth.service";
 import userRouter from "./routers/user.router";
 import companyRouter from "./routers/company.router";
 import locationRouter from "./routers/location.router";
+import cron from "node-cron";
+import { DropboxTokenManager } from "./utils/dropboxRefreshToken";
 
 environment.config();
 
@@ -42,6 +44,19 @@ app.use(
 );
 
 app.use(express.json());
+
+const tokenManager = DropboxTokenManager.getInstance();
+
+cron.schedule("*/5 * * * *", async () => {
+  //EVERY 5 MINUTES REFRESH
+  console.log("Refreshing Dropbox Access Token...");
+  await tokenManager.refreshAccessToken();
+});
+
+(async () => {
+  console.log("Initializing Dropbox Access Token...");
+  await tokenManager.refreshAccessToken();
+})();
 
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
