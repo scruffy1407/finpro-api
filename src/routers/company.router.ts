@@ -2,12 +2,15 @@ import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
+import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
+import { PreSelectionTestController } from "../controllers/preSelectionTest.controller";
 import { CompanyAdminController } from "../controllers/companyadmin.controller";
 
 const companyRouter = Router();
 const companyController = new CompanyController();
 const companyAdminController = new CompanyAdminController();
 const authJwtMiddleware = new AuthJwtMiddleware();
+const preSelectionTestController = new PreSelectionTestController();
 
 companyRouter.post(
   "/job",
@@ -55,7 +58,26 @@ companyRouter.get(
   companyController.getCategory.bind(companyController)
 );
 
-// Company Check Applicants
+//Create Pre-Test
+
+companyRouter.post(
+	"/createpretest",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.createPreSelectionTest.bind(
+		preSelectionTestController
+	)
+);
+
+//Delete PreTest
+companyRouter.delete(
+	"/deletepretest/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.deletePreSelectionTest.bind(preSelectionTestController)
+  );
+  
+// Company Check Applicants - thom part
 companyRouter.get(
   "/applicants",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
