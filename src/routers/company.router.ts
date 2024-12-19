@@ -2,8 +2,8 @@ import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
-import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
 import { PreSelectionTestController } from "../controllers/preSelectionTest.controller";
+import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
 
 const companyRouter = Router();
 const companyController = new CompanyController();
@@ -69,11 +69,13 @@ companyRouter.post(
 
 //Delete PreTest
 companyRouter.delete(
-	"/deletepretest/:testId",
+	"/createpretest/:testId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-	preSelectionTestController.deletePreSelectionTest.bind(preSelectionTestController)
-  );
-  
+	authorizeJobTestOwner,
+	preSelectionTestController.deletePreSelectionTest.bind(
+		preSelectionTestController
+	)
+);
 
 export default companyRouter;
