@@ -6,14 +6,14 @@ environment.config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export class AuthUtils {
-  async generateLoginToken(user_id: number, role_type: string) {
-    const accessToken = await this.generateAccessToken(user_id, role_type);
+  async generateLoginToken(user_id: number, role_type: string, company_id?: number) {
+    const accessToken = await this.generateAccessToken(user_id, role_type, company_id);
 
-    // Token that will be store, and will be used to refresh the usedAcessToken
     const refreshToken = jwt.sign(
       {
         user_id: user_id,
         role_type: role_type,
+        company_id
       },
       JWT_SECRET,
       {
@@ -22,25 +22,23 @@ export class AuthUtils {
     );
     return { accessToken, refreshToken };
   }
-  async decodeToken(token: string) {
-    try {
-      const decodedToken = (await jwt.verify(token, JWT_SECRET)) as JwtPayload;
 
+  async decodeToken(token: string): Promise<JwtPayload | null> {
+    try {
+      const decodedToken = jwt.verify(token, JWT_SECRET) as JwtPayload;
       return decodedToken;
     } catch (error) {
       console.error("Error decoding token:", error);
+      return null;
     }
   }
 
-  async generateAccessToken(user_id: number, role_type: string) {
-    // Regenerate token using refresh token
-    // If refresh token is valid, generate new access token and refresh token
-    // If refresh token is invalid, return error message
-
+  async generateAccessToken(user_id: number, role_type: string, company_id?: number) {
     const accessToken = jwt.sign(
       {
         user_id: user_id,
         role_type: role_type,
+        company_id
       },
       JWT_SECRET,
       {
@@ -68,7 +66,7 @@ export class AuthUtils {
       JWT_SECRET,
       {
         expiresIn: "1h",
-      }
+      },
     );
     return resetToken;
   }

@@ -71,7 +71,7 @@ export interface GoogleProfile {
 }
 
 export interface JwtPayload {
-  companyId: string; // The company ID from the token
+  companyId?: string; // The company ID from the token
   user_id: number;
   role_type: string;
 }
@@ -102,6 +102,7 @@ export interface CompanyGeneralInfo {
 }
 
 export interface JobHunterGeneralInfo {
+  photo?: string;
   jobHunterId: number;
   name: string;
   dob?: Date;

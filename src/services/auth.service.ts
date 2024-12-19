@@ -339,6 +339,8 @@ export class AuthService {
   async login(data: Auth) {
     const validatedData = loginSchema.parse(data);
 
+    let company_id = undefined;
+
     const user = await this.prisma.baseUsers.findUnique({
       where: { email: validatedData.email },
     });
@@ -388,6 +390,7 @@ export class AuthService {
         where: { userId: user.user_id },
       });
       if (company) {
+        company_id = company.company_id
         additionalInfo = {
           name: company.company_name,
           photo: company.logo || null,
@@ -406,7 +409,7 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken } =
-      await this.AuthUtils.generateLoginToken(user.user_id, user.role_type);
+      await this.AuthUtils.generateLoginToken(user.user_id, user.role_type, company_id);
 
     await this.prisma.baseUsers.update({
       where: { email: validatedData.email },

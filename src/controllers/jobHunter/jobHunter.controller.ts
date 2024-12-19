@@ -104,10 +104,10 @@ export class JobHunterController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
 
-    const { job_hunter_id } = req.body;
+    const { id } = req.body;
     const image = req.file ? req.file.path || "" : "";
     const updateImage: UpdateImage = {
-      id: Number(job_hunter_id),
+      id: Number(id),
       image: image,
     };
 
@@ -119,10 +119,11 @@ export class JobHunterController {
           decodedToken.user_id,
           updateImage,
         );
+        console.log(response);
         if (response.success) {
-          res.status(201).send({
+          res.status(200).send({
             status: res.statusCode,
-            data: image,
+            data: response.image,
           });
         } else {
           res.status(400).send({

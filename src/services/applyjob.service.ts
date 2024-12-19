@@ -1,9 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Application, ApplicationStatus } from "../models/models";
 import { Dropbox } from "dropbox";
-import { ACCESS_TOKEN } from "../utils/dropboxRefreshToken";
-
-const dbx = new Dropbox({ accessToken: ACCESS_TOKEN });
+import { DropboxTokenManager } from "../utils/dropboxRefreshToken";
 
 export class ApplyJob {
   private prisma: PrismaClient;
@@ -16,6 +14,10 @@ export class ApplyJob {
     file: Express.Multer.File
   ): Promise<string | undefined> {
     try {
+      const tokenManager = DropboxTokenManager.getInstance();
+      const accessToken = tokenManager.getAccessToken();
+      const dbx = new Dropbox({ accessToken });
+
       const dropboxResponse = await dbx.filesUpload({
         path: `/resumes/${file.originalname}_${Date.now()}`,
         contents: file.buffer,
@@ -26,6 +28,7 @@ export class ApplyJob {
 
       return sharedLinkResponse.result.url;
     } catch (error) {
+      console.log(error);
       return "Failed to upload Resume File";
     }
   }
@@ -51,21 +54,21 @@ export class ApplyJob {
         return { error: "Unauthorized access to apply for the job." };
       }
 
-      const requiredFields: Array<keyof typeof jobHunter> = [
-        "name",
-        "gender",
-        "dob",
-        "location_city",
-        "location_province",
-      ];
+      // const requiredFields: Array<keyof typeof jobHunter> = [
+      //   "name",
+      //   "gender",
+      //   "dob",
+      //   "location_city",
+      //   "location_province",
+      // ];
 
-      const missingFields = requiredFields.filter((field) => !jobHunter[field]);
+      // const missingFields = requiredFields.filter((field) => !jobHunter[field]);
 
-      if (missingFields.length > 0) {
-        return {
-          error: `The following fields are missing: ${missingFields.join(", ")}.`,
-        };
-      }
+      // if (missingFields.length > 0) {
+      //   return {
+      //     error: `The following fields are missing: ${missingFields.join(", ")}.`,
+      //   };
+      // }
 
       const jobExists = await this.prisma.jobPost.findUnique({
         where: { job_id: data.jobId },
