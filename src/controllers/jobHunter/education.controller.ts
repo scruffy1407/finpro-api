@@ -47,7 +47,18 @@ export class EducationController {
   async createEducation(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
-    const createEducationData = req.body as EducationData;
+    const data = req.body;
+
+    const createEducationData: EducationData = {
+      education_degree: data.education_degree,
+      education_description: data.educationDescription,
+      education_name: data.educationName,
+      cumulative_gpa: data.cumulativeGpa,
+      graduation_date: data.educationDate,
+      jobHunterId: data.jobHunterId,
+    };
+
+    console.log("EDUCATION", createEducationData);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -82,7 +93,17 @@ export class EducationController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     const education_id = Number(req.params.educationId);
-    const updateEducationData = req.body as EducationData;
+    const updateEducationData: EducationData = {
+      education_degree: req.body.education_degree,
+      education_name: req.body.educationName,
+      graduation_date: new Date(req.body.educationDate),
+      updated_at: new Date(),
+      education_description: req.body.educationDescription,
+      cumulative_gpa: Number(req.body.cumulativeGpa),
+      jobHunterId: Number(req.body.jobHunterId),
+    };
+
+    console.log(updateEducationData);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -94,7 +115,7 @@ export class EducationController {
           updateEducationData,
         );
         if (response.success) {
-          res.status(201).send({
+          res.status(200).send({
             status: res.statusCode,
             data: response.data,
           });

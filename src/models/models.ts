@@ -102,6 +102,7 @@ export interface CompanyGeneralInfo {
 }
 
 export interface JobHunterGeneralInfo {
+  photo?: string;
   jobHunterId: number;
   name: string;
   dob?: Date;
