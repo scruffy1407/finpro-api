@@ -74,6 +74,7 @@ export interface JwtPayload {
   companyId?: string; // The company ID from the token
   user_id: number;
   role_type: string;
+  verified: boolean;
 }
 
 export interface CompanyInfoResp {
@@ -216,4 +217,38 @@ export interface JobPostWithRelatedJobs {
       company_city: string | null;
     };
   }>;
+}
+
+export enum InterviewStatus {
+  scheduled = "scheduled",
+  cancelled = "cancelled",
+  completed = "completed",
+}
+
+export interface Interview {
+  interviewId?: number;
+  applicationId: number;
+  interviewDate: Date;
+  interviewTimeStart: Date;
+  interviewTimeEnd: Date;
+  interviewDescrption: string;
+  interviewUrl?: string;
+  interviewStatus?: InterviewStatus;
+}
+
+export interface InterviewEmail {
+  email: string;
+  name: string;
+  companyName: string;
+  jobTitle: string;
+  interviewdDate: string;
+  interviewTimeStart: string;
+  interviewTimeEnd: string;
+  invitatationLink: string;
+}
+
+export interface UpdateStatusInterview {
+  interviewId: number;
+  applicationId: number;
+  interviewStatus: InterviewStatus;
 }

@@ -59,7 +59,7 @@ export class OauthController {
               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
 
           res.redirect(
-            `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
+            `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
           );
           return;
         }
@@ -111,7 +111,11 @@ export class OauthController {
       }
 
       const { accessToken, refreshToken } =
-        await this.authUtils.generateLoginToken(user.user_id, role_type);
+        await this.authUtils.generateLoginToken(
+          user.user_id,
+          role_type,
+          user.verified,
+        );
 
       await prisma.baseUsers.update({
         where: { google_id: profile.id },
@@ -121,7 +125,7 @@ export class OauthController {
         },
       });
       res.redirect(
-        `${process.env.CLIENT_URL}/auth/googlecookies?access_token=${accessToken}&refresh_token=${refreshToken}`
+        `${process.env.CLIENT_URL}/auth/googlecookies?access_token=${accessToken}&refresh_token=${refreshToken}`,
       );
     } catch (error) {
       console.error("Error handling callback:", error);
