@@ -4,6 +4,8 @@ import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
 import { PreSelectionTestController } from "../controllers/preSelectionTest.controller";
 import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
+import { authorizeQuestionOwner } from "../middlewares/authorizeQuestionOwner";
+import { auth } from "googleapis/build/src/apis/abusiveexperiencereport";
 
 const companyRouter = Router();
 const companyController = new CompanyController();
@@ -69,7 +71,7 @@ companyRouter.post(
 
 //Delete PreTest
 companyRouter.delete(
-	"/createpretest/:testId",
+	"/deletepretest/:testId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
 	authorizeJobTestOwner,
@@ -77,5 +79,35 @@ companyRouter.delete(
 		preSelectionTestController
 	)
 );
+
+//updating PreTest
+
+companyRouter.put(
+	"/updatepretest/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.updatePreSelectionTest.bind(
+		preSelectionTestController
+	)
+);
+
+companyRouter.post(
+	"/createtest/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.createTest.bind(
+		preSelectionTestController
+	)
+);
+
+companyRouter.put(
+	"/updatetest", // Adding both testId and questionId as route params
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	authorizeQuestionOwner, // Ensure the company owns the specific question before allowing updat
+	preSelectionTestController.updateTest.bind(preSelectionTestController)
+);
+
+
 
 export default companyRouter;
