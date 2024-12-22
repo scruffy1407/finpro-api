@@ -26,7 +26,7 @@ export class WorkingExpController {
           decodedToken.user_id,
           wReview,
         );
-        console.log(response);
+        console.log("INI DATA WORKING EXP:", response);
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,

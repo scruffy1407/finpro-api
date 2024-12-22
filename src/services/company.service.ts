@@ -431,8 +431,6 @@ export class CompanyService {
   }
 
   async getDetailCompanyPage(companyId: number) {
-    console.log("INEER", companyId);
-
     try {
       const company = await this.prisma.company.findUnique({
         where: {
@@ -460,7 +458,6 @@ export class CompanyService {
         },
       });
 
-      console.log(company);
       if (!company) {
         return {
           success: false,

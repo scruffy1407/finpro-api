@@ -32,6 +32,7 @@ export class WorkingExpService {
               end_date: true,
               jobHunter: true,
               company_name: true,
+              job_title: true,
               work_experience_id: true,
               job_description: true,
               start_date: true,
@@ -207,6 +208,12 @@ export class WorkingExpService {
           message: user.message,
         };
       }
+      // Delete related job reviews (optional, depending on your requirements)
+      await this.prisma.jobReview.deleteMany({
+        where: {
+          workExperienceId: workingExpId,
+        },
+      });
 
       await this.prisma.workExperience.delete({
         where: {
