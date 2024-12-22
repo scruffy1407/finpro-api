@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { JobPost } from "../models/models";
+import {
+  companyDetailResponse,
+  JobPost,
+  reviewResponse,
+} from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
 import errorMap from "zod/lib/locales/en";
@@ -168,6 +172,7 @@ export class CompanyService {
         },
         take: 3, // Limit to the 8 newest job posts
         select: {
+          companyId: true,
           job_id: true,
           job_title: true,
           salary_min: true,
@@ -206,7 +211,7 @@ export class CompanyService {
     dateRange?: string,
     sortOrder?: string,
     companyCity?: string,
-    companyProvince?: string
+    companyProvince?: string,
   ) {
     try {
       // Build the search criteria based on the provided filters
@@ -302,6 +307,7 @@ export class CompanyService {
         take: limit, // Limit the number of records per page
         orderBy: orderBy, // Apply sorting
         select: {
+          companyId: true,
           job_id: true,
           job_title: true,
           salary_min: true,
@@ -421,6 +427,102 @@ export class CompanyService {
     } catch (error) {
       const err = error as Error;
       return { error: "somethin wrong with the category id : " + err.message };
+    }
+  }
+
+  async getDetailCompanyPage(companyId: number) {
+    console.log("INEER", companyId);
+
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: {
+          company_id: companyId,
+        },
+
+        include: {
+          jobPost: {
+            where: {
+              status: true,
+            },
+          },
+          _count: {
+            select: {
+              review: true,
+              jobPost: {
+                where: {
+                  status: true,
+                },
+              },
+            },
+          },
+          review: true,
+          baseUser: true,
+        },
+      });
+
+      console.log(company);
+      if (!company) {
+        return {
+          success: false,
+          message: "Cannot find company",
+        };
+      } else {
+        const companyResponse: companyDetailResponse = {
+          logo: company.logo as string,
+          email: company.baseUser.email,
+          addressDetail: company.address_details as string,
+          companyDescription: company.company_description as string,
+          companyIndustry: company.company_industry as string,
+          companyCity: company.company_city as string,
+          companySize: company.company_size as string,
+          companyName: company.company_name,
+          companyProvince: company.company_province as string,
+          companyId: company.company_id,
+          listJob: company.jobPost.map((job): JobPost => {
+            return {
+              job_title: job.job_title,
+              job_description: job.job_description,
+              salary_min: job.salary_min.toNumber(),
+              salary_max: job.salary_max ? job.salary_max.toNumber() : 0,
+              salary_show: job.salary_show,
+              job_experience_max: job.job_experience_max as number,
+              job_experience_min: job.job_experience_min as number,
+              job_space: job.job_space,
+              job_type: job.job_type,
+              status: job.status,
+              catergoryId: job.categoryId,
+              companyId: job.companyId,
+              preSelectionTestId: job.preSelectionTestId,
+              expired_date: job.expired_date,
+            };
+          }),
+          listReview: company.review.map((review): reviewResponse => {
+            return {
+              companyId: review.companyId,
+              reviewId: review.review_id,
+              careerPathRating: review.career_path_rating,
+              culturalRating: review.cultural_rating,
+              facilityRating: review.facility_rating,
+              reviewDescription: review.review_description,
+              reviewTitle: review.review_title,
+              jobunterId: review.jobHunterId,
+              workLifeBalanceRating: review.work_balance_rating,
+            };
+          }),
+        };
+
+        return {
+          success: true,
+          companyResponse,
+          count: company._count,
+        };
+      }
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        message: "Something went wrong, failed to find company",
+      };
     }
   }
 }

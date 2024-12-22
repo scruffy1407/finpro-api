@@ -133,4 +133,10 @@ companyRouter.put(
   interviewController.updateStatusInterview.bind(interviewController),
 );
 
+// PUBLIC DETAIL PAGE
+companyRouter.get(
+  "/company-detail/:companyId",
+  companyController.getDetailCompanyPage.bind(companyController),
+);
+
 export default companyRouter;

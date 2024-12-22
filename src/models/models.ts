@@ -3,6 +3,8 @@ import {
   CompanySize,
   Gender,
   EducationDegree,
+  JobSpace,
+  JobType,
 } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -167,8 +169,8 @@ export interface JobPost {
   job_experience_max: number;
   expired_date: Date;
   status: boolean;
-  job_type: "Full-Time" | "Freelance" | "Internship"; // Enum-like values
-  job_space: "Remote Working" | "On Office" | "Hybrid"; // Enum-like values
+  job_type: "Full-Time" | "Freelance" | "Internship" | JobType; // Enum-like values
+  job_space: "Remote Working" | "On Office" | "Hybrid" | JobSpace; // Enum-like values
 }
 
 export interface JobPostWithRelatedJobs {
@@ -251,4 +253,31 @@ export interface UpdateStatusInterview {
   interviewId: number;
   applicationId: number;
   interviewStatus: InterviewStatus;
+}
+
+export interface reviewResponse {
+  reviewId: number;
+  companyId: number;
+  jobunterId: number;
+  reviewTitle: string;
+  reviewDescription: string;
+  culturalRating: number;
+  workLifeBalanceRating: number;
+  facilityRating: number;
+  careerPathRating: number;
+}
+
+export interface companyDetailResponse {
+  companyId: number;
+  email: string;
+  logo: string;
+  companyName: string;
+  companyDescription: string;
+  companyCity: string;
+  companyProvince: string;
+  addressDetail: string;
+  companyIndustry: string;
+  companySize: string;
+  listJob: JobPost[];
+  listReview: reviewResponse[];
 }
