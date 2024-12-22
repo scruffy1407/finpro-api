@@ -95,8 +95,9 @@ model WorkExperience {
   start_date         DateTime @default(now())
   end_date           DateTime @default(now())
 
-  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
-  company   Company   @relation(fields: [companyId], references: [company_id])
+  jobHunter JobHunter   @relation(fields: [jobHunterId], references: [job_hunter_id])
+  company   Company     @relation(fields: [companyId], references: [company_id])
+  JobReview JobReview[]
 
   @@schema("JobHunter")
 }
@@ -133,6 +134,7 @@ model JobWishlist {
 
 model JobReview {
   review_id           Int    @id @default(autoincrement())
+  workExperienceId    Int
   companyId           Int
   jobHunterId         Int
   review_title        String
@@ -142,8 +144,9 @@ model JobReview {
   facility_rating     Int
   career_path_rating  Int
 
-  company   Company   @relation(fields: [companyId], references: [company_id])
-  jobHunter JobHunter @relation(fields: [jobHunterId], references: [job_hunter_id])
+  workExperience WorkExperience @relation(fields: [workExperienceId], references: [work_experience_id])
+  company        Company        @relation(fields: [companyId], references: [company_id])
+  jobHunter      JobHunter      @relation(fields: [jobHunterId], references: [job_hunter_id])
 
   @@schema("JobHunter")
 }

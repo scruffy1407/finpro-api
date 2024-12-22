@@ -14,6 +14,9 @@ export class WorkingExpController {
   async getListWorkingExp(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
+    const wReviewString = req.query.review;
+    const wReview = wReviewString === "true";
+    console.log("REVIEW BOOLEAN", wReview);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -21,6 +24,7 @@ export class WorkingExpController {
       try {
         const response = await this.workingExpService.getListWorkingExperience(
           decodedToken.user_id,
+          wReview,
         );
         console.log(response);
         if (response.success) {

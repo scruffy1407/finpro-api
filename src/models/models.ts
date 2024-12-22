@@ -267,6 +267,17 @@ export interface reviewResponse {
   careerPathRating: number;
 }
 
+export interface ReviewData {
+  reviewId?: number;
+  workExperienceId: number;
+  reviewTitle: string;
+  reviewDescription: string;
+  culturalRating: number;
+  workLifeBalanceRating: number;
+  facilityRating: number;
+  careerPathRating: number;
+}
+
 export interface companyDetailResponse {
   companyId: number;
   email: string;
