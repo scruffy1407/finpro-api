@@ -234,28 +234,55 @@ export class CompanyController {
   }
 
   // Method to fetch Job Post details by Job ID
+  // async getJobPostDetail(req: Request, res: Response): Promise<void> {
+  //   const jobId = parseInt(req.params.jobId); // Get jobId from URL params
+  //
+  //   if (isNaN(jobId)) {
+  //     res.status(400).send({ message: "Invalid jobId" });
+  //   }
+  //
+  //   try {
+  //     // Call the service method to get job post details
+  //     const jobPostDetail = await this.companyService.getJobPostDetail(jobId);
+  //
+  //     // Check if there was an error or no data
+  //     if (jobPostDetail.error || jobPostDetail.message) {
+  //       res
+  //         .status(404)
+  //         .send({ message: jobPostDetail.message || jobPostDetail.error });
+  //     } else {
+  //       res.status(200).send(jobPostDetail); //  the job post details
+  //     }
+  //   } catch (error) {
+  //     const err = error as Error;
+  //     res.status(500).send({
+  //       message: "An error occurred while fetching the job post details",
+  //       error: err.message,
+  //     });
+  //   }
+  // }
   async getJobPostDetail(req: Request, res: Response): Promise<void> {
-    const jobId = parseInt(req.params.jobId); // Get jobId from URL params
+    const jobId = parseInt(req.params.jobId);
 
     if (isNaN(jobId)) {
-      res.status(400).json({ message: "Invalid jobId" });
+      res.status(400).send({ message: "Invalid jobId" });
+      return; // Important: Return after sending the first response
     }
 
     try {
-      // Call the service method to get job post details
       const jobPostDetail = await this.companyService.getJobPostDetail(jobId);
 
-      // Check if there was an error or no data
       if (jobPostDetail.error || jobPostDetail.message) {
-        res
-          .status(404)
-          .json({ message: jobPostDetail.message || jobPostDetail.error });
+        res.status(404).send({
+          message: jobPostDetail.message || jobPostDetail.error,
+        });
+        return; // Important: Return after sending the first response
       }
 
-      res.status(200).json(jobPostDetail); //  the job post details
+      res.status(200).send(jobPostDetail);
     } catch (error) {
       const err = error as Error;
-      res.status(500).json({
+      res.status(500).send({
         message: "An error occurred while fetching the job post details",
         error: err.message,
       });
