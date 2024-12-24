@@ -306,8 +306,12 @@ model Company {
 
   baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
-  city           city?            @relation(fields: [cityId], references: [city_id])
+  jobPost          JobPost[]
+  review           JobReview[]
+  workExperience   WorkExperience[]
+  preSelectionTest PreSelectionTest[]
 
+  city city? @relation(fields: [cityId], references: [city_id])
 
   @@schema("Company")
 }
@@ -379,7 +383,7 @@ model Application {
 // Pre-Selection Test
 model PreSelectionTest {
   test_id       Int      @id @default(autoincrement())
-  companyId     Int     @default(1)
+  companyId     Int      @default(1)
   test_name     String
   image         String
   passing_grade Int      @default(85)
@@ -391,7 +395,7 @@ model PreSelectionTest {
   jobPost       JobPost[]
   testQuestions TestQuestion[]
 
-  company          Company          @relation(fields: [companyId], references: [company_id])
+  company Company @relation(fields: [companyId], references: [company_id])
 
   @@schema("PreSelectionTest")
 }
@@ -435,9 +439,8 @@ model ResultPreSelection {
   completion_id     Int                              @id @default(autoincrement())
   applicationId     Int
   completion_score  Int                              @default(0)
-  start_date         DateTime?
-  end_date           DateTime?
-
+  start_date        DateTime?
+  end_date          DateTime?
   completion_date   DateTime
   completion_status CompletionStatusPreSelectionTest
   created_at        DateTime                         @default(now())
@@ -613,4 +616,3 @@ enum CompanySize {
 
   @@schema("Company")
 }
-

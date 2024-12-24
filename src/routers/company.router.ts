@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
-uthorizeJobPostOwner } from "../middlewares/company/authorizeJobPostOwner";
 import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
+import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
 import { PreSelectionTestController } from "../controllers/preSelectionTest.controller";
 import { authorizeQuestionOwner } from "../middlewares/authorizeQuestionOwner";
 import { CompanyAdminController } from "../controllers/companyadmin.controller";
@@ -135,7 +135,21 @@ companyRouter.get(
   "/applicants",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getApplicants.bind(companyAdminController),
+  companyAdminController.getCompanyApplicants.bind(companyAdminController)
+);
+
+companyRouter.get(
+  "/jobpostinformation/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  companyAdminController.getJobPostInformation.bind(companyAdminController)
+)
+
+companyRouter.get(
+  "/jobapplicants/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  companyAdminController.getJobApplicants.bind(companyAdminController)
 );
 
 companyRouter.get(
