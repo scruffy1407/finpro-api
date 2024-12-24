@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ApplyJobTest } from "../services/applyjobTest.service";
+import { ApplyJobTest } from "../services/applyJobTest.service";
 
 export class ApplyJobTestController {
 	private applyJobTestService: ApplyJobTest;

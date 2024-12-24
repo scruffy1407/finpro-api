@@ -1,36 +1,44 @@
 import axios from "axios";
 import * as dotenv from "dotenv";
-import cron from "node-cron";
 
 dotenv.config();
 
-let ACCESS_TOKEN = process.env.DROPBOX_ACCESS_TOKEN;
+export class DropboxTokenManager {
+  private static instance: DropboxTokenManager;
+  private accessToken: string = process.env.DROPBOX_ACCESS_TOKEN || "";
 
-async function refreshAccessToken() {
-  try {
-    const response = await axios.post(
-      "https://api.dropbox.com/oauth2/token",
-      null,
-      {
-        params: {
-          grant_type: "refresh_token",
-          refresh_token: process.env.REFRESH_TOKEN,
-          client_id: process.env.APP_KEY,
-          client_secret: process.env.APP_SECRET,
-        },
-      }
-    );
-    const newAccessToken = response.data.access_token;
-    ACCESS_TOKEN = newAccessToken;
-    console.log("New Access Token:", newAccessToken);
-  } catch (error) {
-    console.error("Error refreshing token");
+  private constructor() {}
+
+  public static getInstance(): DropboxTokenManager {
+    if (!DropboxTokenManager.instance) {
+      DropboxTokenManager.instance = new DropboxTokenManager();
+    }
+    return DropboxTokenManager.instance;
+  }
+
+  public getAccessToken(): string {
+    return this.accessToken;
+  }
+
+  public async refreshAccessToken(): Promise<void> {
+    try {
+      const response = await axios.post(
+        "https://api.dropbox.com/oauth2/token",
+        null,
+        {
+          params: {
+            grant_type: "refresh_token",
+            refresh_token: process.env.REFRESH_TOKEN,
+            client_id: process.env.APP_KEY,
+            client_secret: process.env.APP_SECRET,
+          },
+        }
+      );
+
+      this.accessToken = response.data.access_token;
+      console.log("Access token refreshed:", this.accessToken);
+    } catch (error : any) {
+      console.error("Error refreshing Dropbox token:", error.message);
+    }
   }
 }
-
-cron.schedule("59 * * * *", () => {
-  console.log("Refreshing Dropbox Access Token...");
-  refreshAccessToken();
-});
-
-export { ACCESS_TOKEN };

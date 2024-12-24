@@ -1,9 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Application, ApplicationStatus } from "../models/models";
 import { Dropbox } from "dropbox";
-import { ACCESS_TOKEN } from "../utils/dropboxRefreshToken";
-
-const dbx = new Dropbox({ accessToken: ACCESS_TOKEN });
+import { DropboxTokenManager } from "../utils/dropboxRefreshToken";
 
 export class ApplyJobTest {
 	private prisma: PrismaClient;
@@ -17,6 +15,9 @@ export class ApplyJobTest {
 		file: Express.Multer.File
 	): Promise<string | undefined> {
 		try {
+			const tokenManager = DropboxTokenManager.getInstance();
+			const accessToken = tokenManager.getAccessToken();
+			const dbx = new Dropbox({ accessToken });
 			const dropboxResponse = await dbx.filesUpload({
 				path: `/resumes/${file.originalname}_${Date.now()}`,
 				contents: file.buffer,

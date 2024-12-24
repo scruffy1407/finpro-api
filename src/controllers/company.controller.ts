@@ -128,14 +128,10 @@ export class CompanyController {
 				job_space,
 			} = req.body;
 
-			const modifiedPreSelectionTestId = selection_test_active
-				? preSelectionTestId
-				: 0;
-
 			// Prepare the job data for service
 			const jobPostData = {
 				job_title,
-				preSelectionTestId: modifiedPreSelectionTestId,
+				preSelectionTestId,
 				categoryId,
 				selection_test_active,
 				salary_show,
@@ -204,7 +200,7 @@ export class CompanyController {
 			dateRange,
 			sortOrder,
 			companyCity,
-			companyProvince
+			companyProvince,
 		} = req.query;
 
 		try {

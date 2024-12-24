@@ -11,6 +11,8 @@ const companyRouter = Router();
 const companyController = new CompanyController();
 const authJwtMiddleware = new AuthJwtMiddleware();
 const preSelectionTestController = new PreSelectionTestController();
+const getPreSelectionTestsByCompanyController =
+	new PreSelectionTestController();
 
 companyRouter.post(
 	"/job",
@@ -69,6 +71,17 @@ companyRouter.post(
 	)
 );
 
+//View all Pre_test
+
+companyRouter.get(
+	"/viewpretest",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.getPreSelectionTestsByCompanyController.bind(
+		preSelectionTestController
+	)
+);
+
 //Delete PreTest
 companyRouter.delete(
 	"/deletepretest/:testId",
@@ -95,9 +108,7 @@ companyRouter.post(
 	"/createtest/:testId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-	preSelectionTestController.createTest.bind(
-		preSelectionTestController
-	)
+	preSelectionTestController.createTest.bind(preSelectionTestController)
 );
 
 companyRouter.put(
@@ -107,7 +118,5 @@ companyRouter.put(
 	authorizeQuestionOwner, // Ensure the company owns the specific question before allowing updat
 	preSelectionTestController.updateTest.bind(preSelectionTestController)
 );
-
-
 
 export default companyRouter;

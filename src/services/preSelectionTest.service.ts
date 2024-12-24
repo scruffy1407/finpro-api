@@ -13,7 +13,7 @@ export class PreSelectionTestService {
 
 	// Method to create a Pre-selection Test
 	async createPreSelectionTest({
-		jobPostId,
+		// jobPostId,
 		testName,
 		image = "",
 		passingGrade = 85,
@@ -26,9 +26,7 @@ export class PreSelectionTestService {
 		passingGrade?: number;
 		duration?: number;
 		token: string; // Passing the JWT token to validate the company
-	}): Promise<
-		{ preSelectionTest: PreSelectionTest; updatedJobPost: JobPost } | string
-	> {
+	}): Promise<{ preSelectionTest: PreSelectionTest } | string> {
 		try {
 			// Step 1: Decode the token to get the user and company info
 			const decodedToken = await this.authUtils.decodeToken(token); // Decode JWT token
@@ -48,20 +46,20 @@ export class PreSelectionTestService {
 				return "User is not associated with a company";
 			}
 
-			// Step 3: Check if the job post exists
-			const jobPost = await this.prisma.jobPost.findUnique({
-				where: { job_id: jobPostId },
-				include: { company: true },
-			});
+			// // Step 3: Check if the job post exists
+			// const jobPost = await this.prisma.jobPost.findUnique({
+			// 	where: { job_id: jobPostId },
+			// 	include: { company: true },
+			// });
 
-			if (!jobPost) {
-				return "JobPost not found";
-			}
+			// if (!jobPost) {
+			// 	return "JobPost not found";
+			// }
 
-			// Step 4: Verify that the job post belongs to the same company
-			if (jobPost.company.company_id !== company.company_id) {
-				return "You are not authorized to create a pre-selection test for this job post";
-			}
+			// // Step 4: Verify that the job post belongs to the same company
+			// if (jobPost.company.company_id !== company.company_id) {
+			// 	return "You are not authorized to create a pre-selection test for this job post";
+			// }
 
 			// Step 5: Create the pre-selection test
 			const preSelectionTest = await this.prisma.preSelectionTest.create({
@@ -70,24 +68,16 @@ export class PreSelectionTestService {
 					image: image || "", // If no image provided, use an empty string
 					passing_grade: passingGrade,
 					duration: duration,
-					jobPost: {
-						connect: {
-							job_id: jobPostId,
-						},
-					},
-				},
-			});
-
-			// Step 6: Update the JobPost with the preSelectionTestId
-			const updatedJobPost = await this.prisma.jobPost.update({
-				where: { job_id: jobPostId },
-				data: {
-					preSelectionTestId: preSelectionTest.test_id, // Link the test to the job post
+					// jobPost: {
+					// 	connect: {
+					// 		job_id: jobPostId,
+					// 	},
+					// },
 				},
 			});
 
 			// Return the created pre-selection test and updated job post
-			return { preSelectionTest, updatedJobPost };
+			return { preSelectionTest };
 		} catch (error) {
 			const err = error as Error;
 			return `Error: ${err.message}`;
@@ -162,6 +152,7 @@ export class PreSelectionTestService {
 
 	async updatePreSelectionTest({
 		testId,
+		jobPostId,
 		testName,
 		image,
 		passingGrade,
@@ -173,6 +164,7 @@ export class PreSelectionTestService {
 		image?: string;
 		passingGrade?: number;
 		duration?: number;
+		jobPostId?: number;
 		token: string;
 	}): Promise<PreSelectionTest | string> {
 		try {
@@ -199,6 +191,34 @@ export class PreSelectionTestService {
 
 			if (!preSelectionTest) {
 				return "PreSelection test not found";
+			}
+
+			// Validate and connect the job post if jobPostId is provided
+			if (jobPostId) {
+				const jobPost = await this.prisma.jobPost.findUnique({
+					where: { job_id: jobPostId },
+					include: { company: true },
+				});
+
+				if (!jobPost) {
+					return "Job post not found";
+				}
+
+				if (jobPost.company.company_id !== company.company_id) {
+					return "You are not authorized to associate this job post with the pre-selection test";
+				}
+
+				// Connect the job post to the pre-selection test
+				await this.prisma.preSelectionTest.update({
+					where: { test_id: testId },
+					data: {
+						jobPost: {
+							connect: {
+								job_id: jobPostId,
+							},
+						},
+					},
+				});
 			}
 
 			const updateData: {
@@ -376,6 +396,50 @@ export class PreSelectionTestService {
 		} catch (error) {
 			console.error("Error getting existing questions count:", error);
 			throw new Error("Error fetching existing questions count.");
+		}
+	}
+
+	async getPreSelectionTestsByCompany(token: string): Promise<any> {
+		try {
+			// Decode the provided token to retrieve the user's ID
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return { error: "Invalid token or company ID not found" };
+			}
+
+			const userId = decodedToken.user_id;
+
+			// Fetch the company associated with the user
+			const company = await this.prisma.company.findFirst({
+				where: { userId: userId },
+				select: { company_id: true },
+			});
+
+			if (!company) {
+				return { error: "Company not found for the given user" };
+			}
+
+			const companyId = company.company_id;
+
+			// Fetch all pre-selection tests created by the company
+			const preSelectionTests = await this.prisma.preSelectionTest.findMany({
+				where: {
+					companyId: companyId, // Directly filter by companyId
+				},
+				select: {
+					test_id: true,
+					test_name: true,
+					image: true,
+					passing_grade: true,
+					duration: true,
+					created_at: true,
+				},
+			});
+
+			return preSelectionTests;
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching pre-selection tests: " + err.message };
 		}
 	}
 }

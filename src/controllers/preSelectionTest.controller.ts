@@ -259,4 +259,43 @@ export class PreSelectionTestController {
 				.json({ message: "Internal Server Error", error: err.message });
 		}
 	}
+
+	// Method to fetch Pre-Selection Tests by Company
+	public async getPreSelectionTestsByCompanyController(
+		req: Request,
+		res: Response
+	): Promise<void> {
+		try {
+			// Extract the token from the Authorization header
+			const authorizationHeader = req.headers.authorization ?? ""; // Fallback to an empty string
+			if (!authorizationHeader.startsWith("Bearer ")) {
+				res.status(401).json({
+					error:
+						'Authorization token is required and must be in the format "Bearer <token>"',
+				});
+				return;
+			}
+
+			const token = authorizationHeader.split(" ")[1]; // Extract the token
+
+			// Call the service method to get pre-selection tests by company
+			const result =
+				await this.preSelectionTestService.getPreSelectionTestsByCompany(token);
+
+			// Check if the result is an error message
+			if (typeof result === "string" || result?.error) {
+				res.status(400).json({ error: result.error || result });
+				return;
+			}
+
+			// Return the fetched tests
+			res.status(200).json({
+				message: "Pre-selection tests fetched successfully",
+				data: result,
+			});
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({ error: `Error: ${err.message}` });
+		}
+	}
 }
