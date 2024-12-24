@@ -5,6 +5,9 @@ import {
   CompanyGeneralInfo,
   UpdateImage,
   JobHunterGeneralInfo,
+  companyDetailResponse,
+  JobPost,
+  reviewResponse,
 } from "../models/models";
 import { UserService } from "./baseUser/user.service";
 import { getLocationDetail } from "../utils/api";
@@ -178,7 +181,7 @@ export class CompanyService {
 
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
-        updateData.image
+        updateData.image,
       );
       if (!uploadImage.success) {
         return {

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import { AuthUtils } from "../utils/auth.utils"; // Import AuthUtils
+import { AuthUtils } from "../../utils/auth.utils"; // Import AuthUtils
 
 const prisma = new PrismaClient();
 const authUtils = new AuthUtils(); // Instantiate AuthUtils
@@ -8,7 +8,7 @@ const authUtils = new AuthUtils(); // Instantiate AuthUtils
 export const authorizeJobPostOwner = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Get the token from the Authorization header

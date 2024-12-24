@@ -81,7 +81,7 @@ export class JobHunterService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId
+        jobHunterId,
       );
 
       if (!user?.success) {
@@ -92,7 +92,7 @@ export class JobHunterService {
       }
 
       const getLocation = await this.locationService.getUserLocation(
-        updateData.cityId as number
+        updateData.cityId as number,
       );
 
       const updateUser = await this.prisma.jobHunter.update({
@@ -154,7 +154,7 @@ export class JobHunterService {
 
       const uploadImage = await this.userService.uploadImage(
         jobHunter.role_type,
-        updateData.image
+        updateData.image,
       );
       console.log(uploadImage);
 
@@ -185,6 +185,54 @@ export class JobHunterService {
         success: false,
         message: "Something went wrong, failed to update company image",
         detail: e,
+      };
+    }
+  }
+  async validateUserJoinJob(userId: number, jobId: number) {
+    try {
+      const jobHunter = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          jobHunter: true,
+        },
+      });
+      if (!jobHunter) {
+        return {
+          success: false,
+          message: "Cannot find company",
+        };
+      }
+      if (jobHunter.role_type !== RoleType.jobhunter) {
+        return {
+          success: false,
+          message: "Cannot access this data",
+        };
+      }
+
+      const validateData = await this.prisma.application.findFirst({
+        where: {
+          jobId: jobId,
+          jobHunterId: jobHunter?.jobHunter[0]?.job_hunter_id,
+        },
+      });
+      if (!validateData) {
+        return {
+          success: false,
+          code: "VALID",
+          message: "User is not yet join to the job",
+        };
+      }
+      return {
+        success: true,
+        data: validateData,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        message: "Cannot access this data",
       };
     }
   }

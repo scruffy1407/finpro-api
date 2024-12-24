@@ -10,59 +10,146 @@ export class CompanyAdminController {
   constructor() {
     this.companyAdminService = new CompanyAdmin();
     this.authUtils = new AuthUtils();
-    this.getApplicants = this.getApplicants.bind(this);
+    this.getCompanyApplicants = this.getCompanyApplicants.bind(this);
+    this.getJobApplicants = this.getJobApplicants.bind(this);
     this.getApplicationDetails = this.getApplicationDetails.bind(this);
     this.updateApplicationStatus = this.updateApplicationStatus.bind(this);
   }
 
-  async getApplicants(req: Request, res: Response) {
+  async getCompanyApplicants(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
 
     if (!decodedToken?.user_id) {
       res.status(400).json({ success: false, message: "User ID is missing." });
+    } else {
+      try {
+        const applicants = await this.companyAdminService.getCompanyApplicants(
+          decodedToken?.user_id as number
+        );
+        res.status(200).json({ success: true, data: applicants });
+      } catch (error) {
+        console.error("Error fetching applicants:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Failed to fetch applicants." });
+      }
+    }
+  }
+
+  async getJobPostInformation(req: Request, res: Response) {
+    const { jobId } = req.params;
+    const token = req.headers.authorization?.split(" ")[1] as string;
+
+    if (!token) {
+      res.status(400).json({ success: false, message: "Token is missing." });
+      return;
     }
 
     try {
-      const applicants = await this.companyAdminService.getApplicants(
-        decodedToken?.user_id as number
+      const decodedToken = await this.authUtils.decodeToken(token);
+      if (!decodedToken?.user_id) {
+        res.status(400).json({
+          success: false,
+          message: "User ID is missing or invalid in token.",
+        });
+        return;
+      }
+
+      const jobPostInfo = await this.companyAdminService.getJobPostInformation(
+        Number(jobId),
+        Number(decodedToken?.user_id)
       );
-      res.status(200).json({ success: true, data: applicants });
-    } catch (error) {
-      console.error("Error fetching applicants:", error);
-      res
-        .status(500)
-        .json({ success: false, message: "Failed to fetch applicants." });
+
+      if (!jobPostInfo) {
+        res.status(401).json({
+          success: false,
+          message:
+            "Unauthorized to access this job post or job post not found.",
+        });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: jobPostInfo });
+    } catch (error: any) {
+      console.error("Error fetching job post information:", error);
+
+      if (error.message.includes("Unauthorized")) {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized to access this job post.",
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch job post information.",
+        });
+      }
+    }
+  }
+
+  async getJobApplicants(req: Request, res: Response) {
+    const { jobId } = req.params;
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+
+    if (!decodedToken?.user_id) {
+      res.status(400).json({ success: false, message: "User ID is missing." });
+    } else {
+      try {
+        const applicants = await this.companyAdminService.getJobApplicants(
+          Number(jobId),
+          Number(decodedToken?.user_id)
+        );
+        if (applicants.success) {
+          res.status(200).json({ status: res.statusCode, data: applicants });
+        } else {
+          res
+            .status(401)
+            .json({ success: res.statusCode, message: applicants.message });
+        }
+      } catch (error) {
+        console.error("Error fetching applicants:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Failed to fetch applicants." });
+      }
     }
   }
 
   async getApplicationDetails(req: Request, res: Response) {
     const { id } = req.params;
-
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
-    try {
-      const details = await this.companyAdminService.getApplicationDetails(
-        Number(id),
-        decodedToken?.user_id as number
-      );
-      if (!details) {
-        res
-          .status(404)
-          .json({ success: false, message: "Application not found." });
+
+    if (!decodedToken?.user_id) {
+      res.status(400).json({ success: false, message: "User ID is missing." });
+    } else {
+      try {
+        const details = await this.companyAdminService.getApplicationDetails(
+          Number(id),
+          decodedToken?.user_id as number
+        );
+        if (!details) {
+          res.status(404).json({
+            success: false,
+            message: "Application details not found.",
+          });
+        } else {
+          res.status(200).json({ success: true, data: details });
+        }
+      } catch (error) {
+        console.error("Error fetching application details:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch application details.",
+        });
       }
-      res.status(200).json({ success: true, data: details });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch application details.",
-      });
     }
   }
 
   async updateApplicationStatus(req: Request, res: Response) {
     const { application_id, application_status } = req.body;
-
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
 
@@ -82,7 +169,7 @@ export class CompanyAdminController {
         );
 
         if (!result || result.count === 0) {
-          res.status(404).json({
+          res.status(401).json({
             success: false,
             message: "Application status can no longer be updated.",
           });
@@ -93,6 +180,8 @@ export class CompanyAdminController {
           });
         }
       } catch (error: any) {
+        console.error("Error updating application status:", error);
+
         if (error.message.includes("no longer be updated")) {
           res.status(403).json({
             success: false,
@@ -104,7 +193,6 @@ export class CompanyAdminController {
             message: error.message,
           });
         } else {
-          console.error("Error updating application status:", error);
           res.status(500).json({
             success: false,
             message: "Failed to update application status.",

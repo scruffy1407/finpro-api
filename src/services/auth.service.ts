@@ -66,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email
+      validatedData.email,
     );
 
     // Create Base user
@@ -91,7 +91,7 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name
+        validatedData.name,
       ); // create Job Hunter\\
 
       console.log(jobHunter);
@@ -122,7 +122,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name
+        validatedData.name,
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -390,7 +390,7 @@ export class AuthService {
         where: { userId: user.user_id },
       });
       if (company) {
-        company_id = company.company_id
+        company_id = company.company_id;
         additionalInfo = {
           name: company.company_name,
           photo: company.logo || null,
@@ -409,7 +409,12 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken } =
-      await this.AuthUtils.generateLoginToken(user.user_id, user.role_type, company_id);
+      await this.AuthUtils.generateLoginToken(
+        user.user_id,
+        user.role_type,
+        user.verified,
+        company_id,
+      );
 
     await this.prisma.baseUsers.update({
       where: { email: validatedData.email },
@@ -440,7 +445,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" }
+        { expiresIn: "3d" },
       );
 
       return { success: true, accessToken };
@@ -475,7 +480,7 @@ export class AuthService {
   async refreshAccessToken(
     user_id: number,
     user_role: RoleType,
-    token: string
+    token: string,
   ) {
     // Decode refresh token to get id
     // check if the user of the token is available in data base
@@ -506,7 +511,8 @@ export class AuthService {
     // generate new token
     const accessToken = await this.AuthUtils.generateAccessToken(
       user_id,
-      user_role
+      user_role,
+      user.verified,
     );
 
     await this.prisma.baseUsers.update({
@@ -530,8 +536,8 @@ export class AuthService {
         user_id: user_id,
       },
       include: {
-        company: role_type === RoleType.company ? true : false,
-        jobHunter: role_type === RoleType.jobhunter ? true : false,
+        company: role_type === RoleType.company,
+        jobHunter: role_type === RoleType.jobhunter,
       },
     });
     if (!user) {
