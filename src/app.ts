@@ -10,6 +10,8 @@ import "./services/oauth.service";
 import userRouter from "./routers/user.router";
 import companyRouter from "./routers/company.router";
 import locationRouter from "./routers/location.router";
+import applyTestRouter from "./routers/applyTest.router";
+import applyJobTestRouter from "./routers/applyJobTestRouter";
 
 environment.config();
 
@@ -58,6 +60,10 @@ app.use("/applyjob/", applyJobRouter);
 
 // COMPANY
 app.use("/api/company", companyRouter);
+
+app.use ("/api/jobhunter" , applyTestRouter)
+
+app.use ("/api/applyjobtest" , applyJobTestRouter)
 
 app.use(errorHandler.errorHandler());
 

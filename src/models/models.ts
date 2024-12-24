@@ -142,6 +142,7 @@ export enum ApplicationStatus {
   ON_REVIEW = "onreview",
   ACCEPTED = "accepted",
   REJECTED = "rejected",
+  waitingSubmission = "waitingSubmission"
 }
 
 export interface Application {
