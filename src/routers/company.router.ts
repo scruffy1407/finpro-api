@@ -2,7 +2,6 @@ import { Router } from "express";
 import { CompanyController } from "../controllers/company.controller";
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { authorizeJobPostOwner } from "../middlewares/authorizeJobPostOwner";
-import { authorizeJobTestOwner } from "../middlewares/authorizeJobTestOwner";
 import { PreSelectionTestController } from "../controllers/preSelectionTest.controller";
 import { CompanyAdminController } from "../controllers/companyadmin.controller";
 
@@ -61,28 +60,44 @@ companyRouter.get(
 //Create Pre-Test
 
 companyRouter.post(
-	"/createpretest",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-	preSelectionTestController.createPreSelectionTest.bind(
-		preSelectionTestController
-	)
+  "/createpretest",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  preSelectionTestController.createPreSelectionTest.bind(
+    preSelectionTestController
+  )
 );
 
 //Delete PreTest
 companyRouter.delete(
-	"/deletepretest/:testId",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-	preSelectionTestController.deletePreSelectionTest.bind(preSelectionTestController)
-  );
-  
+  "/deletepretest/:testId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  preSelectionTestController.deletePreSelectionTest.bind(
+    preSelectionTestController
+  )
+);
+
 // Company Check Applicants - thom part
 companyRouter.get(
   "/applicants",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getApplicants.bind(companyAdminController)
+  companyAdminController.getCompanyApplicants.bind(companyAdminController)
+);
+
+companyRouter.get(
+  "/jobpostinformation/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  companyAdminController.getJobPostInformation.bind(companyAdminController)
+)
+
+companyRouter.get(
+  "/jobapplicants/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  companyAdminController.getJobApplicants.bind(companyAdminController)
 );
 
 companyRouter.get(

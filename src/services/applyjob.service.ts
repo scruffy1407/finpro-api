@@ -19,7 +19,7 @@ export class ApplyJob {
       const dbx = new Dropbox({ accessToken });
 
       const dropboxResponse = await dbx.filesUpload({
-        path: `/resumes/${file.originalname}_${Date.now()}`,
+        path: `/resumes/${Date.now()}-${file.originalname}}`,
         contents: file.buffer,
       });
       const sharedLinkResponse = await dbx.sharingCreateSharedLinkWithSettings({
@@ -47,13 +47,22 @@ export class ApplyJob {
       });
 
       if (!jobHunter) {
-        return { error: "Invalid access token or user not found." };
+        return {
+          success: false,
+          statusCode: 401,
+          message: "Invalid access token or user not found.",
+        };
       }
 
       if (jobHunter.job_hunter_id !== data.jobHunterId) {
-        return { error: "Unauthorized access to apply for the job." };
+        return {
+          success: false,
+          statusCode: 403,
+          message: "Unauthorized access to apply for the job.",
+        };
       }
 
+      // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
       // const requiredFields: Array<keyof typeof jobHunter> = [
       //   "name",
       //   "gender",
@@ -74,7 +83,11 @@ export class ApplyJob {
         where: { job_id: data.jobId },
       });
       if (!jobExists) {
-        return { error: "Job does not exist." };
+        return {
+          success: false,
+          statusCode: 404,
+          message: "Job does not exist.",
+        };
       }
 
       const existingApplication = await this.prisma.application.findFirst({
@@ -87,21 +100,33 @@ export class ApplyJob {
       if (existingApplication) {
         return {
           success: false,
+          statusCode: 409,
           message: "You have already applied for this job.",
         };
       }
 
       const resumeUrl = await this.uploadResumeToDropbox(file);
 
-      return await this.prisma.application.create({
+      const newApplication = await this.prisma.application.create({
         data: {
           ...data,
           resume: resumeUrl as string,
           application_status: ApplicationStatus.ON_REVIEW,
         },
       });
+
+      return {
+        success: true,
+        statusCode: 201,
+        data: newApplication,
+      };
     } catch (error) {
-      return { error: "Failed to apply for the job, please try again" };
+      console.error("Error applying for job:", error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "Failed to apply for the job, please try again.",
+      };
     }
   }
 
@@ -112,41 +137,95 @@ export class ApplyJob {
     });
   }
 
-  async createBookmark(
-    jobHunterId: number,
-    jobPostId: number,
-    date_added: Date
-  ) {
-    return await this.prisma.jobWishlist.create({
-      data: {
-        jobHunterId,
-        jobPostId,
-        date_added,
-      },
-    });
-  }
+  // BOOKMARK SERVICES
+  async createBookmark(userId: number, jobPostId: number) {
+    try {
+      const user = await this.prisma.baseUsers.findUnique({
+        where: { user_id: userId },
+        include: { jobHunter: true },
+      });
+      const jobHunterId = user?.jobHunter[0].job_hunter_id as number;
+      const existingBookmark = await this.prisma.jobWishlist.findFirst({
+        where: {
+          jobHunterId,
+          jobPostId,
+        },
+      });
 
-  async removeBookmarks(jobHunterId: number, jobPostId: number) {
-    console.log(jobHunterId);
-    console.log(jobPostId);
-    const bookmark = await this.prisma.jobWishlist.deleteMany({
-      where: {
-        jobHunterId,
-        jobPostId,
-      },
-    });
+      if (existingBookmark) {
+        return {
+          success: false,
+          message: "Bookmark already exists for this job post.",
+        };
+      }
 
-    if (bookmark.count === 0) {
-      return { success: false, message: "Bookmark not found." };
+      const newBookmark = await this.prisma.jobWishlist.create({
+        data: {
+          jobHunterId,
+          jobPostId,
+          date_added: new Date(),
+        },
+      });
+
+      return {
+        success: true,
+        message: "Bookmark created successfully.",
+        bookmark: newBookmark,
+      };
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
+      return { success: false, message: "Failed to create bookmark." };
     }
-
-    return { success: true, message: "Bookmark removed successfully." };
   }
 
-  async getAllBookmarks(jobHunterId: number) {
-    return await this.prisma.jobWishlist.findMany({
-      where: { jobHunterId },
-      include: { jobPost: true },
-    });
+  async removeBookmarks(userId: number, wishlist_id: number) {
+    try {
+      const user = await this.prisma.baseUsers.findUnique({
+        where: { user_id: userId },
+        include: { jobHunter: true },
+      });
+
+      if (!user) {
+        return { success: false, message: "User not found." };
+      }
+
+      await this.prisma.jobWishlist.delete({
+        where: {
+          wishlist_id,
+        },
+      });
+
+      return { success: true, message: "Bookmark removed successfully." };
+    } catch (error) {
+      console.error("Error removing bookmark:", error);
+      return { success: false, message: "Failed to remove bookmark." };
+    }
+  }
+
+  async getAllBookmarks(userId: number) {
+    try {
+      const user = await this.prisma.baseUsers.findUnique({
+        where: { user_id: userId },
+        include: { jobHunter: true },
+      });
+
+      const bookmarks = await this.prisma.jobHunter.findFirst({
+        where: { job_hunter_id: user?.jobHunter[0].job_hunter_id },
+        include: {
+          jobWishlist: {
+            include: {
+              jobPost: {
+                include: { company: true },
+              },
+            },
+          },
+        },
+      });
+
+      return bookmarks;
+    } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      return { success: false, message: "Failed to fetch bookmarks." };
+    }
   }
 }

@@ -29,8 +29,7 @@ authRouter.put(
 
 // Verify Email Router
 authRouter.get(
-  "/verify-email",
-  authMiddleware.authenticateJwt.bind(authMiddleware),
+  "/verify-email/:verificationToken",
   authController.verifyEmail.bind(authController)
 );
 

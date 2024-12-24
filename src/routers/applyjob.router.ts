@@ -20,6 +20,8 @@ applyJobRouter.get(
 
   applyJobController.getAllApplications
 );
+
+// Bookmark Remove
 applyJobRouter.post(
   "/bookmark",
   authMiddleware.authenticateJwt.bind(authMiddleware),
@@ -31,7 +33,7 @@ applyJobRouter.post(
   applyJobController.removeBookmarks
 );
 applyJobRouter.get(
-  "/bookmark/:jobHunterId",
+  "/bookmark",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   applyJobController.getAllBookmarks
 );

@@ -26,11 +26,6 @@ export class AuthJwtMiddleware {
     
       // Typecast decoded token to your custom interface
       const user = decoded as JwtPayload;
-
-      console.log("Decoded token user_id:", user.user_id);
-      console.log("Decoded token role_type:", user.role_type);
-      console.log("Decoded token company_id:", user.companyId);
-    
       (req as any).user = user; // Attach the strongly-typed user object
       console.log (user, "INI DECODED USER DAPET KGK 1")
       console.log("Decoded token 2 :", decoded);

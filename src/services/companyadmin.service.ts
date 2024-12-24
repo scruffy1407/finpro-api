@@ -16,7 +16,38 @@ export class CompanyAdmin {
     return company?.company[0].company_id || null;
   }
 
-  async getApplicants(userId: number) {
+  async getJobPostInformation(jobId: number, userId: number) {
+    const companyId = await this.getCompanyId(userId);
+
+    if (!companyId) {
+      console.error("No company found for this user.");
+      return null;
+    }
+
+    const jobPost = await this.prisma.jobPost.findUnique({
+      where: { job_id: jobId },
+      include: {
+        company: {
+          select: {
+            company_id: true,
+            company_name: true,
+            logo: true,
+            company_industry: true,
+            company_size: true,
+          },
+        },
+      },
+    });
+
+    if (jobPost?.company?.company_id !== companyId) {
+      console.error("Unauthorized to access this job post.");
+      return null;
+    }
+
+    return jobPost;
+  }
+
+  async getCompanyApplicants(userId: number) {
     const companyId = await this.getCompanyId(userId);
     if (!companyId) {
       console.error("There is no company found for this user.");
@@ -45,6 +76,43 @@ export class CompanyAdmin {
         },
       },
     });
+  }
+
+  async getJobApplicants(jobId: number, companyId: number) {
+    try {
+      const applicants = await this.prisma.jobPost.findUnique({
+        where: { job_id: jobId },
+        include: {
+          applyJob: {
+            include: {
+              jobHunter: {
+                select: {
+                  job_hunter_id: true,
+                  name: true,
+                  email: true,
+                  resume: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (applicants?.companyId !== companyId) {
+        console.error("Unauthorized to access other company job");
+        return {
+          success: false,
+          message: "Unauthorized to access other company job",
+        };
+      }
+
+      console.log("Fetched applicants data:", applicants);
+
+      return { success: true, applicants };
+    } catch (error) {
+      console.error("Error fetching job applicants:", error);
+      return { success: false, message: "Error fetching job applicants" };
+    }
   }
 
   async getApplicationDetails(applicationId: number, userId: number) {

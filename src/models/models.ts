@@ -72,6 +72,7 @@ export interface GoogleProfile {
 
 export interface JwtPayload {
   companyId?: string; // The company ID from the token
+  company_id?: string;
   user_id: number;
   role_type: string;
 }

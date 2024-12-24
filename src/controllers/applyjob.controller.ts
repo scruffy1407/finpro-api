@@ -1,13 +1,16 @@
- import { Request, Response } from "express";
+import { Request, Response } from "express";
 import { ApplyJob } from "../services/applyjob.service";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ApplicationStatus } from "../models/models";
+import { AuthUtils } from "../utils/auth.utils";
 
 class ApplyJobController {
   private applyJobService: ApplyJob;
+  private authUtils: AuthUtils;
 
   constructor() {
     this.applyJobService = new ApplyJob();
+    this.authUtils = new AuthUtils();
     this.applyJob = this.applyJob.bind(this);
     this.getAllApplications = this.getAllApplications.bind(this);
     this.createBookmark = this.createBookmark.bind(this);
@@ -36,45 +39,26 @@ class ApplyJobController {
       return;
     }
 
-    try {
-      const application = await this.applyJobService.applyJob(
-        {
-          jobHunterId: Number(jobHunterId),
-          jobId: Number(jobId),
-          resume: "",
-          expected_salary: new Decimal(expected_salary),
-          application_status: ApplicationStatus.ON_REVIEW,
-        },
-        file,
-        accessToken
-      );
-      console.log("Application created successfully:", application);
-      res.status(201).send({ application });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.message === "Job hunter does not exist.") {
-          res.status(404).send({
-            success: false,
-            message: error.message,
-          });
-        } else if (error.message === "Job does not exist.") {
-          res.status(404).send({
-            success: false,
-            message: error.message,
-          });
-        } else if (error.message === "You have already applied for this job.") {
-          res.status(409).send({
-            success: false,
-            message: error.message,
-          });
-        } else {
-          console.error("Unexpected error:", error);
-          res.status(500).send({
-            success: false,
-            message: "Failed to apply job, please try again",
-          });
-        }
-      }
+    const response = await this.applyJobService.applyJob(
+      {
+        jobHunterId: Number(jobHunterId),
+        jobId: Number(jobId),
+        resume: "",
+        expected_salary: new Decimal(expected_salary),
+        application_status: ApplicationStatus.ON_REVIEW,
+      },
+      file,
+      accessToken
+    );
+
+    if (response.success) {
+      res
+        .status(response.statusCode)
+        .send({ success: true, data: response.data });
+    } else {
+      res
+        .status(response.statusCode)
+        .send({ success: false, message: response.message });
     }
   }
 
@@ -95,61 +79,82 @@ class ApplyJobController {
   }
 
   async createBookmark(req: Request, res: Response) {
-    const { jobHunterId, jobPostId } = req.body;
-
+    const { jobPostId } = req.body;
+    const token = req.headers.authorization?.split(" ")[1] as string;
+  
     try {
-      const bookmark = await this.applyJobService.createBookmark(
-        Number(jobHunterId),
-        Number(jobPostId),
-        new Date()
+      const decodedToken = await this.authUtils.decodeToken(token);
+      if (!decodedToken) {
+        res
+          .status(401)
+          .send({ success: false, message: "Unauthorized. No token found." });
+        return; // Ensure no further code execution after sending the response
+      }
+  
+      const result = await this.applyJobService.createBookmark(
+        Number(decodedToken.user_id),
+        Number(jobPostId)
       );
-
-      res.status(201).send({ success: true, bookmark });
+  
+      if (!result.success) {
+        res.status(400).send({ success: false, message: result.message });
+        return; // Prevent sending a duplicate response
+      }
+  
+      res.status(201).send({ success: true, bookmark: result.bookmark });
     } catch (error) {
-      console.error(error);
+      console.error("Error creating bookmark:", error);
       res
         .status(500)
-        .send({ success: false, error: "Failed to create bookmark" });
+        .send({ success: false, message: "Failed to create bookmark" });
     }
   }
 
   async removeBookmarks(req: Request, res: Response) {
-    const { jobHunterId, jobPostId } = req.body;
-    console.log("REQ BODY!", req.body);
+    const { wishlist_id } = req.body;
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    if (!decodedToken) {
+      res.status(401).send({ success: false, message: "Unauthorized. No token found." });
+    } else {
+      try {
+        const result = await this.applyJobService.removeBookmarks(
+          Number(decodedToken.user_id),
+          Number(wishlist_id)
+        );
 
-    try {
-      const result = await this.applyJobService.removeBookmarks(
-        Number(jobHunterId),
-        Number(jobPostId)
-      );
+        if (!result.success) {
+          res.status(404).send({ success: false, message: result.message });
+          return;
+        }
 
-      if (!result.success) {
-        res.status(404).send({ success: false, message: result.message });
-        return;
+        res.status(201).send({ success: true, message: result.message });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to remove bookmark" });
       }
-
-      res.status(201).send({ success: true, message: result.message });
-    } catch (error) {
-      console.error(error);
-      res
-        .status(500)
-        .send({ success: false, error: "Failed to remove bookmark" });
     }
   }
 
   async getAllBookmarks(req: Request, res: Response) {
-    const { jobHunterId } = req.params;
-
-    try {
-      const bookmarks = await this.applyJobService.getAllBookmarks(
-        Number(jobHunterId)
-      );
-      res.status(200).send({ success: true, bookmarks });
-    } catch (error) {
-      console.error(error);
-      res
-        .status(500)
-        .send({ success: false, error: "Failed to fetch bookmarks" });
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    if (!decodedToken) {
+      res.status(401).send({ success: false, message: "Unauthorized. No token found." });
+    } else {
+      try {
+        const bookmarks = await this.applyJobService.getAllBookmarks(
+          Number(decodedToken.user_id)
+        );
+        res.status(200).send({ success: true, bookmarks });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch bookmarks" });
+      }
     }
   }
 }

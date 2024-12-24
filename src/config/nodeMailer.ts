@@ -36,7 +36,7 @@ export async function sendEmailVerification(
   verificationToken: string
 ) {
   const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
-  const href = `http://localhost:3000/auth/verify-email/${verificationToken}`;
+  const href = `http://localhost:3000/auth/register/verify-email/${verificationToken}`;
   const html = await ejs.renderFile(templatePath, {
     email: email,
     linkVerify: href,
@@ -45,7 +45,7 @@ export async function sendEmailVerification(
   const mailOption = {
     from: "fareldeksano000@gmail.com",
     to: email,
-    subject: "Verify your Ipsum Email",
+    subject: "Verify Your Pathway Account",
     text: "Hello world?",
     html: html,
   };

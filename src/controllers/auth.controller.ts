@@ -97,10 +97,10 @@ export class AuthController {
   }
 
   async verifyEmail(req: Request, res: Response) {
-    const token = req.headers.authorization?.split(" ")[1] as string;
+    const { verificationToken } = req.params; 
 
     try {
-      const response = await this.authService.verifyEmail(token);
+      const response = await this.authService.verifyEmail(verificationToken);
       if (response.success) {
         res.status(200).send({
           status: res.status,
