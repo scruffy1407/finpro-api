@@ -9,6 +9,7 @@ import { AuthUtils } from "../utils/auth.utils";
 import errorMap from "zod/lib/locales/en";
 
 export class CompanyService {
+
   private prisma: PrismaClient;
   private authUtils: AuthUtils;
 
@@ -92,69 +93,74 @@ export class CompanyService {
   }
 
   // Service to update a job post
-  async updateJob(jobId: number, data: JobPost) {
-    try {
-      // Validate the incoming data using your existing validation schema (if any)
-      const validatedData = jobSchema.parse(data);
+	async updateJob(jobId: number, data: JobPost) {
+		try {
+			// Validate the incoming data using your existing validation schema (if any)
+			const validatedData = jobSchema.parse(data);
 
-      // Check if the job post exists
-      const existingJobPost = await this.prisma.jobPost.findUnique({
-        where: {
-          job_id: jobId,
-        },
-      });
+			// Check if the job post exists
+			const existingJobPost = await this.prisma.jobPost.findUnique({
+				where: {
+					job_id: jobId,
+				},
+			});
 
-      if (!existingJobPost) {
-        return "Job post not found"; // Return a message if the job post doesn't exist
-      }
+			if (!existingJobPost) {
+				return "Job post not found"; // Return a message if the job post doesn't exist
+			}
 
-      // Check if there are any related applications
-      const relatedApplications = await this.prisma.application.findMany({
-        where: {
-          jobId: jobId,
-        },
-      });
+			// Check if there are any related applications
+			const relatedApplications = await this.prisma.application.findMany({
+				where: {
+					jobId: jobId,
+				},
+			});
 
-      // If there are related applications, only allow updating the expired_date
-      if (relatedApplications.length > 0) {
-        // Only update the expired_date, nothing else
-        return this.prisma.jobPost.update({
-          where: {
-            job_id: jobId,
-          },
-          data: {
-            expired_date: validatedData.expired_date,
-          },
-        });
-      }
+			// If there are related applications, only allow updating the expired_date
+			if (relatedApplications.length > 0) {
+				// Only update the expired_date, nothing else
+				return this.prisma.jobPost.update({
+					where: {
+						job_id: jobId,
+					},
+					data: {
+						expired_date: validatedData.expired_date,
+					},
+				});
+			}
 
-      // Update the job post with the new data
-      return this.prisma.jobPost.update({
-        where: {
-          job_id: jobId,
-        },
-        data: {
-          job_title: validatedData.job_title,
-          preSelectionTestId: validatedData.preSelectionTestId,
-          categoryId: validatedData.categoryId,
-          selection_text_active: validatedData.selection_test_active,
-          salary_show: validatedData.salary_show,
-          salary_min: validatedData.salary_min,
-          salary_max: validatedData.salary_max,
-          job_description: validatedData.job_description,
-          job_experience_min: validatedData.job_experience_min,
-          job_experience_max: validatedData.job_experience_max,
-          expired_date: validatedData.expired_date,
-          status: validatedData.status,
-          job_type: validatedData.job_type,
-          job_space: validatedData.job_space,
-        },
-      });
-    } catch (error) {
-      const err = error as Error;
-      return "Error updating job post: " + err.message;
-    }
-  }
+			// Handle the logic for `selection_test_active` being set to false
+			if (validatedData.selection_test_active === false) {
+				validatedData.preSelectionTestId = 0; // Automatically set preSelectionTestId to 0
+			}
+
+			// Update the job post with the new data
+			return this.prisma.jobPost.update({
+				where: {
+					job_id: jobId,
+				},
+				data: {
+					job_title: validatedData.job_title,
+					preSelectionTestId: validatedData.preSelectionTestId,
+					categoryId: validatedData.categoryId,
+					selection_text_active: validatedData.selection_test_active,
+					salary_show: validatedData.salary_show,
+					salary_min: validatedData.salary_min,
+					salary_max: validatedData.salary_max,
+					job_description: validatedData.job_description,
+					job_experience_min: validatedData.job_experience_min,
+					job_experience_max: validatedData.job_experience_max,
+					expired_date: validatedData.expired_date,
+					status: validatedData.status,
+					job_type: validatedData.job_type,
+					job_space: validatedData.job_space,
+				},
+			});
+		} catch (error) {
+			const err = error as Error;
+			return "Error updating job post: " + err.message;
+		}
+	}
 
   // Service to fetch the 8 newest job postings
   async jobNewLanding(): Promise<any> {

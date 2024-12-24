@@ -62,7 +62,9 @@ export class ApplyJob {
         };
       }
 
+
       // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
+
       // const requiredFields: Array<keyof typeof jobHunter> = [
       //   "name",
       //   "gender",
@@ -75,7 +77,11 @@ export class ApplyJob {
 
       // if (missingFields.length > 0) {
       //   return {
+
+      //     error: `The following fields are missing: ${missingFields.join(", ")}.`,
+
       //     error: The following fields are missing: ${missingFields.join(", ")}.,
+
       //   };
       // }
 
