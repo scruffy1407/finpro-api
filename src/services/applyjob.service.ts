@@ -11,7 +11,7 @@ export class ApplyJob {
   }
 
   async uploadResumeToDropbox(
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ): Promise<string | undefined> {
     try {
       const tokenManager = DropboxTokenManager.getInstance();
@@ -36,7 +36,7 @@ export class ApplyJob {
   async applyJob(
     data: Application,
     file: Express.Multer.File,
-    accessToken: string
+    accessToken: string,
   ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
@@ -47,12 +47,23 @@ export class ApplyJob {
       });
 
       if (!jobHunter) {
-        return { error: "Invalid access token or user not found." };
+        return {
+          success: false,
+          statusCode: 401,
+          message: "Invalid access token or user not found.",
+        };
       }
 
       if (jobHunter.job_hunter_id !== data.jobHunterId) {
-        return { error: "Unauthorized access to apply for the job." };
+        return {
+          success: false,
+          statusCode: 403,
+          message: "Unauthorized access to apply for the job.",
+        };
       }
+
+
+      // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
 
       // const requiredFields: Array<keyof typeof jobHunter> = [
       //   "name",
@@ -66,7 +77,11 @@ export class ApplyJob {
 
       // if (missingFields.length > 0) {
       //   return {
+
       //     error: `The following fields are missing: ${missingFields.join(", ")}.`,
+
+      //     error: The following fields are missing: ${missingFields.join(", ")}.,
+
       //   };
       // }
 
@@ -74,7 +89,11 @@ export class ApplyJob {
         where: { job_id: data.jobId },
       });
       if (!jobExists) {
-        return { error: "Job does not exist." };
+        return {
+          success: false,
+          statusCode: 404,
+          message: "Job does not exist.",
+        };
       }
 
       const existingApplication = await this.prisma.application.findFirst({
@@ -87,21 +106,40 @@ export class ApplyJob {
       if (existingApplication) {
         return {
           success: false,
+          statusCode: 409,
           message: "You have already applied for this job.",
         };
       }
 
       const resumeUrl = await this.uploadResumeToDropbox(file);
 
-      return await this.prisma.application.create({
+      if (!resumeUrl) {
+        return {
+          success: false,
+          statusCode: 400,
+          message: `Failed to upload Resume File, Please try again or refresh browser`,
+        };
+      }
+      const newApplication = await this.prisma.application.create({
         data: {
           ...data,
           resume: resumeUrl as string,
           application_status: ApplicationStatus.ON_REVIEW,
         },
       });
+
+      return {
+        success: true,
+        statusCode: 201,
+        data: newApplication,
+      };
     } catch (error) {
-      return { error: "Failed to apply for the job, please try again" };
+      console.error("Error applying for job:", error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "Failed to apply for the job, please try again.",
+      };
     }
   }
 
@@ -115,7 +153,7 @@ export class ApplyJob {
   async createBookmark(
     jobHunterId: number,
     jobPostId: number,
-    date_added: Date
+    date_added: Date,
   ) {
     return await this.prisma.jobWishlist.create({
       data: {

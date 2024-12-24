@@ -5,6 +5,9 @@ import {
   CompanyGeneralInfo,
   UpdateImage,
   JobHunterGeneralInfo,
+  companyDetailResponse,
+  JobPost,
+  reviewResponse,
 } from "../models/models";
 import { UserService } from "./baseUser/user.service";
 import { getLocationDetail } from "../utils/api";
@@ -178,7 +181,7 @@ export class CompanyService {
 
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
-        updateData.image
+        updateData.image,
       );
       if (!uploadImage.success) {
         return {
@@ -200,6 +203,61 @@ export class CompanyService {
         success: true,
         message: "Success update image",
         image: uploadImage.data,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Something went wrong, failed to update company image",
+        detail: e,
+      };
+    }
+  }
+
+  async searchCompany(keyword: string) {
+    try {
+      const company = await this.prisma.company.findMany({
+        where: {
+          company_name: {
+            contains: keyword,
+            mode: "insensitive", // Case-insensitive search
+          },
+        },
+      });
+      const searchResult: { value: number; label: string }[] = company.map(
+        (company) => {
+          return {
+            value: company.company_id,
+            label: company.company_name,
+          };
+        },
+      );
+      console.log(searchResult);
+      return {
+        success: true,
+        data: searchResult,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Something went wrong, failed to update company image",
+        detail: e,
+      };
+    }
+  }
+  async getSpecificCompany(company_id: number) {
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: {
+          company_id: company_id,
+        },
+      });
+      const specificData: { value: number; label: string } = {
+        label: company?.company_name as string,
+        value: company?.company_id as number,
+      };
+      return {
+        success: true,
+        data: specificData,
       };
     } catch (e) {
       return {

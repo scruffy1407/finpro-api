@@ -3,6 +3,8 @@ import {
   CompanySize,
   Gender,
   EducationDegree,
+  JobSpace,
+  JobType,
 } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -71,9 +73,10 @@ export interface GoogleProfile {
 }
 
 export interface JwtPayload {
-  companyId: string; // The company ID from the token
+  companyId?: string; // The company ID from the token
   user_id: number;
   role_type: string;
+  verified: boolean;
 }
 
 export interface CompanyInfoResp {
@@ -102,6 +105,7 @@ export interface CompanyGeneralInfo {
 }
 
 export interface JobHunterGeneralInfo {
+  photo?: string;
   jobHunterId: number;
   name: string;
   dob?: Date;
@@ -166,8 +170,8 @@ export interface JobPost {
   job_experience_max: number;
   expired_date: Date;
   status: boolean;
-  job_type: "Full-Time" | "Freelance" | "Internship"; // Enum-like values
-  job_space: "Remote Working" | "On Office" | "Hybrid"; // Enum-like values
+  job_type: "Full-Time" | "Freelance" | "Internship" | JobType; // Enum-like values
+  job_space: "Remote Working" | "On Office" | "Hybrid" | JobSpace; // Enum-like values
 }
 
 export interface JobPostWithRelatedJobs {
@@ -216,4 +220,76 @@ export interface JobPostWithRelatedJobs {
       company_city: string | null;
     };
   }>;
+}
+
+export enum InterviewStatus {
+  scheduled = "scheduled",
+  cancelled = "cancelled",
+  completed = "completed",
+}
+
+export interface Interview {
+  interviewId?: number;
+  applicationId: number;
+  interviewDate: Date;
+  interviewTimeStart: Date;
+  interviewTimeEnd: Date;
+  interviewDescrption: string;
+  interviewUrl?: string;
+  interviewStatus?: InterviewStatus;
+}
+
+export interface InterviewEmail {
+  email: string;
+  name: string;
+  companyName: string;
+  jobTitle: string;
+  interviewdDate: string;
+  interviewTimeStart: string;
+  interviewTimeEnd: string;
+  invitatationLink: string;
+}
+
+export interface UpdateStatusInterview {
+  interviewId: number;
+  applicationId: number;
+  interviewStatus: InterviewStatus;
+}
+
+export interface reviewResponse {
+  reviewId: number;
+  companyId: number;
+  jobunterId: number;
+  reviewTitle: string;
+  reviewDescription: string;
+  culturalRating: number;
+  workLifeBalanceRating: number;
+  facilityRating: number;
+  careerPathRating: number;
+}
+
+export interface ReviewData {
+  reviewId?: number;
+  workExperienceId: number;
+  reviewTitle: string;
+  reviewDescription: string;
+  culturalRating: number;
+  workLifeBalanceRating: number;
+  facilityRating: number;
+  careerPathRating: number;
+}
+
+export interface companyDetailResponse {
+  companyId: number;
+  email: string;
+  logo: string;
+  companyName: string;
+  companyDescription: string;
+  companyCity: string;
+  companyProvince: string;
+  addressDetail: string;
+  companyIndustry: string;
+  companySize: string;
+  listJob: JobPost[];
+  listReview: reviewResponse[];
 }

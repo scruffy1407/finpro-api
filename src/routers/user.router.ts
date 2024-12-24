@@ -4,6 +4,7 @@ import { JobHunterController } from "../controllers/jobHunter/jobHunter.controll
 import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { WorkingExpController } from "../controllers/jobHunter/workingExp.controller";
 import { EducationController } from "../controllers/jobHunter/education.controller";
+import { ReviewController } from "../controllers/jobHunter/review.controller";
 import upload from "../middlewares/upload.middleware";
 
 const router = Router();
@@ -12,26 +13,35 @@ const jobHunterController = new JobHunterController();
 const workingExpController = new WorkingExpController();
 const educationController = new EducationController();
 const authMiddleware = new AuthJwtMiddleware();
+const reviewController = new ReviewController();
 
 // USER COMPANY
 router.get(
   "/company",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("company"),
-  companyController.getCompanyDetail.bind(companyController)
+  companyController.getCompanyDetail.bind(companyController),
 );
 router.put(
   "/company/edit-profile",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("company"),
-  companyController.updateCompanyDetail.bind(companyController)
+  companyController.updateCompanyDetail.bind(companyController),
 );
 router.put(
   "/company/edit-image",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("company"),
   upload.single("image"),
-  companyController.updatecompanyImage.bind(companyController)
+  companyController.updatecompanyImage.bind(companyController),
+);
+router.get(
+  "/company/search-company",
+  companyController.searchCompany.bind(companyController),
+);
+router.get(
+  "/company/get-data/:companyId",
+  companyController.getSpecificCompany.bind(companyController),
 );
 
 // USER JOB HUNTER
@@ -39,20 +49,20 @@ router.get(
   "/job-hunter",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  jobHunterController.getUserDetail.bind(jobHunterController)
+  jobHunterController.getUserDetail.bind(jobHunterController),
 );
 router.put(
   "/job-hunter/edit-profile",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  jobHunterController.updateUserProfile.bind(jobHunterController)
+  jobHunterController.updateUserProfile.bind(jobHunterController),
 );
 router.put(
   "/job-hunter/edit-image",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
   upload.single("image"),
-  jobHunterController.updateUserImage.bind(jobHunterController)
+  jobHunterController.updateUserImage.bind(jobHunterController),
 );
 
 // USER JOB HUNTER --- WORKING EXPERIENCE
@@ -60,25 +70,25 @@ router.get(
   "/job-hunter/work-experience",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  workingExpController.getListWorkingExp.bind(workingExpController)
+  workingExpController.getListWorkingExp.bind(workingExpController),
 );
 router.post(
   "/job-hunter/work-experience/create-new",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  workingExpController.createWorkingExp.bind(workingExpController)
+  workingExpController.createWorkingExp.bind(workingExpController),
 );
 router.put(
   "/job-hunter/work-experience/edit/:workExpId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  workingExpController.editWorkingExperience.bind(workingExpController)
+  workingExpController.editWorkingExperience.bind(workingExpController),
 );
 router.delete(
   "/job-hunter/work-experience/delete/:workExpId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  workingExpController.deleteWorkingExp.bind(workingExpController)
+  workingExpController.deleteWorkingExp.bind(workingExpController),
 );
 
 // USER JOB HUNTER --- EDUCATION
@@ -86,25 +96,38 @@ router.get(
   "/job-hunter/education",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  educationController.getListEducation.bind(educationController)
+  educationController.getListEducation.bind(educationController),
 );
 router.post(
   "/job-hunter/education/create-new",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  educationController.createEducation.bind(educationController)
+  educationController.createEducation.bind(educationController),
 );
 router.put(
-  "/job-hunter/education/:educationId",
+  "/job-hunter/education/edit/:educationId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  educationController.updateEducation.bind(educationController)
+  educationController.updateEducation.bind(educationController),
 );
 router.delete(
-  "/job-hunter/delete/:educationId",
+  "/job-hunter/education/delete/:educationId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
-  educationController.deleteEducation.bind(educationController)
+  educationController.deleteEducation.bind(educationController),
+);
+
+router.post(
+  "/job-hunter/review",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  reviewController.createReview.bind(reviewController),
+);
+router.get(
+  "/job-hunter/validate/:jobId",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  jobHunterController.validateUserJoinJob.bind(jobHunterController),
 );
 
 export default router;

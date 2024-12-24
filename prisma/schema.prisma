@@ -306,12 +306,8 @@ model Company {
 
   baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
-  jobPost        JobPost[]
-  review         JobReview[]
-  workExperience WorkExperience[]
-  preSelectionTest  PreSelectionTest[]
-
   city           city?            @relation(fields: [cityId], references: [city_id])
+
 
   @@schema("Company")
 }
@@ -397,7 +393,6 @@ model PreSelectionTest {
 
   company          Company          @relation(fields: [companyId], references: [company_id])
 
-
   @@schema("PreSelectionTest")
 }
 
@@ -442,6 +437,7 @@ model ResultPreSelection {
   completion_score  Int                              @default(0)
   start_date         DateTime?
   end_date           DateTime?
+
   completion_date   DateTime
   completion_status CompletionStatusPreSelectionTest
   created_at        DateTime                         @default(now())
@@ -617,3 +613,4 @@ enum CompanySize {
 
   @@schema("Company")
 }
+

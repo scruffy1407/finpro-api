@@ -11,7 +11,8 @@ export class WorkingExpService {
     this.userService = new UserService();
   }
 
-  async getListWorkingExperience(user_id: number) {
+  async getListWorkingExperience(user_id: number, wReview: boolean) {
+    console.log("INNER REVIEW", wReview);
     try {
       const user = await this.userService.validateJobHunter(user_id);
       if (!user.success) {
@@ -26,9 +27,22 @@ export class WorkingExpService {
           job_hunter_id: user?.data?.jobHunter[0].job_hunter_id as number,
         },
         include: {
-          workExperience: true,
+          workExperience: {
+            select: {
+              end_date: true,
+              jobHunter: true,
+              company_name: true,
+              job_title: true,
+              work_experience_id: true,
+              job_description: true,
+              start_date: true,
+              companyId: true,
+              JobReview: wReview ? true : undefined,
+            },
+          },
         },
       });
+
       const workExperiences = listWork?.workExperience;
 
       console.log(workExperiences);
@@ -46,12 +60,13 @@ export class WorkingExpService {
   }
 
   async createWorkingExperience(user_id: number, data: WorkingExperience) {
+    console.log(data);
     const { jobHunterId } = data;
 
     try {
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId
+        jobHunterId,
       );
       if (!user.success) {
         return {
@@ -59,6 +74,8 @@ export class WorkingExpService {
           message: user.message,
         };
       }
+
+      console.log(user);
 
       const company = await this.prisma.company.findUnique({
         where: {
@@ -98,7 +115,7 @@ export class WorkingExpService {
   async editWorkingExperience(
     user_id: number,
     workExperienceId: number,
-    data: WorkingExperience
+    data: WorkingExperience,
   ) {
     const { jobHunterId } = data;
     try {
@@ -116,7 +133,7 @@ export class WorkingExpService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId
+        jobHunterId,
       );
       if (!user.success) {
         return {
@@ -183,7 +200,7 @@ export class WorkingExpService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        getWorkExperience.jobHunterId
+        getWorkExperience.jobHunterId,
       );
       if (!user.success) {
         return {
@@ -191,6 +208,12 @@ export class WorkingExpService {
           message: user.message,
         };
       }
+      // Delete related job reviews (optional, depending on your requirements)
+      await this.prisma.jobReview.deleteMany({
+        where: {
+          workExperienceId: workingExpId,
+        },
+      });
 
       await this.prisma.workExperience.delete({
         where: {
