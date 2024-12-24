@@ -14,6 +14,8 @@ applyJobRouter.post(
 
   applyJobController.applyJob
 );
+
+
 applyJobRouter.get(
   "/applications/:jobHunterId",
   authMiddleware.authenticateJwt.bind(authMiddleware),

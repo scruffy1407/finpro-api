@@ -48,7 +48,7 @@ class ApplyJobController {
         application_status: ApplicationStatus.ON_REVIEW,
       },
       file,
-      accessToken
+      accessToken,
     );
 
     if (response.success) {
@@ -67,7 +67,7 @@ class ApplyJobController {
 
     try {
       const applications = await this.applyJobService.getAllApplications(
-        Number(jobHunterId)
+        Number(jobHunterId),
       );
       res.status(200).send({ success: true, applications });
     } catch (error) {
@@ -88,7 +88,7 @@ class ApplyJobController {
         res
           .status(401)
           .send({ success: false, message: "Unauthorized. No token found." });
-        return; // Ensure no further code execution after sending the response
+        return;
       }
   
       const result = await this.applyJobService.createBookmark(
@@ -111,6 +111,7 @@ class ApplyJobController {
   }
 
   async removeBookmarks(req: Request, res: Response) {
+
     const { wishlist_id } = req.body;
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
@@ -127,7 +128,6 @@ class ApplyJobController {
           res.status(404).send({ success: false, message: result.message });
           return;
         }
-
         res.status(201).send({ success: true, message: result.message });
       } catch (error) {
         console.error(error);

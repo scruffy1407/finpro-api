@@ -11,7 +11,7 @@ export class ApplyJob {
   }
 
   async uploadResumeToDropbox(
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ): Promise<string | undefined> {
     try {
       const tokenManager = DropboxTokenManager.getInstance();
@@ -36,7 +36,7 @@ export class ApplyJob {
   async applyJob(
     data: Application,
     file: Express.Multer.File,
-    accessToken: string
+    accessToken: string,
   ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
@@ -62,6 +62,7 @@ export class ApplyJob {
         };
       }
 
+
       // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
       // const requiredFields: Array<keyof typeof jobHunter> = [
       //   "name",
@@ -75,7 +76,11 @@ export class ApplyJob {
 
       // if (missingFields.length > 0) {
       //   return {
+
       //     error: `The following fields are missing: ${missingFields.join(", ")}.`,
+
+      //     error: The following fields are missing: ${missingFields.join(", ")}.,
+
       //   };
       // }
 
@@ -106,6 +111,14 @@ export class ApplyJob {
       }
 
       const resumeUrl = await this.uploadResumeToDropbox(file);
+
+      if (!resumeUrl) {
+        return {
+          success: false,
+          statusCode: 400,
+          message: `Failed to upload Resume File, Please try again or refresh browser`,
+        };
+      }
 
       const newApplication = await this.prisma.application.create({
         data: {

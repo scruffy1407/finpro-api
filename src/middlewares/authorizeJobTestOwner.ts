@@ -32,7 +32,7 @@ export const authorizeJobTestOwner = async (
 		const userId = decodedToken.user_id; // Assuming the decoded token has user_id
 
 		// Step 3: Find the user's associated company
-		const userCompany = await prisma.company.findUnique({
+		const userCompany = await prisma.company.findFirst({
 			where: { userId: userId },
 			include: { jobPost: true }, // Include job posts related to the user
 		});
@@ -48,7 +48,7 @@ export const authorizeJobTestOwner = async (
 		const { testId } = req.params;
 
 		// Step 5: Find the pre-selection test and check its association with the company's job posts
-		const preSelectionTest = await prisma.preSelectionTest.findUnique({
+		const preSelectionTest = await prisma.preSelectionTest.findFirst({
 			where: { test_id: Number(testId) },
 			include: { jobPost: true },
 		});
@@ -60,10 +60,23 @@ export const authorizeJobTestOwner = async (
 			return; // Return here to stop further processing
 		}
 
+		// Debug log: Check the pre-selection test and job posts
+		console.log("Pre-selection test:", preSelectionTest);
+		console.log("User's company:", userCompany);
+
 		// Step 6: Check if the job post belongs to the user's company
-		const isAuthorized = preSelectionTest.jobPost.some(
-			(jobPost) => jobPost.companyId === userCompany.company_id
-		);
+		const isAuthorized = preSelectionTest.jobPost.some((jobPost) => {
+			console.log(
+				"Comparing jobPost.companyId:",
+				jobPost.companyId,
+				"with userCompany.company_id:",
+				userCompany.company_id
+			);
+			return jobPost.companyId === userCompany.company_id;
+		});
+
+		// Debug log: Check the result of authorization check
+		console.log("Is authorized:", isAuthorized);
 
 		if (!isAuthorized) {
 			res.status(403).json({

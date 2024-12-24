@@ -1,10 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { JobPost } from "../models/models";
+import {
+  companyDetailResponse,
+  JobPost,
+  reviewResponse,
+} from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
 import errorMap from "zod/lib/locales/en";
 
 export class CompanyService {
+
   private prisma: PrismaClient;
   private authUtils: AuthUtils;
 
@@ -88,69 +93,74 @@ export class CompanyService {
   }
 
   // Service to update a job post
-  async updateJob(jobId: number, data: JobPost) {
-    try {
-      // Validate the incoming data using your existing validation schema (if any)
-      const validatedData = jobSchema.parse(data);
+	async updateJob(jobId: number, data: JobPost) {
+		try {
+			// Validate the incoming data using your existing validation schema (if any)
+			const validatedData = jobSchema.parse(data);
 
-      // Check if the job post exists
-      const existingJobPost = await this.prisma.jobPost.findUnique({
-        where: {
-          job_id: jobId,
-        },
-      });
+			// Check if the job post exists
+			const existingJobPost = await this.prisma.jobPost.findUnique({
+				where: {
+					job_id: jobId,
+				},
+			});
 
-      if (!existingJobPost) {
-        return "Job post not found"; // Return a message if the job post doesn't exist
-      }
+			if (!existingJobPost) {
+				return "Job post not found"; // Return a message if the job post doesn't exist
+			}
 
-      // Check if there are any related applications
-      const relatedApplications = await this.prisma.application.findMany({
-        where: {
-          jobId: jobId,
-        },
-      });
+			// Check if there are any related applications
+			const relatedApplications = await this.prisma.application.findMany({
+				where: {
+					jobId: jobId,
+				},
+			});
 
-      // If there are related applications, only allow updating the expired_date
-      if (relatedApplications.length > 0) {
-        // Only update the expired_date, nothing else
-        return this.prisma.jobPost.update({
-          where: {
-            job_id: jobId,
-          },
-          data: {
-            expired_date: validatedData.expired_date,
-          },
-        });
-      }
+			// If there are related applications, only allow updating the expired_date
+			if (relatedApplications.length > 0) {
+				// Only update the expired_date, nothing else
+				return this.prisma.jobPost.update({
+					where: {
+						job_id: jobId,
+					},
+					data: {
+						expired_date: validatedData.expired_date,
+					},
+				});
+			}
 
-      // Update the job post with the new data
-      return this.prisma.jobPost.update({
-        where: {
-          job_id: jobId,
-        },
-        data: {
-          job_title: validatedData.job_title,
-          preSelectionTestId: validatedData.preSelectionTestId,
-          categoryId: validatedData.categoryId,
-          selection_text_active: validatedData.selection_test_active,
-          salary_show: validatedData.salary_show,
-          salary_min: validatedData.salary_min,
-          salary_max: validatedData.salary_max,
-          job_description: validatedData.job_description,
-          job_experience_min: validatedData.job_experience_min,
-          job_experience_max: validatedData.job_experience_max,
-          expired_date: validatedData.expired_date,
-          status: validatedData.status,
-          job_type: validatedData.job_type,
-          job_space: validatedData.job_space,
-        },
-      });
-    } catch (error) {
-      const err = error as Error;
-      return "Error updating job post: " + err.message;
-    }
-  }
+			// Handle the logic for `selection_test_active` being set to false
+			if (validatedData.selection_test_active === false) {
+				validatedData.preSelectionTestId = 0; // Automatically set preSelectionTestId to 0
+			}
+
+			// Update the job post with the new data
+			return this.prisma.jobPost.update({
+				where: {
+					job_id: jobId,
+				},
+				data: {
+					job_title: validatedData.job_title,
+					preSelectionTestId: validatedData.preSelectionTestId,
+					categoryId: validatedData.categoryId,
+					selection_text_active: validatedData.selection_test_active,
+					salary_show: validatedData.salary_show,
+					salary_min: validatedData.salary_min,
+					salary_max: validatedData.salary_max,
+					job_description: validatedData.job_description,
+					job_experience_min: validatedData.job_experience_min,
+					job_experience_max: validatedData.job_experience_max,
+					expired_date: validatedData.expired_date,
+					status: validatedData.status,
+					job_type: validatedData.job_type,
+					job_space: validatedData.job_space,
+				},
+			});
+		} catch (error) {
+			const err = error as Error;
+			return "Error updating job post: " + err.message;
+		}
+	}
 
   // Service to fetch the 8 newest job postings
   async jobNewLanding(): Promise<any> {
@@ -168,6 +178,7 @@ export class CompanyService {
         },
         take: 3, // Limit to the 8 newest job posts
         select: {
+          companyId: true,
           job_id: true,
           job_title: true,
           salary_min: true,
@@ -206,7 +217,7 @@ export class CompanyService {
     dateRange?: string,
     sortOrder?: string,
     companyCity?: string,
-    companyProvince?: string
+    companyProvince?: string,
   ) {
     try {
       // Build the search criteria based on the provided filters
@@ -302,6 +313,7 @@ export class CompanyService {
         take: limit, // Limit the number of records per page
         orderBy: orderBy, // Apply sorting
         select: {
+          companyId: true,
           job_id: true,
           job_title: true,
           salary_min: true,
@@ -421,6 +433,99 @@ export class CompanyService {
     } catch (error) {
       const err = error as Error;
       return { error: "somethin wrong with the category id : " + err.message };
+    }
+  }
+
+  async getDetailCompanyPage(companyId: number) {
+    try {
+      const company = await this.prisma.company.findUnique({
+        where: {
+          company_id: companyId,
+        },
+
+        include: {
+          jobPost: {
+            where: {
+              status: true,
+            },
+          },
+          _count: {
+            select: {
+              review: true,
+              jobPost: {
+                where: {
+                  status: true,
+                },
+              },
+            },
+          },
+          review: true,
+          baseUser: true,
+        },
+      });
+
+      if (!company) {
+        return {
+          success: false,
+          message: "Cannot find company",
+        };
+      } else {
+        const companyResponse: companyDetailResponse = {
+          logo: company.logo as string,
+          email: company.baseUser.email,
+          addressDetail: company.address_details as string,
+          companyDescription: company.company_description as string,
+          companyIndustry: company.company_industry as string,
+          companyCity: company.company_city as string,
+          companySize: company.company_size as string,
+          companyName: company.company_name,
+          companyProvince: company.company_province as string,
+          companyId: company.company_id,
+          listJob: company.jobPost.map((job): JobPost => {
+            return {
+              job_title: job.job_title,
+              job_description: job.job_description,
+              salary_min: job.salary_min.toNumber(),
+              salary_max: job.salary_max ? job.salary_max.toNumber() : 0,
+              salary_show: job.salary_show,
+              job_experience_max: job.job_experience_max as number,
+              job_experience_min: job.job_experience_min as number,
+              job_space: job.job_space,
+              job_type: job.job_type,
+              status: job.status,
+              catergoryId: job.categoryId,
+              companyId: job.companyId,
+              preSelectionTestId: job.preSelectionTestId,
+              expired_date: job.expired_date,
+            };
+          }),
+          listReview: company.review.map((review): reviewResponse => {
+            return {
+              companyId: review.companyId,
+              reviewId: review.review_id,
+              careerPathRating: review.career_path_rating,
+              culturalRating: review.cultural_rating,
+              facilityRating: review.facility_rating,
+              reviewDescription: review.review_description,
+              reviewTitle: review.review_title,
+              jobunterId: review.jobHunterId,
+              workLifeBalanceRating: review.work_balance_rating,
+            };
+          }),
+        };
+
+        return {
+          success: true,
+          companyResponse,
+          count: company._count,
+        };
+      }
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        message: "Something went wrong, failed to find company",
+      };
     }
   }
 }
