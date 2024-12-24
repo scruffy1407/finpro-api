@@ -123,5 +123,11 @@ router.post(
   authMiddleware.authorizeRole("jobhunter"),
   reviewController.createReview.bind(reviewController),
 );
+router.get(
+  "/job-hunter/validate/:jobId",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  jobHunterController.validateUserJoinJob.bind(jobHunterController),
+);
 
 export default router;

@@ -1,4 +1,4 @@
- import { Request, Response } from "express";
+import { Request, Response } from "express";
 import { ApplyJob } from "../services/applyjob.service";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ApplicationStatus } from "../models/models";
@@ -36,45 +36,26 @@ class ApplyJobController {
       return;
     }
 
-    try {
-      const application = await this.applyJobService.applyJob(
-        {
-          jobHunterId: Number(jobHunterId),
-          jobId: Number(jobId),
-          resume: "",
-          expected_salary: new Decimal(expected_salary),
-          application_status: ApplicationStatus.ON_REVIEW,
-        },
-        file,
-        accessToken
-      );
-      console.log("Application created successfully:", application);
-      res.status(201).send({ application });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.message === "Job hunter does not exist.") {
-          res.status(404).send({
-            success: false,
-            message: error.message,
-          });
-        } else if (error.message === "Job does not exist.") {
-          res.status(404).send({
-            success: false,
-            message: error.message,
-          });
-        } else if (error.message === "You have already applied for this job.") {
-          res.status(409).send({
-            success: false,
-            message: error.message,
-          });
-        } else {
-          console.error("Unexpected error:", error);
-          res.status(500).send({
-            success: false,
-            message: "Failed to apply job, please try again",
-          });
-        }
-      }
+    const response = await this.applyJobService.applyJob(
+      {
+        jobHunterId: Number(jobHunterId),
+        jobId: Number(jobId),
+        resume: "",
+        expected_salary: new Decimal(expected_salary),
+        application_status: ApplicationStatus.ON_REVIEW,
+      },
+      file,
+      accessToken,
+    );
+
+    if (response.success) {
+      res
+        .status(response.statusCode)
+        .send({ success: true, data: response.data });
+    } else {
+      res
+        .status(response.statusCode)
+        .send({ success: false, message: response.message });
     }
   }
 
@@ -83,7 +64,7 @@ class ApplyJobController {
 
     try {
       const applications = await this.applyJobService.getAllApplications(
-        Number(jobHunterId)
+        Number(jobHunterId),
       );
       res.status(200).send({ success: true, applications });
     } catch (error) {
@@ -101,7 +82,7 @@ class ApplyJobController {
       const bookmark = await this.applyJobService.createBookmark(
         Number(jobHunterId),
         Number(jobPostId),
-        new Date()
+        new Date(),
       );
 
       res.status(201).send({ success: true, bookmark });
@@ -120,7 +101,7 @@ class ApplyJobController {
     try {
       const result = await this.applyJobService.removeBookmarks(
         Number(jobHunterId),
-        Number(jobPostId)
+        Number(jobPostId),
       );
 
       if (!result.success) {
@@ -142,7 +123,7 @@ class ApplyJobController {
 
     try {
       const bookmarks = await this.applyJobService.getAllBookmarks(
-        Number(jobHunterId)
+        Number(jobHunterId),
       );
       res.status(200).send({ success: true, bookmarks });
     } catch (error) {

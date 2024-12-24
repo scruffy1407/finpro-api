@@ -140,4 +140,38 @@ export class JobHunterController {
       }
     }
   }
+
+  async validateUserJoinJob(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    const jobId = req.params.jobId;
+
+    if (!decodedToken) {
+      res.status(400).send("No token found.");
+    } else {
+      try {
+        const response = await this.jobHunterService.validateUserJoinJob(
+          decodedToken.user_id as number,
+          Number(jobId),
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            data: response.data,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+            code: response.code || "NO_CODE",
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
+    }
+  }
 }
