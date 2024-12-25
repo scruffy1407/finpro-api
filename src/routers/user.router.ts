@@ -5,6 +5,7 @@ import { AuthJwtMiddleware } from "../middlewares/auth.middleware";
 import { WorkingExpController } from "../controllers/jobHunter/workingExp.controller";
 import { EducationController } from "../controllers/jobHunter/education.controller";
 import { ReviewController } from "../controllers/jobHunter/review.controller";
+import { PaymentController } from "../controllers/subscription/payment.controller";
 import upload from "../middlewares/upload.middleware";
 
 const router = Router();
@@ -14,6 +15,7 @@ const workingExpController = new WorkingExpController();
 const educationController = new EducationController();
 const authMiddleware = new AuthJwtMiddleware();
 const reviewController = new ReviewController();
+const paymentController = new PaymentController();
 
 // USER COMPANY
 router.get(
@@ -128,6 +130,18 @@ router.get(
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
   jobHunterController.validateUserJoinJob.bind(jobHunterController),
+);
+
+// Subscription
+router.post(
+  "/job-hunter/subscription/:subscriptionId",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  paymentController.createOrder.bind(paymentController),
+);
+router.get(
+  "/job-hunter/subscription/verify/:subscriptionId",
+  paymentController.verifyOrder.bind(paymentController),
 );
 
 export default router;

@@ -147,7 +147,7 @@ export enum ApplicationStatus {
   ON_REVIEW = "onreview",
   ACCEPTED = "accepted",
   REJECTED = "rejected",
-  waitingSubmission = "waitingSubmission"
+  waitingSubmission = "waitingSubmission",
 }
 
 export interface Application {
@@ -293,4 +293,19 @@ export interface companyDetailResponse {
   companySize: string;
   listJob: JobPost[];
   listReview: reviewResponse[];
+}
+
+export interface orderUserInfo {
+  name?: string;
+  email?: string;
+}
+export interface orderItemInfo {
+  subscriptionId: number;
+  subscriptionName: string;
+}
+
+export interface createOrder {
+  amount: number;
+  userInfo: orderUserInfo;
+  itemInfo: orderItemInfo;
 }
