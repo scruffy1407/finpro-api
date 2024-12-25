@@ -219,13 +219,14 @@ export class JobHunterService {
       });
       if (!validateData) {
         return {
-          success: false,
-          code: "VALID",
+          success: true,
+          code: "NOT_JOIN",
           message: "User is not yet join to the job",
         };
       }
       return {
         success: true,
+        code: "JOIN",
         data: validateData,
       };
     } catch (e) {
