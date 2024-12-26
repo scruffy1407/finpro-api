@@ -42,7 +42,7 @@ app.use(passport.session());
 app.use(
   cors({
     origin: "http://localhost:3000",
-    credentials: true,
+    // credentials: true,
   }),
 );
 
@@ -51,16 +51,15 @@ app.use(express.json());
 const tokenManager = DropboxTokenManager.getInstance();
 
 cron.schedule("*/5 * * * *", async () => {
-	//EVERY 5 MINUTES REFRESH
-	console.log("Refreshing Dropbox Access Token...");
-	await tokenManager.refreshAccessToken();
-  });
+  //EVERY 5 MINUTES REFRESH
+  console.log("Refreshing Dropbox Access Token...");
+  await tokenManager.refreshAccessToken();
+});
 
-  (async () => {
-	console.log("Initializing Dropbox Access Token...");
-	await tokenManager.refreshAccessToken();
-  })();
-
+(async () => {
+  console.log("Initializing Dropbox Access Token...");
+  await tokenManager.refreshAccessToken();
+})();
 
 // AUTH
 app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
@@ -78,9 +77,9 @@ app.use("/applyjob", applyJobRouter);
 // COMPANY & INTERVIEW
 app.use("/api/company", companyRouter);
 
-app.use ("/api/jobhunter" , applyTestRouter)
+app.use("/api/jobhunter", applyTestRouter);
 
-app.use ("/api/applyjobtest" , applyJobTestRouter)
+app.use("/api/applyjobtest", applyJobTestRouter);
 
 app.use(errorHandler.errorHandler());
 

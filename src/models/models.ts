@@ -309,3 +309,13 @@ export interface createOrder {
   userInfo: orderUserInfo;
   itemInfo: orderItemInfo;
 }
+
+export interface createPayment {
+  status: number;
+  amount: number;
+  paymentType: string;
+  bank: string | null;
+  paymentDate: string;
+  paymentStatus: string;
+  transactionId: string;
+}

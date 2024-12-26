@@ -1,9 +1,17 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PaymentMethod, PrismaClient, PaymentStatus } from "@prisma/client";
 import environment from "dotenv";
 import axios from "axios";
-import { generateTransactionCode } from "../../utils/generateUniqueCode";
-import { createOrder, orderItemInfo, orderUserInfo } from "../../models/models";
+import {
+  generateTransactionCode,
+  generateInvoiceCode,
+} from "../../utils/generateUniqueCode";
+import {
+  createOrder,
+  createPayment,
+  orderItemInfo,
+  orderUserInfo,
+} from "../../models/models";
 
 environment.config();
 
@@ -17,10 +25,6 @@ export class PaymentService {
     this.apiURL = process.env.MIDTRANS_API_URL as string;
     this.prisma = new PrismaClient();
   }
-
-  // async createOrder(orderId: string, ammount: number) {
-  //   snap.c;
-  // }
 
   async createOrder(userId: number, subsId: number) {
     let uniqueCode = "";
@@ -128,14 +132,159 @@ export class PaymentService {
         message: "failed to create order",
       };
     }
+  }
 
-    //   1. Create unique order code
-    //   2. Check if unique order code already exist in database
-    //   3. loop until the code is unique
-    //   4. Once is valid unique, create an API call to midtrans
-    //   5. if its success, create data on database with the all the data provided
-    //   6. if its failed to create midtrans, return false (abort the process order)
-    //   7. one we success create data on database, return the token and redirect link
+  async cancelStatusOrder(userId: number, orderId: string) {}
+
+  async midtransUpdateStatus(paymentData: createPayment) {
+    try {
+      const checkTransaction = await this.prisma.transaction.findUnique({
+        where: {
+          invoice_transaction: paymentData.transactionId,
+        },
+      });
+      if (!checkTransaction) {
+        return {
+          success: false,
+          message: "Invalid Order ID",
+        };
+      }
+
+      // CREATE PAYMENT
+      if (paymentData.status === 201) {
+        const createPayment = await this.createPayment(
+          checkTransaction.transaction_id,
+          paymentData,
+        );
+        if (!createPayment.success) {
+          return {
+            success: false,
+            message: "Failed to create payment",
+          };
+        }
+
+        console.log("PAYMENT CREATED");
+        return {
+          success: true,
+          message: createPayment.message,
+        };
+      }
+
+      // UPDATE PAYMENT
+      else {
+        const updatePayment = await this.updateStatusPayment(
+          checkTransaction.transaction_id,
+          paymentData,
+        );
+        if (!updatePayment.success) {
+          return {
+            success: false,
+            message: updatePayment.message,
+          };
+        }
+        await this.prisma.transaction.update({
+          where: {
+            invoice_transaction: paymentData.transactionId,
+          },
+          data: {
+            transaction_status: "success",
+          },
+        });
+        console.log("PAYMENT UPDATED");
+        return {
+          success: true,
+          message: "Update Payment",
+        };
+      }
+    } catch (e) {
+      console.error(e);
+      return {
+        success: false,
+        message: "Failed to update order",
+      };
+    }
+  }
+
+  async createPayment(transactionId: number, paymentData: createPayment) {
+    let uniqueCode = "";
+    let isUniqueCode = false;
+    do {
+      uniqueCode = generateInvoiceCode();
+      const checkCode = await this.prisma.transaction.findUnique({
+        where: {
+          invoice_transaction: uniqueCode,
+        },
+      });
+      if (checkCode?.invoice_transaction === uniqueCode) {
+        isUniqueCode = false;
+      }
+      isUniqueCode = true;
+    } while (!isUniqueCode);
+
+    try {
+      const createPayment = await this.prisma.payment.create({
+        data: {
+          transactionId: transactionId,
+          invoice_payment: uniqueCode,
+          payment_amount: paymentData.amount,
+          payment_date: new Date("01/01/1900"), // dummy
+          payment_status: PaymentStatus.pending,
+          payment_method: paymentData.paymentType as PaymentMethod,
+          bank:
+            paymentData.paymentType === PaymentMethod.bank_transfer
+              ? paymentData.bank
+              : null,
+          created_at: new Date(),
+        },
+      });
+
+      console.log("CREATE PAYMENT", createPayment);
+      return {
+        success: true,
+        data: createPayment,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to create payment",
+      };
+    }
+  }
+
+  async updateStatusPayment(transactionId: number, paymentData: createPayment) {
+    try {
+      const checkTransaction = await this.prisma.payment.findFirst({
+        where: {
+          transactionId: transactionId,
+        },
+      });
+
+      if (!checkTransaction) {
+        return {
+          success: false,
+          message: "No transaction with that id record in our database",
+        };
+      }
+
+      await this.prisma.payment.update({
+        where: {
+          payment_id: checkTransaction.payment_id,
+        },
+        data: {
+          payment_date: new Date(paymentData.paymentDate),
+          payment_status: PaymentStatus.success,
+          updated_at: new Date(),
+        },
+      });
+
+      return { success: true, message: "update status update" };
+    } catch (e) {
+      console.error(e);
+      return {
+        success: false,
+        message: "Failed to update payment",
+      };
+    }
   }
 
   async initOrderMidtrans(
@@ -179,6 +328,29 @@ export class PaymentService {
       };
     }
   }
+  async cancelOrderMidtrans(orderId: string) {
+    const base64ServerKeyCode = Buffer.from(this.serverKey + ":").toString(
+      "base64",
+    );
+    const options = {
+      method: "POST",
+      url: `https://api.sandbox.midtrans.com/v2/${orderId}/cancel`,
+      headers: {
+        accept: "application/json",
+        authorization: `Basic ${base64ServerKeyCode}`,
+      },
+    };
 
-  async initTransaction(req: Request, res: Response) {}
+    try {
+      const response = await axios.request(options);
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, message: "Failed to cancel order" };
+      }
+    } catch (e) {
+      console.log(e);
+      return { success: false, message: "Failed to cancel order" };
+    }
+  }
 }
