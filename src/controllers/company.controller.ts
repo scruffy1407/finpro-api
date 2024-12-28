@@ -39,7 +39,7 @@ export class CompanyController {
 
       const modifiedPreSelectionTestId = selection_test_active
         ? preSelectionTestId
-        : 0;
+        : 0; 
 
       // Prepare the job data for service
       const jobPostData = {

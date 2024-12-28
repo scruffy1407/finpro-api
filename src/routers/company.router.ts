@@ -7,6 +7,7 @@ import { PreSelectionTestController } from "../controllers/preSelectionTest.cont
 import { authorizeQuestionOwner } from "../middlewares/authorizeQuestionOwner";
 import { CompanyAdminController } from "../controllers/companyadmin.controller";
 import { InterviewController } from "../controllers/company/interview.controller";
+import { JobDashListController } from "../controllers/jobCompanyDash.controller";
 import {
   validateInterviewData,
   validateUpdateStatus,
@@ -17,6 +18,7 @@ const companyController = new CompanyController();
 const companyAdminController = new CompanyAdminController();
 const authJwtMiddleware = new AuthJwtMiddleware();
 const preSelectionTestController = new PreSelectionTestController();
+const jobDashListController = new JobDashListController()
 
 const getPreSelectionTestsByCompanyController =
   new PreSelectionTestController();
@@ -196,5 +198,13 @@ companyRouter.get(
   "/company-detail/:companyId",
   companyController.getDetailCompanyPage.bind(companyController)
 );
+
+//JObDashView 
+companyRouter.get (
+  "/companydashjob",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  jobDashListController.getJobDashList.bind(jobDashListController)
+)
 
 export default companyRouter;
