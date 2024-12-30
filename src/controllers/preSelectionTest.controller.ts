@@ -16,7 +16,7 @@ export class PreSelectionTestController {
 	): Promise<void> {
 		try {
 			// Extract the data from the request body
-			const { jobPostId, testName, image, passingGrade, duration } = req.body;
+			const { testName, image, passingGrade, duration } = req.body;
 
 			// Extract the token from the Authorization header
 			const authorizationHeader = req.headers.authorization ?? ""; // If it's undefined, set it to an empty string
@@ -33,7 +33,6 @@ export class PreSelectionTestController {
 
 			// Call the service method to create the pre-selection test, passing the token
 			const result = await this.preSelectionTestService.createPreSelectionTest({
-				jobPostId,
 				testName,
 				image,
 				passingGrade,
