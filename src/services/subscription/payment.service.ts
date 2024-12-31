@@ -1,5 +1,10 @@
 import { Request, Response } from "express";
-import { PaymentMethod, PrismaClient, PaymentStatus } from "@prisma/client";
+import {
+  PaymentMethod,
+  PrismaClient,
+  PaymentStatus,
+  RoleType,
+} from "@prisma/client";
 import environment from "dotenv";
 import axios from "axios";
 import {
@@ -39,12 +44,45 @@ export class PaymentService {
           jobHunter: true,
         },
       });
+
+      // Check user is available or not
       if (!user) {
         return {
           success: false,
           message: "User not found",
         };
       }
+
+      // Check is the user is jobhunter
+      if (user.role_type !== RoleType.jobhunter) {
+        return {
+          success: false,
+          message: "Subscription can only create by jobhunter",
+        };
+      }
+
+      // Check if the user is still have subscription or not
+      const userSubscription =
+        await this.prisma.jobHunterSubscription.findUnique({
+          where: {
+            job_hunter_subscription_id:
+              user.jobHunter[0].jobHunterSubscriptionId,
+          },
+        });
+
+      if (!userSubscription) {
+        return {
+          success: false,
+          message: "Job hunter didnt have any subscription ID",
+        };
+      }
+      if (userSubscription.subscriptionId !== 1) {
+        return {
+          success: false,
+          message: "User already have an ongoing subscription",
+        };
+      }
+
       const subscription = await this.prisma.subscriptionTable.findUnique({
         where: {
           subscription_id: subsId,
@@ -78,6 +116,7 @@ export class PaymentService {
           message: "Failed to generate unique ID",
         };
       }
+
       // Re arrange data
       const data: createOrder = {
         amount: Number(subscription.subscription_price),
@@ -173,6 +212,8 @@ export class PaymentService {
       // UPDATE PAYMENT
       else {
         const updatePayment = await this.updateStatusPayment(
+          checkTransaction.jobHunterId,
+          checkTransaction.subscriptionId,
           checkTransaction.transaction_id,
           paymentData,
         );
@@ -251,7 +292,12 @@ export class PaymentService {
     }
   }
 
-  async updateStatusPayment(transactionId: number, paymentData: createPayment) {
+  async updateStatusPayment(
+    jobHunterId: number,
+    subscriptionId: number,
+    transactionId: number,
+    paymentData: createPayment,
+  ) {
     try {
       const checkTransaction = await this.prisma.payment.findFirst({
         where: {
@@ -277,7 +323,23 @@ export class PaymentService {
         },
       });
 
-      return { success: true, message: "update status update" };
+      const updateSubscription = await this.updateSubscriptionInfo(
+        jobHunterId,
+        subscriptionId,
+        paymentData.paymentDate,
+      );
+
+      if (!updateSubscription.success) {
+        return {
+          success: false,
+          message: updateSubscription.message,
+        };
+      }
+
+      return {
+        success: true,
+        message: "update status payment and subscription",
+      };
     } catch (e) {
       console.error(e);
       return {
@@ -311,6 +373,14 @@ export class PaymentService {
         first_name: orderUserInfo.name,
         email: orderUserInfo.email,
       },
+      item_details: [
+        {
+          id: orderItemInfo.subscriptionId,
+          price: amount,
+          quantity: 1,
+          name: orderItemInfo.subscriptionName,
+        },
+      ],
     };
     try {
       const response = await axios.post(this.apiURL, body, {
@@ -351,6 +421,55 @@ export class PaymentService {
     } catch (e) {
       console.log(e);
       return { success: false, message: "Failed to cancel order" };
+    }
+  }
+
+  async updateSubscriptionInfo(
+    jobhunterId: number,
+    subscriptionId: number,
+    paymentDate: string,
+  ) {
+    try {
+      const checkUser = await this.prisma.jobHunter.findUnique({
+        where: {
+          job_hunter_id: jobhunterId,
+        },
+      });
+
+      if (!checkUser) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      const updateSubscription = await this.prisma.jobHunterSubscription.update(
+        {
+          where: {
+            job_hunter_subscription_id: checkUser.jobHunterSubscriptionId,
+          },
+          data: {
+            subscriptionId: subscriptionId,
+            subscription_active: true,
+            subscription_start_date: new Date(paymentDate),
+            subscription_end_date: new Date(
+              new Date(paymentDate).getTime() + 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+            ),
+            updated_at: new Date(),
+          },
+        },
+      );
+      return {
+        success: {
+          success: true,
+          updateSubscription,
+        },
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to update subscripton data",
+      };
     }
   }
 }

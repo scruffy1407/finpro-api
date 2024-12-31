@@ -15,7 +15,6 @@ export class PaymentController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     const subscriptionId = req.params.subscriptionId;
-    const orderData: createOrder = req.body;
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -26,7 +25,7 @@ export class PaymentController {
           Number(subscriptionId),
         );
         if (response.success) {
-          res.status(200).send({
+          res.status(201).send({
             status: res.statusCode,
             data: response.data,
           });
@@ -97,7 +96,7 @@ export class PaymentController {
       status: Number(status_code),
       amount: gross_amount,
       paymentType: payment_type,
-      bank: va_numbers[0].bank || null,
+      bank: va_numbers ? va_numbers[0].bank : null,
       paymentDate: settlement_time,
       paymentStatus: transaction_status,
       transactionId: order_id,
@@ -119,6 +118,11 @@ export class PaymentController {
         });
         return;
       }
-    } catch (e) {}
+    } catch (e) {
+      res.status(500).send({
+        status: res.statusCode,
+        message: "Something went wrong",
+      });
+    }
   }
 }
