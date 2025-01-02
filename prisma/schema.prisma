@@ -53,6 +53,7 @@ model JobHunter {
   expected_salary         Decimal?  @default(0) @db.Decimal(15, 2)
   summary                 String?
   resume                  String?
+  cv_generated_count      Int?      @default(0)
 
   baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
@@ -176,6 +177,7 @@ model SubscriptionTable {
 model JobHunterSubscription {
   job_hunter_subscription_id Int       @id @default(autoincrement())
   subscriptionId             Int
+  reminderSent               Boolean   @default(false)
   subscription_active        Boolean   @default(false)
   subscription_start_date    DateTime? @default(now())
   subscription_end_date      DateTime? @default(now())
@@ -190,12 +192,14 @@ model JobHunterSubscription {
 }
 
 model Transaction {
-  transaction_id     Int               @id @default(autoincrement())
-  jobHunterId        Int
-  subscriptionId     Int
-  transaction_status TransactionStatus @default(pending)
-  transaction_amount Decimal           @db.Decimal(10, 2)
-  created_at         DateTime          @default(now())
+  transaction_id      Int               @id @default(autoincrement())
+  invoice_transaction String            @unique
+  jobHunterId         Int
+  subscriptionId      Int
+  redirect_link       String?
+  transaction_status  TransactionStatus @default(pending)
+  transaction_amount  Decimal           @db.Decimal(10, 2)
+  created_at          DateTime          @default(now())
 
   payment Payment[]
 
@@ -206,14 +210,16 @@ model Transaction {
 }
 
 model Payment {
-  payment_id     Int           @id @default(autoincrement())
-  transactionId  Int
-  payment_method PaymentMethod
-  payment_amount Decimal       @db.Decimal(10, 2)
-  payment_status PaymentStatus @default(pending)
-  payment_date   DateTime
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  payment_id      Int           @id @default(autoincrement())
+  transactionId   Int
+  invoice_payment String        @unique
+  payment_method  PaymentMethod
+  bank            String?
+  payment_amount  Decimal       @db.Decimal(10, 2)
+  payment_status  PaymentStatus @default(pending)
+  payment_date    DateTime
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
 
   transaction Transaction @relation(fields: [transactionId], references: [transaction_id])
 
@@ -227,7 +233,7 @@ model SkillAssessment {
   developerId           Int
   skill_assessment_name String
   skill_badge           String
-  passing_grade         Int      @default(85)
+  passing_grade         Int      @default(75)
   duration              Int      @default(30)
   deleted               Boolean  @default(false)
   created_at            DateTime @default(now())
@@ -250,6 +256,7 @@ model SkillAsessmentQuestion {
   answer_2                     String
   answer_3                     String
   answer_4                     String
+  correct_answer               String
   created_at                   DateTime @default(now())
   updated_at                   DateTime @updatedAt
 
@@ -265,6 +272,9 @@ model SkillAsessmentCompletion {
   completion_status              CompletionStatusSkillAssessment
   completion_score               Int
   completion_date                DateTime                        @default(now())
+  start_date                     DateTime
+  end_date                       DateTime
+  isRefreshed                    Boolean
 
   certificate Certificate[]
 
@@ -525,6 +535,7 @@ enum ApplicationStatus {
 enum CompletionStatusSkillAssessment {
   failed
   pass
+  ongoing
 
   @@schema("SkillAssessment")
 }
@@ -574,11 +585,11 @@ enum TransactionStatus {
 }
 
 enum PaymentMethod {
-  creditcard
-  gopay
-  bca
-  mandiri
+  bank_transfer
   qris
+  gopay
+  shopeepay
+  credit_card
 
   @@schema("Subscription")
 }
