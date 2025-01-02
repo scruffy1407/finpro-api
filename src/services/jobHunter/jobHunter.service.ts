@@ -1,4 +1,5 @@
-import { PrismaClient, RoleType, Gender } from "@prisma/client";
+import { Gender, PrismaClient, RoleType } from "@prisma/client";
+
 import { UserService } from "../baseUser/user.service";
 import { JobHunterGeneralInfo, UpdateImage } from "../../models/models";
 import { LocationService } from "../location/location.service";

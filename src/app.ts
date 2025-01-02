@@ -44,7 +44,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://6950-2001-448a-2002-26e4-1dad-af2b-198d-d26f.ngrok-free.app", // NGROK ONLY
+      "https://9468-2001-448a-2002-26e4-b001-49f2-82b7-91d5.ngrok-free.app", // NGROK ONLY
     ],
     credentials: true,
   }),

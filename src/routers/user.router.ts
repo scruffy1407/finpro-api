@@ -8,6 +8,7 @@ import { ReviewController } from "../controllers/jobHunter/review.controller";
 import { PaymentController } from "../controllers/subscription/payment.controller";
 import upload from "../middlewares/upload.middleware";
 import environment from "dotenv";
+import { CertificateController } from "../controllers/certificate/certificate.controller";
 
 environment.config();
 
@@ -19,6 +20,7 @@ const educationController = new EducationController();
 const authMiddleware = new AuthJwtMiddleware();
 const reviewController = new ReviewController();
 const paymentController = new PaymentController();
+const certificateController = new CertificateController();
 const WEBHOOK_MIDTRANS_URL = process.env.MIDTRANS_PAYMENT_WEB_HOOK_TOKEN;
 
 // USER COMPANY
@@ -153,6 +155,12 @@ router.post(
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
   paymentController.vefifyPayment.bind(paymentController),
+);
+
+// verify Certificate
+router.get(
+  "/verify-certificate/:certificateCode",
+  certificateController.verifyCertificate.bind(certificateController),
 );
 
 //

@@ -287,6 +287,7 @@ model SkillAsessmentCompletion {
 model Certificate {
   certificate_id              Int      @id @default(autoincrement())
   skillAssessmentCompletionId Int
+  certificate_unique_id       String   @unique
   certificate_name            String
   certificate_issuer          String
   certificate_date            DateTime
