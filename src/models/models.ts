@@ -319,3 +319,17 @@ export interface createPayment {
   paymentStatus: string;
   transactionId: string;
 }
+export interface PaymentComplete {
+  email: string;
+  name: string;
+  orderId: string;
+  amount: number;
+  packageName: string;
+  expirePackage: string;
+}
+
+export interface DataReminder {
+  name: string;
+  packageName: string;
+  expirePackage: string;
+}

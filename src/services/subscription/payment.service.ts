@@ -1,4 +1,3 @@
-import { Request, Response } from "express";
 import {
   PaymentMethod,
   PrismaClient,
@@ -17,6 +16,8 @@ import {
   orderItemInfo,
   orderUserInfo,
 } from "../../models/models";
+import { MidtransUtils } from "../../utils/midtrans.utils";
+import { formatDate } from "../../utils/dateFormatter";
 
 environment.config();
 
@@ -24,11 +25,13 @@ export class PaymentService {
   private serverKey: string;
   private apiURL: string;
   private prisma: PrismaClient;
+  private midtransUtils: MidtransUtils;
 
   constructor() {
     this.serverKey = process.env.MIDTRANS_SERVER_KEY as string;
     this.apiURL = process.env.MIDTRANS_API_URL as string;
     this.prisma = new PrismaClient();
+    this.midtransUtils = new MidtransUtils();
   }
 
   async createOrder(userId: number, subsId: number) {
@@ -130,7 +133,7 @@ export class PaymentService {
         },
       };
 
-      const midTransReturn = await this.initOrderMidtrans(
+      const midTransReturn = await this.midtransUtils.initOrderMidtrans(
         uniqueCode,
         data.amount,
         data.userInfo,
@@ -176,6 +179,7 @@ export class PaymentService {
   async cancelStatusOrder(userId: number, orderId: string) {}
 
   async midtransUpdateStatus(paymentData: createPayment) {
+    console.log("SERVICE PAYMENT DATA :", paymentData);
     try {
       const checkTransaction = await this.prisma.transaction.findUnique({
         where: {
@@ -232,9 +236,40 @@ export class PaymentService {
           },
         });
         console.log("PAYMENT UPDATED");
+
+        const userTransaction = await this.prisma.transaction.findUnique({
+          where: {
+            invoice_transaction: paymentData.transactionId,
+          },
+          include: {
+            jobHunter: {
+              select: {
+                email: true,
+                name: true,
+                jobHunterSubscription: true,
+              },
+            },
+          },
+        });
+
         return {
           success: true,
           message: "Update Payment",
+          data: {
+            email: userTransaction?.jobHunter.email,
+            name: userTransaction?.jobHunter.name || "Name not available",
+            orderId: paymentData.transactionId,
+            amount: paymentData.amount,
+            packageName:
+              userTransaction?.jobHunter.jobHunterSubscription
+                .subscriptionId === 2
+                ? "Standard Plan"
+                : "Professional Plan",
+            expirePackage: formatDate(
+              userTransaction?.jobHunter.jobHunterSubscription
+                .subscription_end_date as Date,
+            ),
+          },
         };
       }
     } catch (e) {
@@ -246,7 +281,11 @@ export class PaymentService {
     }
   }
 
-  async createPayment(transactionId: number, paymentData: createPayment) {
+  async createPayment(
+    transactionId: number,
+    paymentData: createPayment,
+    pass?: "settlement" | "pending",
+  ) {
     let uniqueCode = "";
     let isUniqueCode = false;
     do {
@@ -268,8 +307,14 @@ export class PaymentService {
           transactionId: transactionId,
           invoice_payment: uniqueCode,
           payment_amount: paymentData.amount,
-          payment_date: new Date("01/01/1900"), // dummy
-          payment_status: PaymentStatus.pending,
+          payment_date:
+            pass === "settlement"
+              ? new Date(paymentData.paymentDate)
+              : new Date("01/01/1900"), // dummy
+          payment_status:
+            pass === "settlement"
+              ? PaymentStatus.success
+              : PaymentStatus.pending,
           payment_method: paymentData.paymentType as PaymentMethod,
           bank:
             paymentData.paymentType === PaymentMethod.bank_transfer
@@ -349,81 +394,6 @@ export class PaymentService {
     }
   }
 
-  async initOrderMidtrans(
-    orderId: string,
-    amount: number,
-    orderUserInfo: orderUserInfo,
-    orderItemInfo: orderItemInfo,
-  ) {
-    const base64ServerKeyCode = Buffer.from(this.serverKey + ":").toString(
-      "base64",
-    );
-
-    const header = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Basic ${base64ServerKeyCode}`,
-    };
-    const body = {
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: amount,
-      },
-      customer_details: {
-        first_name: orderUserInfo.name,
-        email: orderUserInfo.email,
-      },
-      item_details: [
-        {
-          id: orderItemInfo.subscriptionId,
-          price: amount,
-          quantity: 1,
-          name: orderItemInfo.subscriptionName,
-        },
-      ],
-    };
-    try {
-      const response = await axios.post(this.apiURL, body, {
-        headers: header,
-      });
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (err: any) {
-      console.log(err);
-      return {
-        success: false,
-        message: err,
-      };
-    }
-  }
-  async cancelOrderMidtrans(orderId: string) {
-    const base64ServerKeyCode = Buffer.from(this.serverKey + ":").toString(
-      "base64",
-    );
-    const options = {
-      method: "POST",
-      url: `https://api.sandbox.midtrans.com/v2/${orderId}/cancel`,
-      headers: {
-        accept: "application/json",
-        authorization: `Basic ${base64ServerKeyCode}`,
-      },
-    };
-
-    try {
-      const response = await axios.request(options);
-      if (response.status === 200) {
-        return { success: true, data: response.data };
-      } else {
-        return { success: false, message: "Failed to cancel order" };
-      }
-    } catch (e) {
-      console.log(e);
-      return { success: false, message: "Failed to cancel order" };
-    }
-  }
-
   async updateSubscriptionInfo(
     jobhunterId: number,
     subscriptionId: number,
@@ -469,6 +439,176 @@ export class PaymentService {
       return {
         success: false,
         message: "Failed to update subscripton data",
+      };
+    }
+  }
+
+  async verifyPayment(userId: number, orderId: string, verify: string) {
+    try {
+      const validateUser = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          jobHunter: true,
+        },
+      });
+
+      if (!validateUser) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      const checkTransaction = await this.prisma.transaction.findUnique({
+        where: {
+          invoice_transaction: orderId,
+        },
+      });
+
+      if (!checkTransaction) {
+        return {
+          success: false,
+          message: "Order Not Found",
+        };
+      }
+
+      const verifyOrder =
+        await this.midtransUtils.verifyStatusMidtrans(orderId);
+
+      if (!verifyOrder.order_id) {
+        return {
+          success: false,
+          message: verifyOrder.message,
+        };
+      }
+
+      switch (verify) {
+        case "settlement":
+          if (
+            verifyOrder.transaction_status === "settlement" &&
+            checkTransaction.transaction_status === "pending"
+          ) {
+            const isPaymentExist = await this.prisma.payment.findFirst({
+              where: {
+                transactionId: checkTransaction.transaction_id,
+              },
+            });
+            if (!isPaymentExist) {
+              return {
+                success: false,
+                message: "Order already has a payment",
+              };
+            }
+
+            const createPayment = await this.createPayment(
+              verifyOrder.order_id,
+              {
+                paymentDate: verifyOrder.payment_date as string,
+                paymentType: verifyOrder.payment_type,
+                amount: verifyOrder.payment_amount,
+                bank: verifyOrder.bank ? verifyOrder.bank[0].bank : null,
+                transactionId: verifyOrder.order_id,
+                status: 200,
+                paymentStatus: "pending",
+              },
+              "settlement",
+            );
+
+            if (!createPayment.success) {
+              return {
+                success: false,
+                message: "Failed to create payment",
+              };
+            }
+
+            const updateSubscription = await this.updateSubscriptionInfo(
+              validateUser.jobHunter[0].job_hunter_id,
+              checkTransaction.subscriptionId,
+              verifyOrder.payment_date,
+            );
+
+            if (!updateSubscription.success) {
+              return {
+                success: false,
+                message: updateSubscription.message,
+              };
+            }
+
+            await this.prisma.transaction.update({
+              where: {
+                transaction_id: checkTransaction.transaction_id,
+              },
+              data: {
+                transaction_status: "success",
+              },
+            });
+
+            return {
+              success: true,
+              message: "update status payment and subscription",
+              data: verifyOrder.transaction_status,
+            };
+          } else if (
+            verifyOrder.transaction_status === "settlement" &&
+            checkTransaction.transaction_status === "success"
+          ) {
+            return {
+              success: true,
+              message: "Payment already updated",
+              data: verifyOrder.transaction_status,
+            };
+          } else {
+            return {
+              success: false,
+              message: "Order is not yet settlement",
+            };
+          }
+        case "pending":
+          if (
+            verifyOrder.transaction_status === "pending" &&
+            checkTransaction.transaction_status === "pending"
+          ) {
+            const isPaymentExist = await this.prisma.payment.findFirst({
+              where: {
+                transactionId: checkTransaction.transaction_id,
+              },
+            });
+            if (!isPaymentExist) {
+              return {
+                success: false,
+                message: "Order already has a payment",
+              };
+            }
+
+            await this.midtransUpdateStatus({
+              paymentDate: verifyOrder.payment_date as string,
+              paymentType: verifyOrder.payment_type,
+              amount: verifyOrder.payment_amount,
+              bank: verifyOrder.bank ? verifyOrder.bank[0].bank : null,
+              transactionId: verifyOrder.order_id,
+              status: 201,
+              paymentStatus: "pending",
+            });
+          }
+
+          return {
+            success: true,
+            message: "Payment already created",
+            data: verifyOrder.transaction_status,
+          };
+
+        default:
+          return {
+            success: false,
+            message: "Failed to create or update",
+          };
+      }
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to create or update",
       };
     }
   }

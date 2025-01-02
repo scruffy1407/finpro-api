@@ -7,9 +7,9 @@ export function generateTransactionCode(): string {
   const day = ("0" + now.getDate()).slice(-2); // Pad day with leading zero
 
   // Generate a random 5-character alphanumeric string
-  const randomId = randomBytes(5).toString("hex").slice(0, 5);
+  const randomId = randomBytes(5).toString("hex").slice(0, 5).toUpperCase();
 
-  return `TRN-${year}${randomId}${month}${day}`;
+  return `PATH-${year}${randomId}${month}${day}`;
 }
 
 export function generateInvoiceCode(): string {
@@ -19,7 +19,7 @@ export function generateInvoiceCode(): string {
   const day = ("0" + now.getDate()).slice(-2); // Pad day with leading zero
 
   // Generate a random 5-character alphanumeric string
-  const randomId = randomBytes(5).toString("hex").slice(0, 5);
+  const randomId = randomBytes(5).toString("hex").slice(0, 5).toUpperCase();
 
   return `INV-${year}${randomId}${month}${day}`;
 }

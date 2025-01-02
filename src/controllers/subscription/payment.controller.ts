@@ -1,7 +1,12 @@
 import { Request, Response } from "express";
 import { PaymentService } from "../../services/subscription/payment.service";
-import { createOrder, createPayment } from "../../models/models";
+import {
+  createOrder,
+  createPayment,
+  PaymentComplete,
+} from "../../models/models";
 import { AuthUtils } from "../../utils/auth.utils";
+import { sendEmailPaymentComplete } from "../../config/nodeMailer";
 
 export class PaymentController {
   private paymentService: PaymentService;
@@ -107,11 +112,34 @@ export class PaymentController {
     try {
       console.log("ORDER ID", order_id);
       const response = await this.paymentService.midtransUpdateStatus(data);
+      console.log("RESPONSE CONTROLLER", response);
       if (response.success) {
-        res.status(200).send({
-          status: res.statusCode,
-        });
-        return;
+        if (data.status === 200 && response.data) {
+          console.log("innerEmail Exec");
+          sendEmailPaymentComplete(
+            response.data.email as string,
+            response.data as PaymentComplete,
+          )
+            .then((response) => {
+              console.log(response);
+              res.status(200).send({
+                status: res.statusCode,
+                message: "Payment Complete and send",
+              });
+            })
+            .catch((e) => {
+              console.error(e);
+              res.status(200).send({
+                status: res.statusCode,
+                message: "Failed to send email",
+              });
+            });
+        } else {
+          res.status(200).send({
+            status: res.statusCode,
+            message: "Payment Complete and send",
+          });
+        }
       } else {
         res.status(400).send({
           status: res.statusCode,
@@ -123,6 +151,44 @@ export class PaymentController {
         status: res.statusCode,
         message: "Something went wrong",
       });
+    }
+  }
+
+  async vefifyPayment(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    const orderId = req.params.orderId;
+    const pass = req.body.pass;
+
+    console.log(orderId);
+
+    if (!decodedToken) {
+      res.status(401).send("No token found.");
+    } else {
+      try {
+        const response = await this.paymentService.verifyPayment(
+          decodedToken.user_id,
+          orderId,
+          pass,
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            data: response.data,
+            message: response.message,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: "Something went wrong",
+        });
+      }
     }
   }
 }

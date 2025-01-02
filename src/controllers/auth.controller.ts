@@ -97,7 +97,7 @@ export class AuthController {
   }
 
   async verifyEmail(req: Request, res: Response) {
-    const { verificationToken } = req.params; 
+    const { verificationToken } = req.params;
 
     try {
       const response = await this.authService.verifyEmail(verificationToken);
@@ -134,7 +134,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, phone_number, name, password, user_role },
         user_role,
-        bearerToken
+        bearerToken,
       );
 
       if (!result.success) {
@@ -145,7 +145,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string
+          result.user?.verification_token as string,
         )
           .then(() => {
             res.status(200).send({
@@ -187,7 +187,7 @@ export class AuthController {
       } else {
         const loginResponse: LoginResponse = {
           access_token: result.accessToken || "",
-          refresh_token: result.user.refresh_token || "",
+          refresh_token: result.refreshToken || "",
           oauth_token: "",
           user: {
             ...result.user,
@@ -212,37 +212,36 @@ export class AuthController {
     }
   }
 
-  async refreshToken(req: Request, res: Response) {
-    try {
-      const { refreshToken }: { refreshToken: string } = req.body;
-
-      const data = await this.authService.refreshToken(refreshToken);
-
-      if (!data.success) {
-        res.status(401).json({
-          success: false,
-          message: data.message || "Failed to refresh token",
-        });
-      } else {
-        const response = {
-          access_token: data.accessToken,
-        };
-
-        res.status(200).json({
-          success: true,
-          message: "Token successfully updated",
-          data: response,
-        });
-      }
-    } catch (error: any) {
-      console.error("Refresh token error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to refresh token",
-        error: error.message,
-      });
-    }
-  }
+  // async refreshToken(req: Request, res: Response) {
+  //   try {
+  //     const { refreshToken }: { refreshToken: string } = req.body;
+  //
+  //     const data = await this.authService.refreshToken(refreshToken);
+  //
+  //     if (!data.success) {
+  //       res.status(401).json({
+  //         success: false,
+  //         message: data.message || "Failed to refresh token",
+  //       });
+  //     } else {
+  //       const response = {
+  //         access_token: data.accessToken,
+  //       };
+  //       res.status(200).json({
+  //         success: true,
+  //         message: "Token successfully updated",
+  //         data: response,
+  //       });
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Refresh token error:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: "Failed to refresh token",
+  //       error: error.message,
+  //     });
+  //   }
+  // }
 
   async logout(req: Request, res: Response) {
     try {
@@ -278,6 +277,7 @@ export class AuthController {
 
   async refreshAccessToken(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
+    console.log("CONTROLLER", token);
     const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -286,12 +286,13 @@ export class AuthController {
         const response = await this.authService.refreshAccessToken(
           decodedToken.user_id,
           decodedToken.role_type as RoleType,
-          token as string
+          token as string,
         );
+        console.log(response);
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,
-            data: response.data,
+            data: response.accessToken,
           });
         } else {
           res.status(400).send({
@@ -300,6 +301,7 @@ export class AuthController {
           });
         }
       } catch (e) {
+        console.log(e);
         res.status(500).send({
           status: res.statusCode,
           message: e,
@@ -318,8 +320,11 @@ export class AuthController {
       try {
         const response = await this.authService.validateToken(
           decodedToken.user_id,
-          decodedToken.role_type as RoleType
+          decodedToken.role_type as RoleType,
         );
+
+        console.log("RESPONSE VALIDATE TOKEN :", response);
+
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,

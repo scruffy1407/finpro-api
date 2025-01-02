@@ -13,6 +13,7 @@ import locationRouter from "./routers/location.router";
 import cron from "node-cron";
 import applyTestRouter from "./routers/applyTest.router";
 import applyJobTestRouter from "./routers/applyJobTestRouter";
+import subscriptionRoutes from "./routers/subscription.router";
 
 import { DropboxTokenManager } from "./utils/dropboxRefreshToken";
 
@@ -41,7 +42,10 @@ app.use(passport.session());
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://6950-2001-448a-2002-26e4-1dad-af2b-198d-d26f.ngrok-free.app", // NGROK ONLY
+    ],
     credentials: true,
   }),
 );
@@ -49,6 +53,8 @@ app.use(
 app.use(express.json());
 
 const tokenManager = DropboxTokenManager.getInstance();
+
+app.use("/subscriptions", subscriptionRoutes);
 
 cron.schedule("*/5 * * * *", async () => {
   //EVERY 5 MINUTES REFRESH

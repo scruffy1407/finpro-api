@@ -143,16 +143,18 @@ router.post(
   authMiddleware.authorizeRole("jobhunter"),
   paymentController.createOrder.bind(paymentController),
 );
-// router.post(
-//   "/job-hunter/subscription/cancel/:orderId",
-//   authMiddleware.authenticateJwt.bind(authMiddleware),
-//   authMiddleware.authorizeRole("jobhunter"),
-//   paymentController.cancelOrder.bind(paymentController),
-// );
+
 router.post(
   `/midtrans/notify-complete`,
   paymentController.verifyOrderComplete.bind(paymentController),
 );
+router.post(
+  "/job-hunter/verify-payment/:orderId",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  paymentController.vefifyPayment.bind(paymentController),
+);
+
 //
 // router.get(
 //   "/job-hunter/subscription/verify/:subscriptionId",
