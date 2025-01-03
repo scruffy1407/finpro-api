@@ -3,6 +3,8 @@ import {
   PrismaClient,
   PaymentStatus,
   RoleType,
+  ApplicationStatus,
+  TransactionStatus,
 } from "@prisma/client";
 import environment from "dotenv";
 import axios from "axios";
@@ -609,6 +611,69 @@ export class PaymentService {
       return {
         success: false,
         message: "Failed to create or update",
+      };
+    }
+  }
+
+  async getUserTransaction(
+    userId: number,
+    status?: string,
+    limit: number = 6, // Fetch 10 posts initially, to load more later
+    offset: number = 0,
+  ) {
+    try {
+      const user = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          jobHunter: true,
+        },
+      });
+      if (!user) {
+        return {
+          success: false,
+          message: "User does not exist",
+        };
+      }
+
+      const whereConditions: any = {
+        jobHunterId: user.jobHunter[0].job_hunter_id,
+        transaction_status: status as TransactionStatus,
+      };
+
+      const transaction = await this.prisma.transaction.findMany({
+        where: whereConditions,
+        skip: offset,
+        take: limit,
+        select: {
+          invoice_transaction: true,
+          transaction_status: true,
+          transaction_amount: true,
+          redirect_link: true,
+          payment: {
+            select: {
+              payment_date: true,
+              payment_method: true,
+              bank: true,
+            },
+          },
+          subscriptionTable: {
+            select: {
+              subscription_type: true,
+            },
+          },
+        },
+      });
+      return {
+        success: true,
+        message: "Get user transaction",
+        transaction,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to get transaction",
       };
     }
   }

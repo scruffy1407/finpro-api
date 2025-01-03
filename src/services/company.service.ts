@@ -528,6 +528,97 @@ export class CompanyService {
       };
     }
   }
+
+  async getCompanyList(
+    companyName?: string,
+    companyCity?: string,
+    companyProvince?: string,
+    limit: number = 6, // Fetch 10 posts initially, to load more later
+    page: number = 1,
+  ) {
+    console.log("QUERY", companyCity, companyName, companyProvince);
+    const whereConditions: any = {};
+    if (companyName) {
+      whereConditions.company_name = {
+        contains: companyName, // Case-insensitive search for job_title
+        mode: "insensitive",
+      };
+    }
+    if (companyCity) {
+      whereConditions.company_city = companyCity;
+    }
+    if (companyProvince) {
+      whereConditions.company_province = companyProvince;
+    }
+
+    console.log("WHERE CONDITION", whereConditions);
+
+    try {
+      // Fetch the total company based on the search criteria
+      const totalCompany = await this.prisma.company.count({
+        where: whereConditions,
+      });
+
+      // Calculate total number of pages
+      const totalPages = Math.ceil(totalCompany / limit);
+
+      // If the requested page is greater than total pages, return an empty result
+      if (page > totalPages) {
+        return {
+          success: true,
+          data: {
+            listCompany: [],
+            currentPage: page,
+            totalPages: totalPages,
+            totalCompany,
+          },
+          message: "No posts available for this page.",
+        };
+      }
+
+      // Calculate skip value for pagination
+      const skip = (page - 1) * limit;
+
+      // Fetch company based on the search criteria and pagination
+      const listCompany = await this.prisma.company.findMany({
+        where: whereConditions, // Apply the search criteria
+        skip: skip, // Skip records for pagination
+        take: limit, // Limit the number of records per page
+        select: {
+          company_id: true,
+          logo: true,
+          company_name: true,
+          company_city: true,
+          company_province: true,
+          _count: {
+            select: {
+              jobPost: {
+                where: {
+                  status: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      return {
+        success: true,
+        data: {
+          listCompany,
+          currentPage: page,
+          totalPages,
+          totalCompany,
+        },
+        message: "Get Company List.",
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        message: "Failed to fetch company",
+      };
+    }
+  }
 }
 
 //GET JOB POST DATABASE

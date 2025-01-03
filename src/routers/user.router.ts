@@ -156,6 +156,12 @@ router.post(
   authMiddleware.authorizeRole("jobhunter"),
   paymentController.vefifyPayment.bind(paymentController),
 );
+router.get(
+  "/job-hunter/payment",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter"),
+  paymentController.getUserTransaction.bind(paymentController),
+);
 
 // verify Certificate
 router.get(

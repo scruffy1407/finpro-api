@@ -191,4 +191,43 @@ export class PaymentController {
       }
     }
   }
+
+  async getUserTransaction(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+    const { offset, status, limit } = req.body;
+
+    if (!decodedToken) {
+      res.status(400).send({
+        status: res.statusCode,
+        message: "Invalid token",
+      });
+    } else {
+      try {
+        const response = await this.paymentService.getUserTransaction(
+          decodedToken.user_id,
+          status,
+          limit,
+          offset,
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            message: response.message,
+            data: response.transaction,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
+    }
+  }
 }
