@@ -32,7 +32,7 @@ applyTestRouter.post(
 	"/updateanswer",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
-	jobHunterTestController.updateResult.bind(JobHunterTestController)
+	jobHunterTestController.updateResult.bind(jobHunterTestController)
 );
 
 export default applyTestRouter;

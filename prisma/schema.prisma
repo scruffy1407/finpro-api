@@ -177,6 +177,7 @@ model SubscriptionTable {
 model JobHunterSubscription {
   job_hunter_subscription_id Int       @id @default(autoincrement())
   subscriptionId             Int
+  reminderSent               Boolean   @default(false)
   subscription_active        Boolean   @default(false)
   subscription_start_date    DateTime? @default(now())
   subscription_end_date      DateTime? @default(now())
@@ -195,6 +196,7 @@ model Transaction {
   invoice_transaction String            @unique
   jobHunterId         Int
   subscriptionId      Int
+  redirect_link       String?
   transaction_status  TransactionStatus @default(pending)
   transaction_amount  Decimal           @db.Decimal(10, 2)
   created_at          DateTime          @default(now())
@@ -225,12 +227,13 @@ model Payment {
 }
 
 // Skill Assessment
+
 model SkillAssessment {
   skill_assessment_id   Int      @id @default(autoincrement())
   developerId           Int
   skill_assessment_name String
   skill_badge           String
-  passing_grade         Int      @default(85)
+  passing_grade         Int      @default(75)
   duration              Int      @default(30)
   deleted               Boolean  @default(false)
   created_at            DateTime @default(now())
@@ -253,6 +256,7 @@ model SkillAsessmentQuestion {
   answer_2                     String
   answer_3                     String
   answer_4                     String
+  correct_answer               String
   created_at                   DateTime @default(now())
   updated_at                   DateTime @updatedAt
 
@@ -268,6 +272,9 @@ model SkillAsessmentCompletion {
   completion_status              CompletionStatusSkillAssessment
   completion_score               Int
   completion_date                DateTime                        @default(now())
+  start_date                     DateTime
+  end_date                       DateTime
+  isRefreshed                    Boolean
 
   certificate Certificate[]
 
@@ -280,6 +287,7 @@ model SkillAsessmentCompletion {
 model Certificate {
   certificate_id              Int      @id @default(autoincrement())
   skillAssessmentCompletionId Int
+  certificate_unique_id       String 
   certificate_name            String
   certificate_issuer          String
   certificate_date            DateTime
@@ -528,6 +536,7 @@ enum ApplicationStatus {
 enum CompletionStatusSkillAssessment {
   failed
   pass
+  ongoing
 
   @@schema("SkillAssessment")
 }
