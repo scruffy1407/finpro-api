@@ -265,29 +265,29 @@ model SkillAsessmentQuestion {
   @@schema("SkillAssessment")
 }
 
-  model SkillAsessmentCompletion {
-    skill_assessment_completion_id Int                             @id @default(autoincrement())
-    skillAssessmentId              Int
-    jobHunterId                    Int
-    completion_status              CompletionStatusSkillAssessment
-    completion_score               Int
-    completion_date                DateTime                        @default(now())
-    start_date                     DateTime
-    end_date                       DateTime
-    isRefreshed                    Boolean
+model SkillAsessmentCompletion {
+  skill_assessment_completion_id Int                             @id @default(autoincrement())
+  skillAssessmentId              Int
+  jobHunterId                    Int
+  completion_status              CompletionStatusSkillAssessment
+  completion_score               Int
+  completion_date                DateTime                        @default(now())
+  start_date                     DateTime
+  end_date                       DateTime
+  isRefreshed                    Boolean
 
-    certificate Certificate[]
+  certificate Certificate[]
 
-    jobHunter       JobHunter       @relation(fields: [jobHunterId], references: [job_hunter_id])
-    skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
+  jobHunter       JobHunter       @relation(fields: [jobHunterId], references: [job_hunter_id])
+  skillAssessment SkillAssessment @relation(fields: [skillAssessmentId], references: [skill_assessment_id])
 
-    @@schema("SkillAssessment")
-  }
+  @@schema("SkillAssessment")
+}
 
 model Certificate {
   certificate_id              Int      @id @default(autoincrement())
   skillAssessmentCompletionId Int
-  certificate_unique_id       String   @unique
+  certificate_unique_id       String 
   certificate_name            String
   certificate_issuer          String
   certificate_date            DateTime
