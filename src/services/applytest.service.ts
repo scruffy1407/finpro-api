@@ -7,7 +7,7 @@ interface ResultPreSelection {
 	applicationId: number;
 	completion_score?: number;
 	completion_date?: Date;
-	completion_status?: string; // Replace with an enum if needed
+	completion_status?: string; 
 	created_at: Date;
 	isRefreshed?: boolean;
 }
@@ -18,7 +18,7 @@ interface Application {
 	jobId: number;
 	resume?: string;
 	expected_salary?: Decimal;
-	application_status?: string; // Replace with an enum if needed
+	application_status?: string; 
 	created_at: Date;
 	updated_at?: Date;
 }
@@ -32,7 +32,6 @@ export class ApplyTestService {
 		this.authUtils = new AuthUtils();
 	}
 
-	// services/preSelectionTestService.ts
 	async joinPreSelectionTest({
 		jobId,
 		token,
@@ -63,7 +62,7 @@ export class ApplyTestService {
 			}
 
 			// Ensure the job hunter exists
-			// Retrieve the Job Hunter based on the decoded user_id
+
 			const jobHunter = await this.prisma.jobHunter.findUnique({
 				where: { userId: decodedToken.user_id },
 			});
@@ -288,7 +287,7 @@ export class ApplyTestService {
 				return "Pre-selection test not found.";
 			}
 
-			const { passing_grade: passingGrade, duration } = preSelectionTest;
+			const { passing_grade: passingGrade } = preSelectionTest;
 
 			// Determine the completion status based on the score and passing grade
 			const completionStatus = score >= passingGrade ? "pass" : "failed";
@@ -303,8 +302,6 @@ export class ApplyTestService {
 			if (!resultPreSelection) {
 				return "ResultPreSelection not found for the provided applicationId.";
 			}
-
-			const { completion_date: completionDate } = resultPreSelection;
 
 			// Step 5: Update ResultPreSelection score with completion_id
 			const updatedResult = await this.prisma.resultPreSelection.update({

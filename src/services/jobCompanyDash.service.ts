@@ -17,7 +17,7 @@ export class JobCompanyDashService {
 		status?: boolean,
 		salaryShow?: boolean,
 		sortOrder?: string,
-		jobTitle?:string
+		jobTitle?: string
 	) {
 		try {
 			// Build the search criteria for fetching job posts
@@ -131,4 +131,6 @@ export class JobCompanyDashService {
 			return { error: "Error fetching job posts: " + err.message };
 		}
 	}
+	
+	
 }

@@ -34,7 +34,7 @@ companyRouter.post(
 
 //DELETING SOFT DELETE
 companyRouter.put(
-	"/job/:jobId",
+	"/delete/job/:jobId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
 	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
 	companyController.deleteJob.bind(companyController) // Controller method
