@@ -40,7 +40,7 @@ export async function sendInterviewEmail(interviewEmail: InterviewEmail) {
   const mailOption = {
     from: "fareldeksano000@gmail.com", // sender address
     to: interviewEmail.email, // list of receivers
-    subject: `YEYY! You got interview the interview for ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
+    subject: `YEYY! You got the interview for ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
     text: "Hello world?", // plain text body
     html: html,
   };
@@ -51,7 +51,7 @@ export async function resendInterviewEmail(interviewEmail: InterviewEmail) {
   const templatePath = path.join(
     __dirname,
     "/views/",
-    "resendInterviewEmail.ejs",
+    "resendInterviewEmail.ejs"
   );
   const html = await ejs.renderFile(templatePath, {});
   const mailOption = {
@@ -66,7 +66,7 @@ export async function resendInterviewEmail(interviewEmail: InterviewEmail) {
 
 export async function sendEmailVerification(
   email: string,
-  verificationToken: string,
+  verificationToken: string
 ) {
   const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
   const href = `http://localhost:3000/auth/register/verify-email/${verificationToken}`;
@@ -83,4 +83,33 @@ export async function sendEmailVerification(
     html: html,
   };
   await transporter.sendMail(mailOption);
+}
+
+export async function sendApplicationStatusEmail(
+  email: string,
+  emailData: {
+    name: string;
+    applicationStatus: string;
+    jobName: string;
+    jobTitle: string;
+  }
+) {
+  const templatePath = path.join(__dirname, "/views/", "applicationStatus.ejs");
+  const formattedData = {
+    ...emailData,
+    applicationStatus:
+      emailData.applicationStatus.charAt(0).toUpperCase() +
+      emailData.applicationStatus.slice(1),
+  };
+  const html = await ejs.renderFile(templatePath, {
+    emailData: formattedData,
+  });
+
+  const mailOptions = {
+    from: "fareldeksano000@gmail.com",
+    to: email,
+    subject: `Job Application Status Update - ${formattedData.applicationStatus}`,
+    html,
+  };
+  await transporter.sendMail(mailOptions);
 }

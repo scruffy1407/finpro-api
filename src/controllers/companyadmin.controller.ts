@@ -14,6 +14,10 @@ export class CompanyAdminController {
     this.getJobApplicants = this.getJobApplicants.bind(this);
     this.getApplicationDetails = this.getApplicationDetails.bind(this);
     this.updateApplicationStatus = this.updateApplicationStatus.bind(this);
+    this.deleteJob = this.deleteJob.bind(this);
+    this.toggleJobStatus = this.toggleJobStatus.bind(this);
+    this.getJobPostInformation = this.getJobPostInformation.bind(this);
+    this.getJobStatus = this.getJobStatus.bind(this);
   }
 
   async getCompanyApplicants(req: Request, res: Response) {
@@ -152,7 +156,6 @@ export class CompanyAdminController {
     const { application_id, application_status } = req.body;
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
-
     if (
       !application_id ||
       !Object.values(ApplicationStatus).includes(application_status)
@@ -199,6 +202,115 @@ export class CompanyAdminController {
           });
         }
       }
+    }
+  }
+
+  async getJobStatus(req: Request, res: Response): Promise<void> {
+    const { jobId } = req.params;
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      res.status(400).json({ success: false, message: "Token is missing." });
+      return;
+    }
+    try {
+      const decodedToken = await this.authUtils.decodeToken(token as string);
+      if (!decodedToken?.user_id) {
+        res
+          .status(400)
+          .json({ success: false, message: "User ID is missing." });
+        return;
+      }
+      if (isNaN(Number(jobId))) {
+        res.status(400).json({ success: false, message: "Invalid jobId" });
+        return;
+      }
+      const status = await this.companyAdminService.getJobStatus(
+        Number(jobId),
+        decodedToken?.user_id as number
+      );
+      if (!status) {
+        res.status(200).json({
+          status: false,
+          message: "Job post is inactive or unavailable.",
+        });
+      } else {
+        res.status(200).json({ status: true });
+      }
+    } catch (error) {
+      console.error("Error fetching job status:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  async deleteJob(req: Request, res: Response): Promise<void> {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      res.status(400).json({ success: false, message: "Token is missing." });
+      return;
+    }
+    try {
+      const decodedToken = await this.authUtils.decodeToken(token as string);
+      const jobId = parseInt(req.params.jobId);
+      if (isNaN(jobId)) {
+        res.status(400).json({ success: false, message: "Invalid jobId" });
+        return;
+      }
+      const result = await this.companyAdminService.deleteJob(
+        jobId,
+        decodedToken?.user_id as number
+      );
+      if (result === "Job post deleted successfully.") {
+        res.status(200).json({ success: true, message: result });
+      } else {
+        res.status(400).json({ success: false, message: result });
+      }
+    } catch (error) {
+      console.error("Error deleting job post:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  async toggleJobStatus(req: Request, res: Response): Promise<void> {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      res.status(400).json({ error: "Token is missing." });
+      return;
+    }
+    try {
+      const decodedToken = await this.authUtils.decodeToken(token as string);
+      const jobId = parseInt(req.params.jobId);
+      const { status } = req.body;
+
+      if (isNaN(jobId)) {
+        res.status(400).json({ success: false, message: "Invalid jobId" });
+        return;
+      }
+      if (typeof status !== "boolean") {
+        res
+          .status(400)
+          .json({ success: false, message: "Status must be a boolean" });
+        return;
+      }
+      const result = await this.companyAdminService.toggleJobStatus(
+        jobId,
+        status,
+        decodedToken?.user_id as number
+      );
+
+      if (result.includes("updated")) {
+        res.status(200).json({ success: true, message: result });
+      } else {
+        res.status(400).json({ success: false, message: result });
+      }
+    } catch (error) {
+      console.error("Error toggling job status:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 }

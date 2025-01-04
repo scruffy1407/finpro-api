@@ -53,6 +53,7 @@ model JobHunter {
   expected_salary         Decimal?  @default(0) @db.Decimal(15, 2)
   summary                 String?
   resume                  String?
+  cv_generated_count      Int?      @default(0)
 
   baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
@@ -190,12 +191,13 @@ model JobHunterSubscription {
 }
 
 model Transaction {
-  transaction_id     Int               @id @default(autoincrement())
-  jobHunterId        Int
-  subscriptionId     Int
-  transaction_status TransactionStatus @default(pending)
-  transaction_amount Decimal           @db.Decimal(10, 2)
-  created_at         DateTime          @default(now())
+  transaction_id      Int               @id @default(autoincrement())
+  invoice_transaction String            @unique
+  jobHunterId         Int
+  subscriptionId      Int
+  transaction_status  TransactionStatus @default(pending)
+  transaction_amount  Decimal           @db.Decimal(10, 2)
+  created_at          DateTime          @default(now())
 
   payment Payment[]
 
@@ -206,14 +208,16 @@ model Transaction {
 }
 
 model Payment {
-  payment_id     Int           @id @default(autoincrement())
-  transactionId  Int
-  payment_method PaymentMethod
-  payment_amount Decimal       @db.Decimal(10, 2)
-  payment_status PaymentStatus @default(pending)
-  payment_date   DateTime
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  payment_id      Int           @id @default(autoincrement())
+  transactionId   Int
+  invoice_payment String        @unique
+  payment_method  PaymentMethod
+  bank            String?
+  payment_amount  Decimal       @db.Decimal(10, 2)
+  payment_status  PaymentStatus @default(pending)
+  payment_date    DateTime
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
 
   transaction Transaction @relation(fields: [transactionId], references: [transaction_id])
 
@@ -221,7 +225,6 @@ model Payment {
 }
 
 // Skill Assessment
-
 model SkillAssessment {
   skill_assessment_id   Int      @id @default(autoincrement())
   developerId           Int
@@ -574,11 +577,11 @@ enum TransactionStatus {
 }
 
 enum PaymentMethod {
-  creditcard
-  gopay
-  bca
-  mandiri
+  bank_transfer
   qris
+  gopay
+  shopeepay
+  credit_card
 
   @@schema("Subscription")
 }
