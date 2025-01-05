@@ -81,7 +81,8 @@ class ApplyJobController {
   async getUserApplication(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token);
-    const { limit, offset, status } = req.body;
+    const { offset = 0, limit = 6, status } = req.query;
+    console.log("CONTROLLER", limit, offset, status);
     if (!decodedToken) {
       res.status(400).send({
         status: 400,
@@ -90,10 +91,10 @@ class ApplyJobController {
     } else {
       try {
         const response = await this.applyJobService.getUserApplications(
-          limit,
-          offset,
+          Number(limit),
+          Number(offset),
           decodedToken.user_id,
-          status,
+          status as string,
         );
 
         if (response.success) {

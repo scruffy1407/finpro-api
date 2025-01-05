@@ -337,7 +337,9 @@ export class CompanyController {
       companyName,
       companyCity,
       companyProvince,
+      hasJob = false,
     } = req.query;
+    console.log("CONTROLLER", page);
     try {
       const response = await this.companyService.getCompanyList(
         companyName as string,

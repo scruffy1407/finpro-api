@@ -535,8 +535,9 @@ export class CompanyService {
     companyProvince?: string,
     limit: number = 6, // Fetch 10 posts initially, to load more later
     page: number = 1,
+    hasJob: boolean = false,
   ) {
-    console.log("QUERY", companyCity, companyName, companyProvince);
+    console.log("QUERY", page);
     const whereConditions: any = {};
     if (companyName) {
       whereConditions.company_name = {
@@ -549,6 +550,8 @@ export class CompanyService {
     }
     if (companyProvince) {
       whereConditions.company_province = companyProvince;
+    }
+    if (hasJob) {
     }
 
     console.log("WHERE CONDITION", whereConditions);

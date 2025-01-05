@@ -23,7 +23,7 @@ applyJobRouter.get(
 
 // Get User application
 applyJobRouter.get(
-  "/user-application/",
+  "/user-application",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter").bind(authMiddleware),
   applyJobController.getUserApplication.bind(applyJobController),

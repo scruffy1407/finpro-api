@@ -197,6 +197,8 @@ export class ApplyJob {
           application_id: true,
           application_status: true,
           created_at: true,
+          resume: true,
+          expected_salary: true,
           jobPost: {
             select: {
               job_id: true,
