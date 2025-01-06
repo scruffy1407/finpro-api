@@ -29,7 +29,7 @@ companyRouter.post(
   "/job",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-  companyController.createJob.bind(companyController)
+  companyController.createJob.bind(companyController),
 );
 
 //DELETING SOFT DELETE
@@ -42,34 +42,40 @@ companyRouter.put(
 
 // PUT request to update a job post
 companyRouter.put(
-	"/job/:jobId",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-	authorizeJobPostOwner, // Authorization middleware to check if the logged-in company owns the job post
-	companyController.updateJob.bind(companyController) // Controller method
+  "/job/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  authorizeJobPostOwner, // Authorization middleware to check if the logged-in company owns the job post
+  companyController.updateJob.bind(companyController), // Controller method
 );
 
 //Get the Job Post for Landing-Page
 companyRouter.get(
-	"/jobNewLp",
-	companyController.jobNewLanding.bind(companyController)
+  "/jobNewLp",
+  companyController.jobNewLanding.bind(companyController),
 );
 
 //get the Job post for Job-List Page
 companyRouter.get(
-	"/jobPosts",
-	companyController.getJobPosts.bind(companyController)
+  "/jobPosts",
+  companyController.getJobPosts.bind(companyController),
 );
 
 // Get Job Post Details (without authentication middleware)
 companyRouter.get(
-	"/jobDetails/:jobId", // The endpoint to fetch job post details by jobId
-	companyController.getJobPostDetail.bind(companyController) // Directly bind the controller method
+  "/jobDetails/:jobId", // The endpoint to fetch job post details by jobId
+  companyController.getJobPostDetail.bind(companyController), // Directly bind the controller method
 );
 
 companyRouter.get(
-	"/categories",
-	companyController.getCategory.bind(companyController)
+  "/categories",
+  companyController.getCategory.bind(companyController),
+);
+
+// Get company for company list page
+companyRouter.get(
+  "/company",
+  companyController.getCompanyList.bind(companyController),
 );
 
 //Create Pre-Test
@@ -84,44 +90,41 @@ companyRouter.post(
 );
 
 //View all Pre_test
-
 companyRouter.get(
   "/viewpretest",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
   preSelectionTestController.getPreSelectionTestsByCompanyController.bind(
-    preSelectionTestController
-  )
+    preSelectionTestController,
+  ),
 );
 
 //Delete PreTest
-
 companyRouter.delete(
   "/deletepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
   authorizeJobTestOwner,
   preSelectionTestController.deletePreSelectionTest.bind(
-    preSelectionTestController
-  )
+    preSelectionTestController,
+  ),
 );
 
 //updating PreTest
-
 companyRouter.put(
   "/updatepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
   preSelectionTestController.updatePreSelectionTest.bind(
-    preSelectionTestController
-  )
+    preSelectionTestController,
+  ),
 );
 
 companyRouter.post(
   "/createtest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-  preSelectionTestController.createTest.bind(preSelectionTestController)
+  preSelectionTestController.createTest.bind(preSelectionTestController),
 );
 
 companyRouter.put(
@@ -170,28 +173,28 @@ companyRouter.put(
 
 //INTERVIEW
 companyRouter.post(
-	"/application/interview",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-	authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-	validateInterviewData,
-	interviewController.setInterviewSchedule.bind(interviewController)
+  "/application/interview",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  validateInterviewData,
+  interviewController.setInterviewSchedule.bind(interviewController),
 );
 companyRouter.put(
-	"/application/interview",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-	authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-	validateInterviewData,
-	interviewController.editInterviewScedule.bind(interviewController)
+  "/application/interview",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  validateInterviewData,
+  interviewController.editInterviewScedule.bind(interviewController),
 );
 companyRouter.put(
-	"/application/status",
-	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-	authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
-	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-	validateUpdateStatus,
-	interviewController.updateStatusInterview.bind(interviewController)
+  "/application/status",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  validateUpdateStatus,
+  interviewController.updateStatusInterview.bind(interviewController),
 );
 
 // PUBLIC DETAIL PAGE

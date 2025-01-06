@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { Application, ApplicationStatus } from "../models/models";
+import { PrismaClient, ApplicationStatus } from "@prisma/client";
+import { Application } from "../models/models";
 import { Dropbox } from "dropbox";
 import { DropboxTokenManager } from "../utils/dropboxRefreshToken";
 
@@ -62,7 +62,6 @@ export class ApplyJob {
         };
       }
 
-
       // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
       // const requiredFields: Array<keyof typeof jobHunter> = [
       //   "name",
@@ -124,7 +123,7 @@ export class ApplyJob {
         data: {
           ...data,
           resume: resumeUrl as string,
-          application_status: ApplicationStatus.ON_REVIEW,
+          application_status: ApplicationStatus.onreview,
         },
       });
 
@@ -148,6 +147,90 @@ export class ApplyJob {
       where: { jobHunterId },
       include: { jobPost: true },
     });
+  }
+
+  // Applicant List Page
+  async getUserApplications(
+    limit: number = 6, // Fetch 10 posts initially, to load more later
+    offset: number = 0,
+    userId: number,
+    status?: string,
+  ) {
+    try {
+      //   Check User
+      const user = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          jobHunter: true,
+        },
+      });
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      //   Get List job
+      // Data that will display in frontend
+      // 1.Jobs Name
+      // 2. Application ID
+      // 3. Jobs Detail Like : JobsId,Jobs Type,Jobs Space, Jobs Salary
+      // 4. Application Status
+      // 5. Apply Date
+
+      const whereConditions: any = {
+        jobHunterId: user.jobHunter[0].job_hunter_id,
+        application_status: status as ApplicationStatus,
+      };
+
+      const applicationUser = await this.prisma.application.findMany({
+        where: whereConditions,
+        skip: offset, // Skip posts based on the offset
+        take: limit, // Limit the number of records per request (max 6)
+        orderBy: {
+          created_at: "desc",
+        },
+        select: {
+          application_id: true,
+          application_status: true,
+          created_at: true,
+          resume: true,
+          expected_salary: true,
+          jobPost: {
+            select: {
+              job_id: true,
+              job_title: true,
+              job_space: true,
+              job_type: true,
+              salary_show: true,
+              salary_min: true,
+              salary_max: true,
+              selection_text_active: true,
+            },
+          },
+          resultPreSelection: {
+            select: {
+              completion_id: true,
+              completion_score: true,
+              completion_status: true,
+            },
+          },
+        },
+      });
+      return {
+        success: true,
+        message: "Success get application",
+        applicationUser,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to get user application",
+      };
+    }
   }
 
   // BOOKMARK SERVICES

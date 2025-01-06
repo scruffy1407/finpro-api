@@ -12,32 +12,38 @@ applyJobRouter.post(
   upload.single("resume"),
   authMiddleware.authenticateJwt.bind(authMiddleware),
 
-  applyJobController.applyJob
+  applyJobController.applyJob,
 );
-
 
 applyJobRouter.get(
   "/applications/:jobHunterId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
+  applyJobController.getAllApplications,
+);
 
-  applyJobController.getAllApplications
+// Get User application
+applyJobRouter.get(
+  "/user-application",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("jobhunter").bind(authMiddleware),
+  applyJobController.getUserApplication.bind(applyJobController),
 );
 
 // Bookmark Remove
 applyJobRouter.post(
   "/bookmark",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  applyJobController.createBookmark
+  applyJobController.createBookmark,
 );
 applyJobRouter.post(
   "/bookmark/remove",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  applyJobController.removeBookmarks
+  applyJobController.removeBookmarks,
 );
 applyJobRouter.get(
   "/bookmark",
   authMiddleware.authenticateJwt.bind(authMiddleware),
-  applyJobController.getAllBookmarks
+  applyJobController.getAllBookmarks,
 );
 
 export default applyJobRouter;

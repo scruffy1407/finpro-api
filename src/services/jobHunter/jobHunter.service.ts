@@ -1,4 +1,5 @@
-import { PrismaClient, RoleType, Gender } from "@prisma/client";
+import { Gender, PrismaClient, RoleType } from "@prisma/client";
+
 import { UserService } from "../baseUser/user.service";
 import { JobHunterGeneralInfo, UpdateImage } from "../../models/models";
 import { LocationService } from "../location/location.service";
@@ -219,13 +220,14 @@ export class JobHunterService {
       });
       if (!validateData) {
         return {
-          success: false,
-          code: "VALID",
+          success: true,
+          code: "NOT_JOIN",
           message: "User is not yet join to the job",
         };
       }
       return {
         success: true,
+        code: "JOIN",
         data: validateData,
       };
     } catch (e) {
