@@ -20,7 +20,6 @@ export class PreSelectionTestService {
 		duration = 30,
 		token, // Token is passed in for authentication
 	}: {
-		jobPostId: number;
 		testName: string;
 		image?: string;
 		passingGrade?: number;
@@ -41,6 +40,8 @@ export class PreSelectionTestService {
 				where: { userId: userId },
 				select: { company_id: true },
 			});
+
+			const companyId = company?.company_id;
 
 			if (!company) {
 				return "User is not associated with a company";
@@ -68,6 +69,7 @@ export class PreSelectionTestService {
 					image: image || "", // If no image provided, use an empty string
 					passing_grade: passingGrade,
 					duration: duration,
+					companyId : companyId,
 					// jobPost: {
 					// 	connect: {
 					// 		job_id: jobPostId,

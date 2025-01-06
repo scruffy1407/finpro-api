@@ -39,7 +39,7 @@ export class CompanyController {
 
       const modifiedPreSelectionTestId = selection_test_active
         ? preSelectionTestId
-        : 0;
+        : 0; 
 
       // Prepare the job data for service
       const jobPostData = {
@@ -85,7 +85,7 @@ export class CompanyController {
       const result = await this.companyService.deleteJob(jobId);
 
       // If deletion was successful, return a success message
-      if (result === "Job post deleted successfully.") {
+      if (result === "Job post deleted successfully." || "Job post deleted successfully.") {
         res.status(200).json({ message: result });
       } else {
         // If there were related applications, return an error message
@@ -99,71 +99,71 @@ export class CompanyController {
   }
 
   async updateJob(req: Request, res: Response): Promise<void> {
-		try {
-			// Extract jobId from URL parameters
-			const jobId = parseInt(req.params.jobId);
+    try {
+      // Extract jobId from URL parameters
+      const jobId = parseInt(req.params.jobId);
 
-			// Validate jobId
-			if (isNaN(jobId)) {
-				res.status(400).json({ error: "Invalid jobId" });
-				return;
-			}
+      // Validate jobId
+      if (isNaN(jobId)) {
+        res.status(400).json({ error: "Invalid jobId" });
+        return;
+      }
 
-			// Extract the job post data from the request body
-			const {
-				job_title,
-				preSelectionTestId,
-				categoryId,
-				selection_test_active,
-				salary_show,
-				salary_min,
-				salary_max,
-				job_description,
-				job_experience_min,
-				job_experience_max,
-				expired_date,
-				status,
-				job_type,
-				job_space,
-			} = req.body;
+      // Extract the job post data from the request body
+      const {
+        job_title,
+        preSelectionTestId,
+        categoryId,
+        selection_test_active,
+        salary_show,
+        salary_min,
+        salary_max,
+        job_description,
+        job_experience_min,
+        job_experience_max,
+        expired_date,
+        status,
+        job_type,
+        job_space,
+      } = req.body;
 
-			// Prepare the job data for service
-			const jobPostData = {
-				job_title,
-				preSelectionTestId,
-				categoryId,
-				selection_test_active,
-				salary_show,
-				salary_min,
-				salary_max,
-				job_description,
-				job_experience_min,
-				job_experience_max,
-				expired_date: new Date(expired_date),
-				status,
-				job_type,
-				job_space,
-			};
+      // Prepare the job data for service
+      const jobPostData = {
+        job_title,
+        preSelectionTestId,
+        categoryId,
+        selection_test_active,
+        salary_show,
+        salary_min,
+        salary_max,
+        job_description,
+        job_experience_min,
+        job_experience_max,
+        expired_date: new Date(expired_date),
+        status,
+        job_type,
+        job_space,
+      };
 
-			// Call the service to update the job post
-			const updatedJobPost = await this.companyService.updateJob(
-				jobId,
-				jobPostData
-			);
+      // Call the service to update the job post
+      const updatedJobPost = await this.companyService.updateJob(
+        jobId,
+        jobPostData,
+      );
 
-			// If job post was updated, return it
-			if (typeof updatedJobPost !== "string") {
-				res.status(200).json({ updatedJobPost });
-			} else {
-				// If an error message is returned (e.g., job post not found), return the message
-				res.status(400).json({ error: updatedJobPost });
-			}
-		} catch (error) {
-			const err = error as Error;
-			console.error("Error updating job post:", error);
-			res.status(500).json({ error: err.message || "Internal server error" });
-		}
-	}
+      // If job post was updated, return it
+      if (typeof updatedJobPost !== "string") {
+        res.status(200).json({ updatedJobPost });
+      } else {
+        // If an error message is returned (e.g., job post not found), return the message
+        res.status(400).json({ error: updatedJobPost });
+      }
+    } catch (error) {
+      const err = error as Error;
+      console.error("Error updating job post:", error);
+      res.status(500).json({ error: err.message || "Internal server error" });
+    }
+  }
 
   // Controller method to handle the fetching of the latest job posts
   async jobNewLanding(req: Request, res: Response): Promise<void> {
@@ -320,6 +320,44 @@ export class CompanyController {
         res.status(400).send({
           status: res.statusCode,
           message: response.message,
+        });
+      }
+    } catch (e) {
+      res.status(500).send({
+        status: res.statusCode,
+        message: e,
+      });
+    }
+  }
+
+  async getCompanyList(req: Request, res: Response) {
+    const {
+      page = 1,
+      limit = 12,
+      companyName,
+      companyCity,
+      companyProvince,
+      hasJob = false,
+    } = req.query;
+    console.log("CONTROLLER", page);
+    try {
+      const response = await this.companyService.getCompanyList(
+        companyName as string,
+        companyCity as string,
+        companyProvince as string,
+        Number(limit),
+        Number(page),
+      );
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          data: response.data,
+          message: response.message,
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          message: response.message || "No Response",
         });
       }
     } catch (e) {

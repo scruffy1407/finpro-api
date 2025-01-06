@@ -154,9 +154,15 @@ export class JobHunterController {
           decodedToken.user_id as number,
           Number(jobId),
         );
-        if (response.success) {
+        if (response.success && response.code === "NOT_JOIN") {
           res.status(200).send({
             status: res.statusCode,
+            code: "NOT_JOIN",
+          });
+        } else if (response.success && response.code === "JOIN") {
+          res.status(200).send({
+            status: res.statusCode,
+            code: "JOIN",
             data: response.data,
           });
         } else {
