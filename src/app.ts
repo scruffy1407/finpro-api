@@ -45,7 +45,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://9468-2001-448a-2002-26e4-b001-49f2-82b7-91d5.ngrok-free.app", // NGROK ONLY
+      "https://4de4-2001-448a-2002-26e4-4844-65ac-bd25-7408.ngrok-free.app", // NGROK ONLY
     ],
     credentials: true,
   }),
@@ -93,7 +93,7 @@ app.use("/api/applyjobtest", applyJobTestRouter);
 
 //Developer
 
-app.use("/api/dev" , devRouter)
+app.use("/api/dev", devRouter);
 
 app.use(errorHandler.errorHandler());
 
