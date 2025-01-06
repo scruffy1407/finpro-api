@@ -69,7 +69,7 @@ export class PreSelectionTestService {
 					image: image || "", // If no image provided, use an empty string
 					passing_grade: passingGrade,
 					duration: duration,
-					companyId : companyId,
+					companyId: companyId,
 					// jobPost: {
 					// 	connect: {
 					// 		job_id: jobPostId,
@@ -435,6 +435,11 @@ export class PreSelectionTestService {
 					passing_grade: true,
 					duration: true,
 					created_at: true,
+					_count: {
+						select: {
+							testQuestions: true, // Count of associated questions
+						},
+					},
 				},
 			});
 
@@ -442,6 +447,105 @@ export class PreSelectionTestService {
 		} catch (error) {
 			const err = error as Error;
 			return { error: "Error fetching pre-selection tests: " + err.message };
+		}
+	}
+
+	async getPreSelectionTestById(token: string, testId: number): Promise<any> {
+		try {
+			// Decode the provided token to retrieve the user's ID
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return { error: "Invalid token or company ID not found" };
+			}
+
+			const userId = decodedToken.user_id;
+
+			// Fetch the company associated with the user
+			const company = await this.prisma.company.findFirst({
+				where: { userId: userId },
+				select: { company_id: true },
+			});
+
+			if (!company) {
+				return { error: "Company not found for the given user" };
+			}
+
+			const companyId = company.company_id;
+
+			// Fetch the pre-selection test based on test_id and companyId
+			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
+				where: {
+					test_id: testId, // Use test_id as the unique identifier
+				},
+				select: {
+					test_id: true,
+					test_name: true,
+					companyId: true, // Include the companyId to check the relationship
+				},
+			});
+
+			// Check if the test belongs to the company
+			if (!preSelectionTest) {
+				return { error: "Pre-selection test not found" };
+			}
+
+			if (preSelectionTest.companyId !== companyId) {
+				return { error: "You do not have access to this test" };
+			}
+
+			// Return only test_id and test_name
+			return {
+				test_id: preSelectionTest.test_id,
+				test_name: preSelectionTest.test_name,
+			};
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching pre-selection test: " + err.message };
+		}
+	}
+
+	async getTestByPreTestId(testId: number, token: string): Promise<any> {
+		try {
+			// Step 1: Decode the token and get the userId and companyId
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return { error: "Invalid token or company ID not found" };
+			}
+
+			const userId = decodedToken.user_id;
+
+			// Fetch the company associated with the user
+			const company = await this.prisma.company.findFirst({
+				where: { userId: userId },
+				select: { company_id: true },
+			});
+
+			if (!company) {
+				return { error: "Company not found for the given user" };
+			}
+
+			const companyId = company.company_id;
+
+			// Step 2: Find the pre-selection test by ID and check if it belongs to the company
+			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
+				where: { test_id: testId },
+				include: { testQuestions: true }, // Include the test questions
+			});
+
+			if (!preSelectionTest) {
+				return "Pre-selection test not found.";
+			}
+
+			// Step 3: Check if the test belongs to the current company
+			if (preSelectionTest.companyId !== companyId) {
+				return "You are not authorized to access this test.";
+			}
+
+			// Step 4: Return the pre-selection test with the questions
+			return preSelectionTest;
+		} catch (error) {
+			const err = error as Error;
+			return `Error fetching pre-selection test: ${err.message}`;
 		}
 	}
 }
