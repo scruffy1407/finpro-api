@@ -7,9 +7,10 @@ import { PreSelectionTestController } from "../controllers/preSelectionTest.cont
 import { authorizeQuestionOwner } from "../middlewares/authorizeQuestionOwner";
 import { CompanyAdminController } from "../controllers/companyadmin.controller";
 import { InterviewController } from "../controllers/company/interview.controller";
+import { JobDashListController } from "../controllers/jobCompanyDash.controller";
 import {
-  validateInterviewData,
-  validateUpdateStatus,
+	validateInterviewData,
+	validateUpdateStatus,
 } from "../middlewares/company/interview.middleware";
 
 const companyRouter = Router();
@@ -17,6 +18,7 @@ const companyController = new CompanyController();
 const companyAdminController = new CompanyAdminController();
 const authJwtMiddleware = new AuthJwtMiddleware();
 const preSelectionTestController = new PreSelectionTestController();
+const jobDashListController = new JobDashListController();
 
 const getPreSelectionTestsByCompanyController =
   new PreSelectionTestController();
@@ -30,11 +32,12 @@ companyRouter.post(
   companyController.createJob.bind(companyController),
 );
 
-companyRouter.delete(
-  "/job/:jobId",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyController.deleteJob.bind(companyController), // Controller method
+//DELETING SOFT DELETE
+companyRouter.put(
+	"/delete/job/:jobId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyController.deleteJob.bind(companyController) // Controller method
 );
 
 // PUT request to update a job post
@@ -78,16 +81,15 @@ companyRouter.get(
 //Create Pre-Test
 
 companyRouter.post(
-  "/createpretest",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-  preSelectionTestController.createPreSelectionTest.bind(
-    preSelectionTestController,
-  ),
+	"/createpretest",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.createPreSelectionTest.bind(
+		preSelectionTestController
+	)
 );
 
 //View all Pre_test
-
 companyRouter.get(
   "/viewpretest",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
@@ -98,7 +100,6 @@ companyRouter.get(
 );
 
 //Delete PreTest
-
 companyRouter.delete(
   "/deletepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
@@ -110,7 +111,6 @@ companyRouter.delete(
 );
 
 //updating PreTest
-
 companyRouter.put(
   "/updatepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
@@ -128,47 +128,47 @@ companyRouter.post(
 );
 
 companyRouter.put(
-  "/updatetest", // Adding both testId and questionId as route params
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
-  authorizeQuestionOwner, // Ensure the company owns the specific question before allowing updat
-  preSelectionTestController.updateTest.bind(preSelectionTestController),
+	"/updatetest", // Adding both testId and questionId as route params
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	authorizeQuestionOwner, // Ensure the company owns the specific question before allowing updat
+	preSelectionTestController.updateTest.bind(preSelectionTestController)
 );
 
 // Company Check Applicants - thom part
 companyRouter.get(
-  "/applicants",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getCompanyApplicants.bind(companyAdminController),
+	"/applicants",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyAdminController.getCompanyApplicants.bind(companyAdminController)
 );
 
 companyRouter.get(
-  "/jobpostinformation/:jobId",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getJobPostInformation.bind(companyAdminController),
+	"/jobpostinformation/:jobId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyAdminController.getJobPostInformation.bind(companyAdminController)
 );
 
 companyRouter.get(
-  "/jobapplicants/:jobId",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getJobApplicants.bind(companyAdminController),
+	"/jobapplicants/:jobId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyAdminController.getJobApplicants.bind(companyAdminController)
 );
 
 companyRouter.get(
-  "/applications/:id",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.getApplicationDetails.bind(companyAdminController),
+	"/applications/:id",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyAdminController.getApplicationDetails.bind(companyAdminController)
 );
 
 companyRouter.put(
-  "/applications/",
-  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
-  companyAdminController.updateApplicationStatus.bind(companyAdminController),
+	"/applications/",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	companyAdminController.updateApplicationStatus.bind(companyAdminController)
 );
 
 //INTERVIEW
@@ -202,5 +202,33 @@ companyRouter.get(
   "/company-detail/:companyId",
   companyController.getDetailCompanyPage.bind(companyController),
 );
+
+//JobDashView
+companyRouter.get(
+	"/companydashjob",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+	jobDashListController.getJobDashList.bind(jobDashListController)
+);
+
+// Publish / Unpublish Job (Delete Job)
+companyRouter.put(
+  "/job/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  companyAdminController.deleteJob.bind(companyController)
+);
+
+companyRouter.put(
+  "/job/:jobId/status",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  companyAdminController.toggleJobStatus.bind(companyController)
+);
+
+companyRouter.get(
+  "/jobstatus/:jobId",
+  companyAdminController.getJobStatus.bind(companyController)
+)
 
 export default companyRouter;

@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  companyDetailResponse,
-  JobPost,
-  reviewResponse,
+	companyDetailResponse,
+	JobPost,
+	reviewResponse,
 } from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
@@ -67,29 +67,62 @@ export class CompanyService {
   // Delete a Job
 
   async deleteJob(jobId: number): Promise<string> {
-    try {
-      const applications = await this.prisma.application.findMany({
-        where: {
-          jobId: jobId,
-        },
-      });
+		try {
+			// Fetch the job post details to check the expired date
+			const jobPost = await this.prisma.jobPost.findUnique({
+				where: { job_id: jobId },
+			});
 
-      if (applications.length > 0) {
-        return "Cannot delete job post. It has related applications.";
-      }
+			if (!jobPost) {
+				return "Job post not found.";
+			}
 
-      await this.prisma.jobPost.delete({
-        where: {
-          job_id: jobId,
-        },
-      });
+			// Check if the job has expired
+			const currentDate = new Date();
+			const isExpired = jobPost.expired_date < currentDate;
 
-      return "Job post deleted successfully.";
-    } catch (error) {
-      const err = error as Error;
-      return "Error deleting job post: " + err.message;
-    }
-  }
+			// If the job has expired, we can delete it even if there are related applications
+			if (isExpired) {
+				// Perform soft delete by updating the `deleted` field
+				await this.prisma.jobPost.update({
+					where: { job_id: jobId },
+					data: {
+						deleted: true, // Set the `deleted` field to true
+						status: false, // Optionally update the status to inactive
+						updated_at: new Date(), // Ensure the updated timestamp is refreshed
+					},
+				});
+
+				return "Job post marked as deleted successfully.";
+			}
+
+			// Check if the job has related applications
+			const applications = await this.prisma.application.findMany({
+				where: {
+					jobId: jobId,
+				},
+			});
+
+			if (applications.length > 0) {
+				return "Cannot delete job post. It has related applications.";
+			}
+
+			// Perform soft delete by updating the `deleted` field
+			await this.prisma.jobPost.update({
+				where: { job_id: jobId },
+				data: {
+					deleted: true, // Set the `deleted` field to true
+					status: false, // Optionally update the status to inactive
+					updated_at: new Date(), // Ensure the updated timestamp is refreshed
+				},
+			});
+
+			return "Job post deleted successfully.";
+		} catch (error) {
+			const err = error as Error;
+			return "Error deleting job post: " + err.message;
+		}
+	}
 
   // Service to update a job post
   async updateJob(jobId: number, data: JobPost) {
@@ -162,50 +195,51 @@ export class CompanyService {
   }
 
   // Service to fetch the 8 newest job postings
-  async jobNewLanding(): Promise<any> {
-    try {
-      // Fetch the 8 newest job posts by ordering by 'created_at' descending
-      const latestJobPosts = await this.prisma.jobPost.findMany({
-        where: {
-          status: true, // Filter for only jobs with 'status' set to true
-          expired_date: {
-            gte: new Date(), // Filter for jobs where the expiry_date is in the future
-          },
-        },
-        orderBy: {
-          created_at: "desc", // Order by creation date, most recent first
-        },
-        take: 3, // Limit to the 8 newest job posts
-        select: {
-          companyId: true,
-          job_id: true,
-          job_title: true,
-          salary_min: true,
-          salary_max: true,
-          created_at: true,
-          job_type: true,
-          job_space: true,
-          job_experience_min: true,
-          job_experience_max: true,
-          salary_show: true,
-          company: {
-            select: {
-              logo: true,
-              company_name: true,
-              company_city: true,
-            },
-          },
-        },
-      });
+ async jobNewLanding(): Promise<any> {
+		try {
+			// Fetch the 8 newest job posts by ordering by 'created_at' descending
+			const latestJobPosts = await this.prisma.jobPost.findMany({
+				where: {
+					status: true, // Filter for only jobs with 'status' set to true
+          deleted : false,
+					expired_date: {
+						gte: new Date(), // Filter for jobs where the expiry_date is in the future
+					},
+				},
+				orderBy: {
+					created_at: "desc", // Order by creation date, most recent first
+				},
+				take: 3, // Limit to the 8 newest job posts
+				select: {
+					companyId: true,
+					job_id: true,
+					job_title: true,
+					salary_min: true,
+					salary_max: true,
+					created_at: true,
+					job_type: true,
+					job_space: true,
+					job_experience_min: true,
+					job_experience_max: true,
+					salary_show: true,
+					company: {
+						select: {
+							logo: true,
+							company_name: true,
+							company_city: true,
+						},
+					},
+				},
+			});
 
-      // Return the latest job posts
-      return latestJobPosts;
-    } catch (error) {
-      const err = error as Error;
-      return { error: "Error fetching latest job posts: " + err.message };
-    }
-  }
-
+			// Return the latest job posts
+			return latestJobPosts;
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching latest job posts: " + err.message };
+		}
+	}
+  
   async getJobPosts(
     page: number = 1,
     limit: number = 15,
@@ -218,14 +252,15 @@ export class CompanyService {
     companyCity?: string,
     companyProvince?: string,
   ) {
-    try {
-      // Build the search criteria based on the provided filters
-      const whereConditions: any = {
-        status: true, // Filter for only jobs with 'status' set to true
-        expired_date: {
-          gte: new Date(), // Filter for jobs where the expiry_date is in the future
-        },
-      };
+   try {
+			// Build the search criteria based on the provided filters
+			const whereConditions: any = {
+				status: true, // Filter for only jobs with 'status' set to true
+       			deleted : false,
+				expired_date: {
+					gte: new Date(), // Filter for jobs where the expiry_date is in the future
+				},
+			};
 
       if (job_title) {
         whereConditions.job_title = {
@@ -623,270 +658,3 @@ export class CompanyService {
     }
   }
 }
-
-//GET JOB POST DATABASE
-
-// async getJobPosts(page: number = 1, limit: number = 15) {
-// 	try {
-// 		//fetch the total number of job posts for calculating total pages
-// 		const totalJobPosts = await this.prisma.jobPost.count();
-
-// 		//total number pages
-// 		const totalPages = Math.ceil(totalJobPosts / limit);
-
-// 		if (page > totalPages) {
-// 			return {
-// 				data: [],
-// 				currentPage: page,
-// 				totalPages: totalPages,
-// 				totalJobPosts: totalJobPosts,
-// 				message: "No posts available for this page.",
-// 			};
-// 		}
-// 		//skip value
-// 		const skip = (page - 1) * limit;
-
-// 		//fetch job Posts with pagination (skip and limit)
-// 		const jobPosts = await this.prisma.jobPost.findMany({
-// 			skip: skip,
-// 			take: limit,
-// 			orderBy: {
-// 				created_at: "desc", // You can adjust this sorting logic if needed
-// 			},
-// 			select: {
-// 				job_id: true,
-// 				job_title: true,
-// 				salary_min: true,
-// 				salary_max: true,
-// 				created_at: true,
-// 				job_type: true,
-// 				company: {
-// 					select: {
-// 						logo: true,
-// 						company_name: true,
-// 						company_city: true,
-// 					},
-// 				},
-// 			},
-// 		});
-
-// 		// Return the paginated result
-// 		return {
-// 			data: jobPosts,
-// 			currentPage: page,
-// 			totalPages: totalPages,
-// 			totalJobPosts: totalJobPosts,
-// 		};
-// 	} catch (error) {
-// 		const err = error as Error;
-// 		return { error: "Error fetching job posts: " + err.message };
-// 	}
-// }
-
-//Backup 2
-// async getJobPosts(
-// 	page: number = 1,
-// 	limit: number = 15,
-// 	job_title?: string,
-// 	categoryId?: number
-// ) {
-// 	try {
-// 		// Build the search criteria based on the provided filters
-// 		const whereConditions: any = {};
-
-// 		if (job_title) {
-// 			whereConditions.job_title = {
-// 				contains: job_title, // Case-insensitive search for job_title
-// 				mode: "insensitive",
-// 			};
-// 		}
-
-// 		if (categoryId) {
-// 			whereConditions.categoryId = categoryId; // Filter by categoryId
-// 		}
-
-// 		// Fetch the total number of job posts based on the search criteria
-// 		const totalJobPosts = await this.prisma.jobPost.count({
-// 			where: whereConditions,
-// 		});
-
-// 		// Calculate total number of pages
-// 		const totalPages = Math.ceil(totalJobPosts / limit);
-
-// 		// If the requested page is greater than total pages, return an empty result
-// 		if (page > totalPages) {
-// 			return {
-// 				data: [],
-// 				currentPage: page,
-// 				totalPages: totalPages,
-// 				totalJobPosts: totalJobPosts,
-// 				message: "No posts available for this page.",
-// 			};
-// 		}
-
-// 		// Calculate skip value for pagination
-// 		const skip = (page - 1) * limit;
-
-// 		// Fetch job posts based on the search criteria and pagination
-// 		const jobPosts = await this.prisma.jobPost.findMany({
-// 			where: whereConditions, // Apply the search criteria
-// 			skip: skip, // Skip records for pagination
-// 			take: limit, // Limit the number of records per page
-// 			orderBy: {
-// 				created_at: "desc", // Order by creation date, most recent first
-// 			},
-// 			select: {
-// 				job_id: true,
-// 				job_title: true,
-// 				salary_min: true,
-// 				salary_max: true,
-// 				created_at: true,
-// 				job_type: true,
-// 				company: {
-// 					select: {
-// 						logo: true,
-// 						company_name: true,
-// 						company_city: true,
-// 					},
-// 				},
-// 			},
-// 		});
-
-// 		// Return the paginated results with search information
-// 		return {
-// 			data: jobPosts,
-// 			currentPage: page,
-// 			totalPages: totalPages,
-// 			totalJobPosts: totalJobPosts,
-// 		};
-// 	} catch (error) {
-// 		const err = error as Error;
-// 		return { error: "Error fetching job posts: " + err.message };
-// 	}
-// }
-
-//backup 3
-// async getJobPosts(
-// 	page: number = 1,
-// 	limit: number = 15,
-// 	job_title?: string,
-// 	categoryId?: number,
-// 	jobType?: string,
-// 	jobSpace?: string,
-// 	dateRange?: string,
-// 	sortOrder?: string
-// ) {
-// 	try {
-// 		// Build the search criteria based on the provided filters
-// 		const whereConditions: any = {};
-
-// 		if (job_title) {
-// 			whereConditions.job_title = {
-// 				contains: job_title, // Case-insensitive search for job_title
-// 				mode: "insensitive",
-// 			};
-// 		}
-
-// 		if (categoryId) {
-// 			whereConditions.categoryId = categoryId; // Filter by categoryId
-// 		}
-
-// 		// If jobType and jobSpace are provided, filter by them as well
-// 		if (jobType || jobSpace) {
-// 			whereConditions.job_type = jobType; // Filter by jobType (full-time, internship, etc.)
-// 			whereConditions.job_space = jobSpace; // Filter by jobSpace (remote, hybrid, etc.)
-// 		}
-
-// 		// Add date range filter if provided
-// 		if (dateRange === "last7days") {
-// 			const last7Days = new Date();
-// 			last7Days.setDate(last7Days.getDate() - 7);
-// 			whereConditions.created_at = {
-// 				gte: last7Days, // Filter by date greater than or equal to last 7 days
-// 			};
-// 		} else if (dateRange === "thisMonth") {
-// 			const startOfMonth = new Date();
-// 			startOfMonth.setDate(1); // Set to the first day of the current month
-// 			whereConditions.created_at = {
-// 				gte: startOfMonth, // Filter by date greater than or equal to the start of the month
-// 			};
-// 		} else if (dateRange === "thisYear") {
-// 			const startOfYear = new Date();
-// 			startOfYear.setMonth(0); // Set to January of the current year
-// 			startOfYear.setDate(1); // Set to the first day of the year
-// 			whereConditions.created_at = {
-// 				gte: startOfYear, // Filter by date greater than or equal to the start of the year
-// 			};
-// 		}
-
-// 		// Fetch the total number of job posts based on the search criteria
-// 		const totalJobPosts = await this.prisma.jobPost.count({
-// 			where: whereConditions,
-// 		});
-
-// 		// Calculate total number of pages
-// 		const totalPages = Math.ceil(totalJobPosts / limit);
-
-// 		// If the requested page is greater than total pages, return an empty result
-// 		if (page > totalPages) {
-// 			return {
-// 				data: [],
-// 				currentPage: page,
-// 				totalPages: totalPages,
-// 				totalJobPosts: totalJobPosts,
-// 				message: "No posts available for this page.",
-// 			};
-// 		}
-
-// 		// Calculate skip value for pagination
-// 		const skip = (page - 1) * limit;
-
-// 		// Construct the orderBy array for sorting based on user input
-// 		const orderBy: any = [];
-// 		if (sortOrder === "asc") {
-// 			orderBy.push({ job_title: "asc" }); // Alphabetical sorting A-Z
-// 		} else if (sortOrder === "desc") {
-// 			orderBy.push({ job_title: "desc" }); // Alphabetical sorting Z-A
-// 		} else {
-// 			orderBy.push({ created_at: "desc" }); // Default sorting by newest job posts
-// 		}
-
-// 		// Fetch job posts based on the search criteria and pagination
-// 		const jobPosts = await this.prisma.jobPost.findMany({
-// 			where: whereConditions, // Apply the search criteria
-// 			skip: skip, // Skip records for pagination
-// 			take: limit, // Limit the number of records per page
-// 			orderBy: orderBy, // Apply sorting
-// 			select: {
-// 				job_id: true,
-// 				job_title: true,
-// 				salary_min: true,
-// 				salary_max: true,
-// 				created_at: true,
-// 				job_type: true,
-// 				job_space: true,
-// 				salary_show: true,
-// 				job_experience_min: true,
-// 				job_experience_max: true,
-// 				company: {
-// 					select: {
-// 						logo: true,
-// 						company_name: true,
-// 						company_city: true,
-// 					},
-// 				},
-// 			},
-// 		});
-
-// 		// Return the paginated results with search information
-// 		return {
-// 			data: jobPosts,
-// 			currentPage: page,
-// 			totalPages: totalPages,
-// 			totalJobPosts: totalJobPosts,
-// 		};
-// 	} catch (error) {
-// 		const err = error as Error;
-// 		return { error: "Error fetching job posts: " + err.message };
-// 	}
-// }

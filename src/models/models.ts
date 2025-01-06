@@ -124,6 +124,8 @@ export interface WorkingExperience {
   companyId: number;
   jobTitle: string;
   jobDescription: string;
+  startDate: Date;
+  endDate: Date;
 }
 
 export interface EducationData {

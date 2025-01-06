@@ -14,7 +14,8 @@ import cron from "node-cron";
 import applyTestRouter from "./routers/applyTest.router";
 import applyJobTestRouter from "./routers/applyJobTestRouter";
 import subscriptionRoutes from "./routers/subscription.router";
-
+import cvRouter from "./routers/cv.router";
+import devRouter from "./routers/dev.router";
 import { DropboxTokenManager } from "./utils/dropboxRefreshToken";
 
 environment.config();
@@ -80,12 +81,19 @@ app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
 // APPLY JOB
 app.use("/applyjob", applyJobRouter);
 
+// CV Generate
+app.use("/api/cv", cvRouter);
+
 // COMPANY & INTERVIEW
 app.use("/api/company", companyRouter);
 
 app.use("/api/jobhunter", applyTestRouter);
 
 app.use("/api/applyjobtest", applyJobTestRouter);
+
+//Developer
+
+app.use("/api/dev" , devRouter)
 
 app.use(errorHandler.errorHandler());
 

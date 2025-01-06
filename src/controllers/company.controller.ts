@@ -39,7 +39,7 @@ export class CompanyController {
 
       const modifiedPreSelectionTestId = selection_test_active
         ? preSelectionTestId
-        : 0;
+        : 0; 
 
       // Prepare the job data for service
       const jobPostData = {
@@ -85,7 +85,7 @@ export class CompanyController {
       const result = await this.companyService.deleteJob(jobId);
 
       // If deletion was successful, return a success message
-      if (result === "Job post deleted successfully.") {
+      if (result === "Job post deleted successfully." || "Job post deleted successfully.") {
         res.status(200).json({ message: result });
       } else {
         // If there were related applications, return an error message
