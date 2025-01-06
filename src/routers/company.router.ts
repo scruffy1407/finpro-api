@@ -211,6 +211,24 @@ companyRouter.get(
 	jobDashListController.getJobDashList.bind(jobDashListController)
 );
 
+//GET PRETEST BY ID RIZKY ADDTIION NEW
+companyRouter.get(
+	"/viewpretestbyId/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.getPreSelectionTestById.bind(
+		preSelectionTestController
+	)
+);
+
+//GET TEST BY PreTest ID RIZKY ADDTIION NEW
+companyRouter.get(
+	"/viewtestbyPretestId/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+	preSelectionTestController.getTestByPreTestId.bind(preSelectionTestController)
+);
+
 // Publish / Unpublish Job (Delete Job)
 companyRouter.put(
   "/job/:jobId",

@@ -297,5 +297,99 @@ export class PreSelectionTestController {
 		}
 	}
 
-	
+	// Method to handle fetching Pre-selection Test by ID
+	public async getPreSelectionTestById(
+		req: Request,
+		res: Response
+	): Promise<void> {
+		try {
+			const { testId } = req.params; // Extract testId from the URL parameters
+
+			if (!testId) {
+				res.status(400).json({ error: "Test ID is required" });
+				return;
+			}
+
+			// Extract the token from the Authorization header
+			const authorizationHeader = req.headers.authorization ?? ""; // If undefined, set to an empty string
+
+			// Ensure the token is present and formatted correctly
+			if (!authorizationHeader.startsWith("Bearer ")) {
+				res.status(401).json({
+					error:
+						'Authorization token is required and must be in the format "Bearer <token>"',
+				});
+				return;
+			}
+
+			const token = authorizationHeader.split(" ")[1]; // Safely extract the token after "Bearer "
+
+			// Call the service method to fetch the pre-selection test by testId
+			const result = await this.preSelectionTestService.getPreSelectionTestById(
+				token,
+				Number(testId) // Pass the token and testId as a number
+			);
+
+			// Check if the result is a string (error) or an object (success)
+			if (typeof result === "string" || result?.error) {
+				res.status(400).json({ error: result.error || result });
+				return;
+			}
+
+			// Return the fetched pre-selection test (testId and testName)
+			res.status(200).json({
+				message: "Pre-selection test fetched successfully",
+				data: result,
+			});
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({ error: `Error: ${err.message}` });
+		}
+	}
+
+	// Method to fetch Pre-selection Test by ID, ensuring company access
+	public async getTestByPreTestId(req: Request, res: Response): Promise<void> {
+		try {
+			const { testId } = req.params; // Get testId from URL parameter
+
+			if (!testId) {
+				res.status(400).json({ error: "Test ID is required." });
+				return;
+			}
+
+			// Extract the token from the Authorization header
+			const authorizationHeader = req.headers.authorization ?? ""; // If it's undefined, set it to an empty string
+
+			if (!authorizationHeader.startsWith("Bearer ")) {
+				res.status(401).json({
+					error:
+						'Authorization token is required and must be in the format "Bearer <token>"',
+				});
+				return;
+			}
+
+			const token = authorizationHeader.split(" ")[1]; // Safely extract the token after "Bearer "
+
+			// Call the service to fetch the test by testId, passing the token to retrieve companyId
+			const result = await this.preSelectionTestService.getTestByPreTestId(
+				Number(testId), // Convert testId to a number
+				token // Pass the token to the service
+			);
+
+			// If the result is an error, return the error response
+			if (typeof result === "string" || result?.error) {
+				res.status(400).json({ error: result.error || result });
+				return;
+			}
+
+			// Return the fetched pre-selection test with questions
+			res.status(200).json({
+				message: "Pre-selection test fetched successfully",
+				data: result,
+			});
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({ error: `Error: ${err.message}` });
+		}
+	}
 }
