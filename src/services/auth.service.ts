@@ -416,6 +416,8 @@ export class AuthService {
         company_id,
       );
 
+    console.log("AFTER LOGIN", accessToken, refreshToken);
+
     await this.prisma.baseUsers.update({
       where: { email: validatedData.email },
       data: {
@@ -424,7 +426,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, accessToken, user, additionalInfo };
+    return { success: true, accessToken, refreshToken, user, additionalInfo };
   }
 
   async refreshToken(token: string) {
@@ -488,6 +490,9 @@ export class AuthService {
     // generate a new access token
 
     // Check user is available based on id
+
+    console.log("SERVICE TOKEN", token);
+
     const user = await this.prisma.baseUsers.findUnique({
       where: {
         user_id: user_id,
@@ -524,7 +529,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, data: accessToken };
+    return { success: true, accessToken };
   }
 
   // /api/auth/validate-token
@@ -537,7 +542,14 @@ export class AuthService {
       },
       include: {
         company: role_type === RoleType.company,
-        jobHunter: role_type === RoleType.jobhunter,
+        jobHunter: {
+          select: {
+            jobHunterSubscription: role_type === RoleType.jobhunter,
+            job_hunter_id: role_type === RoleType.jobhunter,
+            photo: role_type === RoleType.jobhunter,
+            name: role_type === RoleType.jobhunter,
+          },
+        },
       },
     });
     if (!user) {

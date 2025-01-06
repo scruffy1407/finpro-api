@@ -60,13 +60,22 @@ export class WorkingExpService {
   }
 
   async createWorkingExperience(user_id: number, data: WorkingExperience) {
-    console.log(data);
-    const { jobHunterId } = data;
+    console.log(data, "DATA DATA DATAAAAAAAA");
+    const { jobHunterId, startDate, endDate } = data;
 
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+  
+    if (start > end) {
+      return {
+        success: false,
+        message: "Start date cannot be later than end date.",
+      };
+    }
     try {
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -94,6 +103,8 @@ export class WorkingExpService {
           company_name: company.company_name,
           job_description: data.jobDescription,
           job_title: data.jobTitle,
+          start_date: start,
+          end_date: end,
           created_at: new Date(),
           updated_at: new Date(),
         },
@@ -115,9 +126,20 @@ export class WorkingExpService {
   async editWorkingExperience(
     user_id: number,
     workExperienceId: number,
-    data: WorkingExperience,
+    data: WorkingExperience
   ) {
-    const { jobHunterId } = data;
+    const { jobHunterId, startDate, endDate } = data;
+  
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+  
+    if (start > end) {
+      return {
+        success: false,
+        message: "Start date cannot be later than end date.",
+      };
+    }
+  
     try {
       const checkWorkExp = await this.prisma.workExperience.findUnique({
         where: {
@@ -130,10 +152,10 @@ export class WorkingExpService {
           message: "Working Experience is not available",
         };
       }
-
+  
       const user = await this.userService.validateJobHunter(
         user_id,
-        jobHunterId,
+        jobHunterId
       );
       if (!user.success) {
         return {
@@ -141,24 +163,25 @@ export class WorkingExpService {
           message: user.message,
         };
       }
-
+  
       if (checkWorkExp.jobHunterId !== user.data?.jobHunter[0].job_hunter_id) {
         return {
           success: false,
           message:
-            "User cannot edit this work experience because he/she not the owner",
+            "User cannot edit this work experience because he/she is not the owner",
         };
       }
+  
       const company = await this.prisma.company.findUnique({
         where: {
           company_id: data.companyId,
         },
       });
-
+  
       if (!company) {
         return { success: false, message: "Cannot find company" };
       }
-
+  
       const updateWorkingExp = await this.prisma.workExperience.update({
         where: {
           work_experience_id: workExperienceId,
@@ -167,9 +190,12 @@ export class WorkingExpService {
           company_name: company.company_name,
           job_description: data.jobDescription,
           job_title: data.jobTitle,
+          start_date: start,
+          end_date: end,
           updated_at: new Date(),
         },
       });
+  
       return {
         success: true,
         data: updateWorkingExp,
@@ -181,7 +207,7 @@ export class WorkingExpService {
         detail: e,
       };
     }
-  }
+  }  
 
   async deleteWorkingExperience(user_id: number, workingExpId: number) {
     try {
@@ -200,7 +226,7 @@ export class WorkingExpService {
 
       const user = await this.userService.validateJobHunter(
         user_id,
-        getWorkExperience.jobHunterId,
+        getWorkExperience.jobHunterId
       );
       if (!user.success) {
         return {

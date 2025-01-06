@@ -78,10 +78,50 @@ class ApplyJobController {
     }
   }
 
+  async getUserApplication(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token);
+    const { offset = 0, limit = 6, status } = req.query;
+    console.log("CONTROLLER", limit, offset, status);
+    if (!decodedToken) {
+      res.status(400).send({
+        status: 400,
+        message: "Invalid Token",
+      });
+    } else {
+      try {
+        const response = await this.applyJobService.getUserApplications(
+          Number(limit),
+          Number(offset),
+          decodedToken.user_id,
+          status as string,
+        );
+
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            message: response.message,
+            data: response.applicationUser,
+          });
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
+    }
+  }
+
   async createBookmark(req: Request, res: Response) {
     const { jobPostId } = req.body;
     const token = req.headers.authorization?.split(" ")[1] as string;
-  
+
     try {
       const decodedToken = await this.authUtils.decodeToken(token);
       if (!decodedToken) {
@@ -90,17 +130,17 @@ class ApplyJobController {
           .send({ success: false, message: "Unauthorized. No token found." });
         return;
       }
-  
+
       const result = await this.applyJobService.createBookmark(
         Number(decodedToken.user_id),
-        Number(jobPostId)
+        Number(jobPostId),
       );
-  
+
       if (!result.success) {
         res.status(400).send({ success: false, message: result.message });
         return; // Prevent sending a duplicate response
       }
-  
+
       res.status(201).send({ success: true, bookmark: result.bookmark });
     } catch (error) {
       console.error("Error creating bookmark:", error);
@@ -111,17 +151,18 @@ class ApplyJobController {
   }
 
   async removeBookmarks(req: Request, res: Response) {
-
     const { wishlist_id } = req.body;
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
-      res.status(401).send({ success: false, message: "Unauthorized. No token found." });
+      res
+        .status(401)
+        .send({ success: false, message: "Unauthorized. No token found." });
     } else {
       try {
         const result = await this.applyJobService.removeBookmarks(
           Number(decodedToken.user_id),
-          Number(wishlist_id)
+          Number(wishlist_id),
         );
 
         if (!result.success) {
@@ -142,11 +183,13 @@ class ApplyJobController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
-      res.status(401).send({ success: false, message: "Unauthorized. No token found." });
+      res
+        .status(401)
+        .send({ success: false, message: "Unauthorized. No token found." });
     } else {
       try {
         const bookmarks = await this.applyJobService.getAllBookmarks(
-          Number(decodedToken.user_id)
+          Number(decodedToken.user_id),
         );
         res.status(200).send({ success: true, bookmarks });
       } catch (error) {
