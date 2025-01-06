@@ -91,7 +91,7 @@ export async function sendEmailVerification(
 
 export async function sendEmailPaymentComplete(
   email: string,
-  dataOrder: PaymentComplete,
+  dataOrder: PaymentComplete
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -100,7 +100,7 @@ export async function sendEmailPaymentComplete(
   const templatePath = path.join(
     __dirname,
     "/views/",
-    "PaymentCompleteEmail.ejs",
+    "PaymentCompleteEmail.ejs"
   );
 
   const html = await ejs.renderFile(templatePath, {
@@ -119,7 +119,7 @@ export async function sendEmailPaymentComplete(
 
 export async function sendEmailSubsReminder(
   email: string,
-  emailData: DataReminder,
+  emailData: DataReminder
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -143,7 +143,7 @@ export async function sendEmailSubsReminder(
 
 export async function sendEmailSubExpired(
   email: string,
-  emailData: DataReminder,
+  emailData: DataReminder
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -163,6 +163,7 @@ export async function sendEmailSubExpired(
     html: html,
   };
   await transporter.sendMail(mailOption);
+}
 
 export async function sendApplicationStatusEmail(
   email: string,
