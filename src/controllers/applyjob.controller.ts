@@ -200,6 +200,63 @@ class ApplyJobController {
       }
     }
   }
+
+  async verifyApplyJob(req: Request, res: Response) {
+    try {
+      const { apply, job } = req.query;
+      console.log(apply, job);
+
+      if (apply !== "true" || !apply) {
+        res.status(400).send({
+          status: res.statusCode,
+          message: "Failed to request verify",
+        });
+        return;
+      }
+
+      if (!job) {
+        res.status(400).send({
+          status: res.statusCode,
+          message: "Failed to request verify",
+        });
+        return;
+      }
+
+      const token = req.headers.authorization?.split(" ")[1] as string;
+      const decodedToken = await this.authUtils.decodeToken(token);
+
+      if (!decodedToken) {
+        res.status(400).send({
+          status: res.statusCode,
+          message: "Invalid Token",
+        });
+        return;
+      }
+
+      const response = await this.applyJobService.verifyApplyJob(
+        Number(job),
+        decodedToken.user_id as number,
+      );
+
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          message: "Confirm apply",
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          message: response.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error in verifyApplyJob:", error);
+      res.status(500).send({
+        status: 500,
+        message: "Internal Server Error",
+      });
+    }
+  }
 }
 
 export default new ApplyJobController();

@@ -324,4 +324,54 @@ export class ApplyJob {
       return { success: false, message: "Failed to fetch bookmarks." };
     }
   }
+
+  async verifyApplyJob(jobId: number, userId: number) {
+    try {
+      const checkJob = await this.prisma.jobPost.findUnique({
+        where: {
+          job_id: jobId,
+        },
+      });
+
+      if (!checkJob) {
+        return { success: false, message: "Jobs not found" };
+      }
+
+      const checkUser = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          jobHunter: true,
+        },
+      });
+
+      if (!checkUser) {
+        return { success: false, message: "User not found" };
+      }
+
+      const findApplication = await this.prisma.application.findFirst({
+        where: {
+          jobId: jobId,
+          jobHunterId: checkUser.jobHunter[0].job_hunter_id,
+        },
+      });
+
+      if (!findApplication) {
+        return {
+          success: false,
+          message: "Application not found",
+        };
+      }
+      return {
+        success: true,
+        message: "Application found",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to verify",
+      };
+    }
+  }
 }

@@ -45,5 +45,10 @@ applyJobRouter.get(
   authMiddleware.authenticateJwt.bind(authMiddleware),
   applyJobController.getAllBookmarks,
 );
+applyJobRouter.get(
+  "/verify-apply",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  applyJobController.verifyApplyJob.bind(applyJobController),
+);
 
 export default applyJobRouter;

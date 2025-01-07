@@ -50,7 +50,7 @@ export class InterviewService {
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      if (applicant?.application_status !== ApplicationStatus.accepted) {
+      if (applicant?.application_status !== ApplicationStatus.onreview) {
         return {
           success: false,
           message:
