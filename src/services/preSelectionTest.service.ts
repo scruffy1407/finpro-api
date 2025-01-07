@@ -316,70 +316,128 @@ export class PreSelectionTestService {
 			return `Error creating a questions ${err.message}`;
 		}
 	}
-
 	async updateTestQuestions({
 		preSelectionTestId,
-		questionId,
-		question,
-		answer_1,
-		answer_2,
-		answer_3,
-		answer_4,
-		correct_answer,
+		questions, // Array of questions
+		token,
 	}: {
 		preSelectionTestId: number;
-		questionId: number; // The ID of the question to be updated
-		question: string;
-		answer_1: string;
-		answer_2: string;
-		answer_3: string;
-		answer_4: string;
-		correct_answer: string;
+		questions: {
+			questionId: number;
+			question: string;
+			answer_1: string;
+			answer_2: string;
+			answer_3: string;
+			answer_4: string;
+			correct_answer: string;
+		}[];
 		token: string;
 	}) {
 		try {
-			// Step 1: Find the pre-selection test by ID and get related questions
+			console.log("Received questions:", questions); // Log the entire questions array
+
+			// Step 1: Check if pre-selection test exists
 			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
 				where: { test_id: preSelectionTestId },
-				include: { testQuestions: true }, // Include related test questions
 			});
 
 			if (!preSelectionTest) {
-				return "Pre-selection test not found."; // Return error if test doesn't exist
+				return { status: "error", message: "Pre-selection test not found." }; // Return structured error
 			}
 
-			// Step 2: Check if the question exists in the pre-selection test's questions
-			const questionToUpdate = preSelectionTest.testQuestions.find(
-				(q) => q.question_id === questionId // Match question_id to find the question
-			);
+			// Step 2: Initialize an array to collect update promises
+			const updatePromises = [];
 
-			if (!questionToUpdate) {
-				return "Question not found in this Pre-selection Test."; // Return error if question doesn't exist
+			// Step 3: Loop through each question in the request body
+			for (const question of questions) {
+				const {
+					questionId,
+					question: questionText,
+					answer_1,
+					answer_2,
+					answer_3,
+					answer_4,
+					correct_answer,
+				} = question;
+
+				console.log("Processing Question with ID:", questionId); // Debugging line
+
+				// Check if the questionId is valid
+				if (!questionId) {
+					console.log(
+						"Error: questionId is undefined or invalid for question:",
+						question
+					);
+					updatePromises.push(Promise.reject("Invalid questionId."));
+					continue;
+				}
+
+				// Find the existing question in the database (instead of fetching all test questions)
+				const questionToUpdate = await this.prisma.testQuestion.findUnique({
+					where: { question_id: questionId },
+				});
+
+				if (!questionToUpdate) {
+					// Collect the error and continue to the next question
+					updatePromises.push(
+						Promise.reject(`Question with ID ${questionId} not found.`)
+					);
+					continue;
+				}
+
+				// Step 4: Validate that the correct_answer is one of the options
+				if (
+					![answer_1, answer_2, answer_3, answer_4].includes(correct_answer)
+				) {
+					// Collect the error and continue to the next question
+					updatePromises.push(
+						Promise.reject(
+							`Correct answer must be one of the provided options for question ID ${questionId}.`
+						)
+					);
+					continue;
+				}
+
+				// Step 5: Add the update to the promises array
+				updatePromises.push(
+					this.prisma.testQuestion.update({
+						where: { question_id: questionId },
+						data: {
+							question: questionText,
+							answer_1,
+							answer_2,
+							answer_3,
+							answer_4,
+							correct_answer,
+						},
+					})
+				);
 			}
 
-			// Step 3: Validate that the correct_answer is one of the options
-			if (![answer_1, answer_2, answer_3, answer_4].includes(correct_answer)) {
-				return "Correct answer must be one of the provided options.";
+			// Step 6: Wait for all updates and check for errors
+			const updateResults = await Promise.allSettled(updatePromises);
+
+			// Filter out any failed updates
+			const errors = updateResults
+				.filter((result) => result.status === "rejected")
+				.map((result) => (result as PromiseRejectedResult).reason);
+
+			if (errors.length > 0) {
+				// Return structured error if any updates failed
+				return {
+					status: "error",
+					message: `Error(s) occurred: ${errors.join(", ")}`,
+				};
 			}
 
-			// Step 3: Update the question data
-			const updatedQuestion = await this.prisma.testQuestion.update({
-				where: { question_id: questionId }, // Use question_id to identify the question
-				data: {
-					question, // Update the question text
-					answer_1, // Update answer 1
-					answer_2, // Update answer 2
-					answer_3, // Update answer 3
-					answer_4, // Update answer 4
-					correct_answer, // Update correct answer
-				},
-			});
-
-			// Step 4: Return the updated question
-			return updatedQuestion;
+			// Return success message if no errors occurred
+			return {
+				status: "success",
+				message: "All questions updated successfully.",
+			};
 		} catch (error) {
 			const err = error as Error;
-			return `Error: ${err.message}`; // Return the error message if something goes wrong
+			return { status: "error", message: `Error: ${err.message}` }; // Return error structure
 		}
 	}
 
@@ -427,6 +485,7 @@ export class PreSelectionTestService {
 			const preSelectionTests = await this.prisma.preSelectionTest.findMany({
 				where: {
 					companyId: companyId, // Directly filter by companyId
+					deleted: false,
 				},
 				select: {
 					test_id: true,
@@ -529,7 +588,13 @@ export class PreSelectionTestService {
 			// Step 2: Find the pre-selection test by ID and check if it belongs to the company
 			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
 				where: { test_id: testId },
-				include: { testQuestions: true }, // Include the test questions
+				include: {
+					testQuestions: {
+						orderBy: {
+							question_id: "asc", // Sorting by question_id in ascending order
+						},
+					},
+				},
 			});
 
 			if (!preSelectionTest) {
@@ -546,6 +611,59 @@ export class PreSelectionTestService {
 		} catch (error) {
 			const err = error as Error;
 			return `Error fetching pre-selection test: ${err.message}`;
+		}
+	}
+
+	async softDeletePreSelectionTest(
+		testId: number
+	): Promise<PreSelectionTest | string> {
+		try {
+			// Step 1: Find the pre-selection test by ID
+			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
+				where: { test_id: testId },
+				include: { jobPost: true },
+			});
+
+			if (!preSelectionTest) {
+				return "Pre-selection test not found";
+			}
+
+			if (preSelectionTest.deleted === true) {
+				return "The selected Pre-Selection test is already deleted";
+			}
+
+			// Step 2: Check if all applicants have failed or rejected status
+			const nonFailedOrRejectedApplicants =
+				await this.prisma.application.findMany({
+					where: {
+						jobPost: {
+							preSelectionTestId: testId, // Use the preSelectionTestId from JobPost
+						},
+						application_status: {
+							notIn: ["failed", "rejected"], // Exclude failed and rejected statuses
+						},
+					},
+				});
+
+			// If there are any applicants that don't have failed or rejected status
+			if (nonFailedOrRejectedApplicants.length > 0) {
+				return "Some applicants have not failed or rejected status, cannot delete";
+			}
+
+			// Step 3: Mark the pre-selection test as deleted (soft delete)
+			const updatedPreSelectionTest = await this.prisma.preSelectionTest.update(
+				{
+					where: { test_id: testId },
+					data: {
+						deleted: true, // Set 'deleted' to true to soft delete
+					},
+				}
+			);
+
+			return updatedPreSelectionTest;
+		} catch (error) {
+			const err = error as Error;
+			return `Error: ${err.message}`;
 		}
 	}
 }
