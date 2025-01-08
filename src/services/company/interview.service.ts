@@ -138,6 +138,7 @@ export class InterviewService {
             interviewTimeStart: formatTime24Hour(
               createInterview.interview_time_end,
             ),
+            interviewDescription: createInterview.interview_descrption,
           } as InterviewEmail,
         };
       }
@@ -183,21 +184,22 @@ export class InterviewService {
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      // if (user?.company[0].company_id !== applicant?.jobPost.companyId) {
-      //   return {
-      //     success: false,
-      //     message: "User not authorize to update this data",
-      //   };
-      // }
       const updateInterview = await this.prisma.interview.update({
         where: {
           interview_id: interviewId,
         },
         data: {
           interview_descrption: updateData.interviewDescription,
+          interview_url: updateData.interviewUrl as string,
           interview_date: new Date(updateData.interviewDate),
-          interview_time_start: new Date(updateData.interviewTimeStart),
-          interview_time_end: new Date(updateData.interviewTimeEnd),
+          interview_time_start: convertToDate(
+            updateData.interviewTimeStart as string,
+            updateData.interviewDate as string,
+          ),
+          interview_time_end: convertToDate(
+            updateData.interviewTimeEnd as string,
+            updateData.interviewDate as string,
+          ),
           updated_at: new Date(),
         },
       });
@@ -206,6 +208,7 @@ export class InterviewService {
 
       return {
         success: true,
+        updateInterview,
         interviewEmail: {
           email: applicant?.jobHunter.email,
           companyName: user?.company[0].company_name,
@@ -219,6 +222,7 @@ export class InterviewService {
           interviewTimeStart: formatTime24Hour(
             updateData.interviewTimeStart as Date,
           ),
+          interviewDescription: updateInterview.interview_descrption,
         } as InterviewEmail,
       };
     } catch (e) {

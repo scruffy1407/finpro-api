@@ -84,6 +84,7 @@ export class InterviewController {
             .then(() => {
               res.status(200).send({
                 status: res.status,
+                data: response.updateInterview,
                 message: "interview update and send to user",
               });
             })

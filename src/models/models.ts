@@ -252,6 +252,7 @@ export interface InterviewEmail {
   interviewTimeStart: string;
   interviewTimeEnd: string;
   invitatationLink: string;
+  interviewDescription: string;
 }
 
 export interface UpdateStatusInterview {
