@@ -37,9 +37,10 @@ export class InterviewController {
         if (response.success) {
           sendInterviewEmail(response.interviewEmail as InterviewEmail)
             .then(() => {
-              res.status(200).send({
+              res.status(201).send({
                 status: res.status,
                 message: "interview created and send",
+                data: response.data,
               });
             })
             .catch((err) => {

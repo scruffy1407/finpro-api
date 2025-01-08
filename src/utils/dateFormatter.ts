@@ -16,3 +16,16 @@ export function formatTime24Hour(dateString: Date) {
 
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`; // Output: "10:30"
 }
+
+export function convertToDate(timeString: string, baseDate: string) {
+  // Split the time string into hours and minutes
+  const [hours, minutes] = timeString.split(":").map(Number);
+
+  // Create a new Date object with the base date
+  const date = new Date(baseDate);
+
+  // Set the hours and minutes
+  date.setHours(hours, minutes, 0, 0); // Set seconds and milliseconds to 0
+
+  return date;
+}

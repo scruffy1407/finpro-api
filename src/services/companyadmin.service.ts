@@ -133,6 +133,7 @@ export class CompanyAdmin {
               resume: true,
             },
           },
+          interview: true,
         },
       });
 
