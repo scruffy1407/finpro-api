@@ -214,7 +214,10 @@ export class CompanyAdmin {
       console.error("Application not found or unauthorized.");
       return null;
     }
-    if (existingApplication.application_status !== ApplicationStatus.onreview) {
+    if (
+      existingApplication.application_status !== ApplicationStatus.onreview &&
+      existingApplication.application_status !== ApplicationStatus.interview
+    ) {
       console.error("Application status can no longer be updated.");
       return null;
     }

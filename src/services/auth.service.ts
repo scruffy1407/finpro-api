@@ -27,14 +27,14 @@ export class AuthService {
   async register(data: Auth, role: RoleType, bearerToken?: string) {
     const validatedData = registerSchema.parse(data);
 
-    if (role === RoleType.developer) {
-      if (!bearerToken || bearerToken !== DEVELOPER_ACCESS_TOKEN) {
-        return {
-          success: false,
-          message: "Unauthorized to create a developer role.",
-        };
-      }
-    }
+    // if (role === RoleType.developer) {
+    //   if (!bearerToken || bearerToken !== DEVELOPER_ACCESS_TOKEN) {
+    //     return {
+    //       success: false,
+    //       message: "Unauthorized to create a developer role.",
+    //     };
+    //   }
+    // }
 
     const existingUser = await this.prisma.baseUsers.findFirst({
       where: {
@@ -341,9 +341,37 @@ export class AuthService {
 
     let company_id = undefined;
 
-    const user = await this.prisma.baseUsers.findUnique({
-      where: { email: validatedData.email },
-    });
+    let user = null;
+
+    if (validatedData.user_role === RoleType.jobhunter) {
+      user = await this.prisma.baseUsers.findUnique({
+        where: { email: validatedData.email },
+        include: {
+          jobHunter: {
+            select: {
+              jobHunterSubscription: true,
+              job_hunter_id: true,
+              photo: true,
+              name: true,
+            },
+          },
+        },
+      });
+    } else if (validatedData.user_role === RoleType.company) {
+      user = await this.prisma.baseUsers.findUnique({
+        where: { email: validatedData.email },
+        include: {
+          company: true,
+        },
+      });
+    } else if (validatedData.user_role === RoleType.developer) {
+      user = await this.prisma.baseUsers.findUnique({
+        where: { email: validatedData.email },
+        include: {
+          developers: true,
+        },
+      });
+    }
 
     if (
       !user ||
@@ -370,44 +398,6 @@ export class AuthService {
       };
     }
 
-    let additionalInfo: { name: string; photo: string | null } = {
-      name: "",
-      photo: null,
-    };
-
-    if (user.role_type === RoleType.jobhunter) {
-      const jobHunter = await this.prisma.jobHunter.findUnique({
-        where: { userId: user.user_id },
-      });
-      if (jobHunter) {
-        additionalInfo = {
-          name: jobHunter.name,
-          photo: jobHunter.photo || null,
-        };
-      }
-    } else if (user.role_type === RoleType.company) {
-      const company = await this.prisma.company.findUnique({
-        where: { userId: user.user_id },
-      });
-      if (company) {
-        company_id = company.company_id;
-        additionalInfo = {
-          name: company.company_name,
-          photo: company.logo || null,
-        };
-      }
-    } else if (user.role_type === RoleType.developer) {
-      const developer = await this.prisma.developer.findUnique({
-        where: { userId: user.user_id },
-      });
-      if (developer) {
-        additionalInfo = {
-          name: developer.developer_name,
-          photo: null,
-        };
-      }
-    }
-
     const { accessToken, refreshToken } =
       await this.AuthUtils.generateLoginToken(
         user.user_id,
@@ -415,8 +405,6 @@ export class AuthService {
         user.verified,
         company_id,
       );
-
-    console.log("AFTER LOGIN", accessToken, refreshToken);
 
     await this.prisma.baseUsers.update({
       where: { email: validatedData.email },
@@ -426,7 +414,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, accessToken, refreshToken, user, additionalInfo };
+    return { success: true, accessToken, refreshToken, user };
   }
 
   async refreshToken(token: string) {
@@ -576,6 +564,31 @@ export class AuthService {
           },
         },
       });
+
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      } else {
+        return {
+          success: true,
+          data: user,
+        };
+      }
+    }
+
+    if (role_type === RoleType.developer) {
+      // Fetch jobHunter-specific data
+      const user = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: user_id,
+        },
+        include: {
+          developers: true,
+        },
+      });
+
       if (!user) {
         return {
           success: false,
