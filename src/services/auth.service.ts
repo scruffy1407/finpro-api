@@ -535,33 +535,63 @@ export class AuthService {
   // /api/auth/validate-token
   async validateToken(user_id: number, role_type: RoleType) {
     // Check user is available based on id
-    console.log(role_type);
-    const user = await this.prisma.baseUsers.findUnique({
-      where: {
-        user_id: user_id,
-      },
-      include: {
-        company: role_type === RoleType.company,
-        jobHunter: {
-          select: {
-            jobHunterSubscription: role_type === RoleType.jobhunter,
-            job_hunter_id: role_type === RoleType.jobhunter,
-            photo: role_type === RoleType.jobhunter,
-            name: role_type === RoleType.jobhunter,
+
+    if (role_type === RoleType.company) {
+      // Fetch company-specific data
+      const user = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: user_id,
+        },
+        include: {
+          company: true, // Include company details
+        },
+      });
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      } else {
+        return {
+          success: true,
+          data: user,
+        };
+      }
+    }
+
+    if (role_type === RoleType.jobhunter) {
+      // Fetch jobHunter-specific data
+      const user = await this.prisma.baseUsers.findUnique({
+        where: {
+          user_id: user_id,
+        },
+        include: {
+          jobHunter: {
+            select: {
+              jobHunterSubscription: true,
+              job_hunter_id: true,
+              photo: true,
+              name: true,
+            },
           },
         },
-      },
-    });
-    if (!user) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    } else {
-      return {
-        success: true,
-        data: user,
-      };
+      });
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      } else {
+        return {
+          success: true,
+          data: user,
+        };
+      }
     }
+
+    return {
+      success: false,
+      message: "error",
+    };
   }
 }

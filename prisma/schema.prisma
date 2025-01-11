@@ -615,7 +615,7 @@ enum CompanyIndustry {
   mediaandentertainment
   governmentandnonprofit
   others
-
+  
   @@schema("Company")
 }
 

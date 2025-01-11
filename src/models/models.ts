@@ -85,24 +85,31 @@ export interface CompanyInfoResp {
   company_id: number;
   company_logo: string;
   company_name: string;
-  company_description: string;
-  company_province: string;
-  latitude: number;
-  longitude: number;
-  company_city: string;
-  company_industry: string;
-  company_size: string;
-  address_detail: string;
+  phone_number?: string;
+  company_description?: string;
+  company_province?: string;
+  latitude?: number;
+  longitude?: number;
+  company_city?: string;
+  company_industry?: string;
+  company_size?: string;
+  address_details?: string;
+  cityId?: number ;
+  provinceId?: number;
 }
 
 export interface CompanyGeneralInfo {
-  company_id: number;
+  companyId: number;
   company_name: string;
-  company_description: string;
-  company_province: string;
-  company_city: string;
-  company_industry: CompanyIndustry;
-  company_size: CompanySize;
+  company_description?: string;
+  company_province?: string;
+  company_city?: string;
+  company_industry?: CompanyIndustry;
+  company_size?: CompanySize;
+  address_details?: string;
+  phone_number?: string;
+  cityId?: number ;
+  provinceId?: number;
 }
 
 export interface JobHunterGeneralInfo {

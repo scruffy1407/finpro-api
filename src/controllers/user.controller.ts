@@ -21,7 +21,7 @@ export class CompanyController {
     } else {
       try {
         const response = await this.companyService.getCompanyDetail(
-          decodedToken.user_id,
+          decodedToken.user_id
         );
         if (response.success) {
           res.status(200).send({
@@ -47,23 +47,31 @@ export class CompanyController {
   async updateCompanyDetail(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const {
-      company_id,
+      companyId,
       company_province,
       company_city,
       company_description,
       company_industry,
       company_size,
       company_name,
+      address_details,
+      phone_number,
+      cityId,
+      provinceId,
     }: CompanyGeneralInfo = req.body as CompanyGeneralInfo;
-
+    console.log(req.body, "ADIT CONTROLLER");
     const updateData: CompanyGeneralInfo = {
-      company_id,
+      companyId,
       company_province,
       company_description,
       company_industry,
       company_size,
       company_name,
       company_city,
+      address_details,
+      phone_number,
+      cityId,
+      provinceId,
     };
     const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
@@ -72,12 +80,15 @@ export class CompanyController {
       try {
         const response = await this.companyService.updateCompanyDetail(
           decodedToken.user_id,
-          updateData,
+          updateData
         );
         if (response.success) {
           res.status(204).send({
             status: res.statusCode,
-            data: response.data,
+            data: {
+              company: response.company,
+              user: response.user,
+            },
           });
         } else {
           res.status(400).send({
@@ -112,7 +123,7 @@ export class CompanyController {
       try {
         const response = await this.companyService.updateCompanyImage(
           decodedToken.user_id,
-          updateImage,
+          updateImage
         );
         if (response.success) {
           res.status(200).send({
@@ -163,7 +174,7 @@ export class CompanyController {
     const companyId = req.params.companyId;
     try {
       const response = await this.companyService.getSpecificCompany(
-        Number(companyId),
+        Number(companyId)
       );
       if (response.success) {
         res.status(200).send({
