@@ -54,6 +54,7 @@ model JobHunter {
   summary                 String?
   resume                  String?
   cv_generated_count      Int?      @default(0)
+  assesment_count         Int?      @default(0)
 
   baseUser BaseUsers @relation(fields: [userId], references: [user_id])
 
@@ -615,7 +616,7 @@ enum CompanyIndustry {
   mediaandentertainment
   governmentandnonprofit
   others
-  
+
   @@schema("Company")
 }
 
