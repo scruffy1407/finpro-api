@@ -212,10 +212,13 @@ export class JobHunterService {
         };
       }
 
-      const validateData = await this.prisma.application.findFirst({
+      const validateData = await this.prisma.application.findMany({
         where: {
           jobId: jobId,
           jobHunterId: jobHunter?.jobHunter[0]?.job_hunter_id,
+        },
+        orderBy: {
+          created_at: "asc",
         },
       });
       if (!validateData) {
@@ -228,7 +231,7 @@ export class JobHunterService {
       return {
         success: true,
         code: "JOIN",
-        data: validateData,
+        data: validateData[validateData.length - 1],
       };
     } catch (e) {
       console.log(e);

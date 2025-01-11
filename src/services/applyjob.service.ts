@@ -350,7 +350,7 @@ export class ApplyJob {
         return { success: false, message: "User not found" };
       }
 
-      const findApplication = await this.prisma.application.findFirst({
+      const findApplication = await this.prisma.application.findMany({
         where: {
           jobId: jobId,
           jobHunterId: checkUser.jobHunter[0].job_hunter_id,
