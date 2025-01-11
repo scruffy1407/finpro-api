@@ -242,10 +242,10 @@ export enum InterviewStatus {
 export interface Interview {
   interviewId?: number;
   applicationId: number;
-  interviewDate: Date;
-  interviewTimeStart: Date;
-  interviewTimeEnd: Date;
-  interviewDescrption: string;
+  interviewDate: Date | string;
+  interviewTimeStart: Date | string;
+  interviewTimeEnd: Date | string;
+  interviewDescription: string;
   interviewUrl?: string;
   interviewStatus?: InterviewStatus;
 }
@@ -259,6 +259,7 @@ export interface InterviewEmail {
   interviewTimeStart: string;
   interviewTimeEnd: string;
   invitatationLink: string;
+  interviewDescription: string;
 }
 
 export interface UpdateStatusInterview {

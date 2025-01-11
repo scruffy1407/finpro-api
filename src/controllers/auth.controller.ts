@@ -185,22 +185,15 @@ export class AuthController {
           message: result.message || "Failed to login: User not found",
         });
       } else {
-        const loginResponse: LoginResponse = {
-          access_token: result.accessToken || "",
-          refresh_token: result.refreshToken || "",
-          oauth_token: "",
-          user: {
-            ...result.user,
-            user_role: result.user.role_type || "jobhunter",
-            name: result.additionalInfo.name,
-            photo: result.additionalInfo.photo,
-          },
-        };
-
         res.status(200).json({
           success: true,
           message: "Successfully logged in",
-          data: loginResponse,
+          data: {
+            access_token: result.accessToken || "",
+            refresh_token: result.refreshToken || "",
+            oauth_token: "",
+            data: result.user,
+          },
         });
       }
     } catch (error: any) {

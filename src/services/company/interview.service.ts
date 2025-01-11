@@ -5,7 +5,11 @@ import {
   InterviewStatus,
   UpdateStatusInterview,
 } from "../../models/models";
-import { formatDate, formatTime24Hour } from "../../utils/dateFormatter";
+import {
+  formatDate,
+  formatTime24Hour,
+  convertToDate,
+} from "../../utils/dateFormatter";
 
 export class InterviewService {
   private prisma: PrismaClient;
@@ -50,48 +54,54 @@ export class InterviewService {
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      if (applicant?.application_status !== ApplicationStatus.accepted) {
+      if (applicant?.application_status !== ApplicationStatus.interview) {
         return {
           success: false,
           message:
-            "Cannot create interview if the current status is not accepeted",
+            "Cannot create interview if the current status is not interview",
         };
       }
 
       let uniqueCode: string = "";
       let applicantCode: string = "";
 
-      do {
-        uniqueCode = this.generateCode(
-          user?.company[0].company_name || "anonymous",
-        );
-        const checkCode = await this.prisma.interview.findFirst({
-          where: {
-            interview_room_code: uniqueCode,
-          },
-        });
-
-        applicantCode = checkCode?.interview_room_code as string;
-        console.log("CHECK CODE", checkCode);
-        console.log("UNIQUIE CODE", uniqueCode);
-        console.log("APPLICANT CODE", applicantCode);
-      } while (uniqueCode === applicantCode);
-
-      const roomUrl = `http:localhost:3000/applicant/interview/meet?room=${uniqueCode}`;
-      console.log("OUTER UNIQUE CODE", uniqueCode);
-      console.log("ROOM URL", roomUrl);
+      // do {
+      //   uniqueCode = this.generateCode(
+      //     user?.company[0].company_name || "anonymous",
+      //   );
+      //   const checkCode = await this.prisma.interview.findFirst({
+      //     where: {
+      //       interview_room_code: uniqueCode,
+      //     },
+      //   });
+      //
+      //   applicantCode = checkCode?.interview_room_code as string;
+      //   console.log("CHECK CODE", checkCode);
+      //   console.log("UNIQUIE CODE", uniqueCode);
+      //   console.log("APPLICANT CODE", applicantCode);
+      // } while (uniqueCode === applicantCode);
+      //
+      // const roomUrl = `http:localhost:3000/applicant/interview/meet?room=${uniqueCode}`;
+      // console.log("OUTER UNIQUE CODE", uniqueCode);
+      // console.log("ROOM URL", roomUrl);
 
       const createInterview = await this.prisma.interview.create({
         data: {
           applicationId: data.applicationId,
           interview_date: new Date(data.interviewDate),
           interview_room_code: uniqueCode,
-          interview_url: roomUrl,
-          interview_time_start: new Date(data.interviewTimeStart),
-          interview_time_end: new Date(data.interviewTimeEnd),
+          interview_url: data.interviewUrl as string,
+          interview_time_start: convertToDate(
+            data.interviewTimeStart as string,
+            data.interviewDate as string,
+          ),
+          interview_time_end: convertToDate(
+            data.interviewTimeEnd as string,
+            data.interviewDate as string,
+          ),
           created_at: new Date(),
           updated_at: new Date(),
-          interview_descrption: data.interviewDescrption,
+          interview_descrption: data.interviewDescription,
           interview_status: InterviewStatus.scheduled,
         },
       });
@@ -128,6 +138,7 @@ export class InterviewService {
             interviewTimeStart: formatTime24Hour(
               createInterview.interview_time_end,
             ),
+            interviewDescription: createInterview.interview_descrption,
           } as InterviewEmail,
         };
       }
@@ -173,21 +184,22 @@ export class InterviewService {
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      // if (user?.company[0].company_id !== applicant?.jobPost.companyId) {
-      //   return {
-      //     success: false,
-      //     message: "User not authorize to update this data",
-      //   };
-      // }
       const updateInterview = await this.prisma.interview.update({
         where: {
           interview_id: interviewId,
         },
         data: {
-          interview_descrption: updateData.interviewDescrption,
+          interview_descrption: updateData.interviewDescription,
+          interview_url: updateData.interviewUrl as string,
           interview_date: new Date(updateData.interviewDate),
-          interview_time_start: new Date(updateData.interviewTimeStart),
-          interview_time_end: new Date(updateData.interviewTimeEnd),
+          interview_time_start: convertToDate(
+            updateData.interviewTimeStart as string,
+            updateData.interviewDate as string,
+          ),
+          interview_time_end: convertToDate(
+            updateData.interviewTimeEnd as string,
+            updateData.interviewDate as string,
+          ),
           updated_at: new Date(),
         },
       });
@@ -196,15 +208,21 @@ export class InterviewService {
 
       return {
         success: true,
+        updateInterview,
         interviewEmail: {
           email: applicant?.jobHunter.email,
           companyName: user?.company[0].company_name,
           jobTitle: applicant?.jobPost.job_title,
           name: applicant?.jobHunter.name,
           invitatationLink: updateInterview.interview_url,
-          interviewdDate: formatDate(updateData.interviewDate),
-          interviewTimeEnd: formatTime24Hour(updateData.interviewTimeEnd),
-          interviewTimeStart: formatTime24Hour(updateData.interviewTimeStart),
+          interviewdDate: formatDate(updateData.interviewDate as Date),
+          interviewTimeEnd: formatTime24Hour(
+            updateData.interviewTimeEnd as Date,
+          ),
+          interviewTimeStart: formatTime24Hour(
+            updateData.interviewTimeStart as Date,
+          ),
+          interviewDescription: updateInterview.interview_descrption,
         } as InterviewEmail,
       };
     } catch (e) {

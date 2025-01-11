@@ -21,7 +21,7 @@ export const validateInterviewData = (
     !data.interviewDate ||
     !data.interviewTimeStart ||
     !data.interviewTimeEnd ||
-    !data.interviewDescrption
+    !data.interviewDescription
   ) {
     res.status(400).json({ error: "All fields are required" });
   } else if (startTime >= endTime) {

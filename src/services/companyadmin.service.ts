@@ -79,33 +79,65 @@ export class CompanyAdmin {
     });
   }
 
-  async getJobApplicants(jobId: number, companyId: number) {
+  async getJobApplicants(jobId: number, userId: number, fetchType: string) {
     try {
-      const applicants = await this.prisma.jobPost.findUnique({
-        where: { job_id: jobId },
+      const companyId = await this.getCompanyId(userId);
+
+      if (!companyId) {
+        console.error("No company found for this user.");
+        return {
+          success: false,
+          message: "No company found for this user",
+        };
+      }
+
+      const job = await this.prisma.jobPost.findUnique({
+        where: {
+          job_id: jobId,
+        },
+      });
+      if (!job) {
+        return {
+          success: false,
+          message: "Job not available",
+        };
+      }
+
+      if (job.companyId !== companyId) {
+        return {
+          success: false,
+          message: "User not authorize to access this job",
+        };
+      }
+
+      const whereCondition: any = {
+        jobId: jobId,
+      };
+
+      if (fetchType === "interview") {
+        whereCondition.application_status = "interview";
+      } else if (fetchType === "accepted") {
+        whereCondition.application_status = "accepted";
+      } else if (fetchType === "rejected") {
+        whereCondition.application_status = "rejected";
+      }
+
+      const applicants = await this.prisma.application.findMany({
+        where: whereCondition,
         include: {
-          applyJob: {
-            include: {
-              jobHunter: {
-                select: {
-                  job_hunter_id: true,
-                  name: true,
-                  email: true,
-                  resume: true,
-                },
-              },
+          jobHunter: {
+            select: {
+              job_hunter_id: true,
+              name: true,
+              email: true,
+              resume: true,
             },
           },
+          interview: true,
         },
       });
 
-      if (applicants?.companyId !== companyId) {
-        console.error("Unauthorized to access other company job");
-        return {
-          success: false,
-          message: "Unauthorized to access other company job",
-        };
-      }
+      console.log("APPLICANTS", applicants, companyId);
 
       console.log("Fetched applicants data:", applicants);
 
@@ -144,7 +176,7 @@ export class CompanyAdmin {
   async updateApplicationStatus(
     applicationId: number,
     status: ApplicationStatus,
-    userId: number
+    userId: number,
   ) {
     const companyId = await this.getCompanyId(userId);
     if (!companyId) {
@@ -182,7 +214,10 @@ export class CompanyAdmin {
       console.error("Application not found or unauthorized.");
       return null;
     }
-    if (existingApplication.application_status !== ApplicationStatus.onreview) {
+    if (
+      existingApplication.application_status !== ApplicationStatus.onreview &&
+      existingApplication.application_status !== ApplicationStatus.interview
+    ) {
       console.error("Application status can no longer be updated.");
       return null;
     }
@@ -315,7 +350,7 @@ export class CompanyAdmin {
   async toggleJobStatus(
     jobId: number,
     status: boolean,
-    userId: number
+    userId: number,
   ): Promise<string> {
     try {
       const companyId = await this.getCompanyId(userId);

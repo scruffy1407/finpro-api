@@ -29,7 +29,7 @@ export class CompanyAdminController {
     } else {
       try {
         const applicants = await this.companyAdminService.getCompanyApplicants(
-          decodedToken?.user_id as number
+          decodedToken?.user_id as number,
         );
         res.status(200).json({ success: true, data: applicants });
       } catch (error) {
@@ -62,7 +62,7 @@ export class CompanyAdminController {
 
       const jobPostInfo = await this.companyAdminService.getJobPostInformation(
         Number(jobId),
-        Number(decodedToken?.user_id)
+        Number(decodedToken?.user_id),
       );
 
       if (!jobPostInfo) {
@@ -96,6 +96,7 @@ export class CompanyAdminController {
     const { jobId } = req.params;
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
+    const { get } = req.query;
 
     if (!decodedToken?.user_id) {
       res.status(400).json({ success: false, message: "User ID is missing." });
@@ -103,7 +104,8 @@ export class CompanyAdminController {
       try {
         const applicants = await this.companyAdminService.getJobApplicants(
           Number(jobId),
-          Number(decodedToken?.user_id)
+          Number(decodedToken?.user_id),
+          get as string,
         );
         if (applicants.success) {
           res.status(200).json({ status: res.statusCode, data: applicants });
@@ -132,7 +134,7 @@ export class CompanyAdminController {
       try {
         const details = await this.companyAdminService.getApplicationDetails(
           Number(id),
-          decodedToken?.user_id as number
+          decodedToken?.user_id as number,
         );
         if (!details) {
           res.status(404).json({
@@ -168,7 +170,7 @@ export class CompanyAdminController {
         const result = await this.companyAdminService.updateApplicationStatus(
           Number(application_id),
           application_status as ApplicationStatus,
-          decodedToken?.user_id as number
+          decodedToken?.user_id as number,
         );
 
         if (!result || result.count === 0) {
@@ -226,7 +228,7 @@ export class CompanyAdminController {
       }
       const status = await this.companyAdminService.getJobStatus(
         Number(jobId),
-        decodedToken?.user_id as number
+        decodedToken?.user_id as number,
       );
       if (!status) {
         res.status(200).json({
@@ -259,7 +261,7 @@ export class CompanyAdminController {
       }
       const result = await this.companyAdminService.deleteJob(
         jobId,
-        decodedToken?.user_id as number
+        decodedToken?.user_id as number,
       );
       if (result === "Job post deleted successfully.") {
         res.status(200).json({ success: true, message: result });
@@ -298,7 +300,7 @@ export class CompanyAdminController {
       const result = await this.companyAdminService.toggleJobStatus(
         jobId,
         status,
-        decodedToken?.user_id as number
+        decodedToken?.user_id as number,
       );
 
       if (result.includes("updated")) {
