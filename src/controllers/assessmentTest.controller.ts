@@ -3,291 +3,283 @@ import { AssessmentTestService } from "../services/assessmentTest.service";
 import { type } from "os";
 
 export class AssessmentTestController {
-	private assessmentTestService: AssessmentTestService;
+  private assessmentTestService: AssessmentTestService;
 
-	constructor() {
-		this.assessmentTestService = new AssessmentTestService();
-	}
+  constructor() {
+    this.assessmentTestService = new AssessmentTestService();
+  }
 
-	public async createAssessmentTest(
-		req: Request,
-		res: Response
-	): Promise<void> {
-		try {
-			console.log("Received file:", req.file); // This will log the file object uploaded by Multer.
+  public async createAssessmentTest(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { skill_assessment_name, passing_grade, duration } = req.body;
+      const passingGradeInt = parseInt(passing_grade as string, 10);
+      const durationInt = parseInt(duration as string, 10);
+      const skill_badge = req.file ? req.file.path : "default-badge-url";
 
-			// Extract fields from the request body
-			const { skill_assessment_name, passing_grade, duration } = req.body;
+      if (!skill_badge) {
+        res.status(400).json({ error: "Skill badge image is required." });
+        return;
+      }
 
-			const passingGradeInt = parseInt(passing_grade as string, 10);
-			const durationInt = parseInt(duration as string, 10);
+      const authorizationHeader = req.headers.authorization ?? "";
+      if (!authorizationHeader.startsWith("Bearer ")) {
+        res.status(401).json({
+          error:
+            "Authorization token is required and must be in the format of 'Bearer <token>'",
+        });
+        return;
+      }
 
-			// Extract the file uploaded as `skill_badge`
-			const skill_badge = req.file ? req.file.path : "default-badge-url"; // Fallback URL
+      const token = authorizationHeader.split(" ")[1];
 
-			console.log("Skill badge path:", skill_badge); // Log the file path
+      const result = await this.assessmentTestService.createAssessmentTest({
+        skill_assessment_name,
+        skill_badge,
+        passing_grade: passingGradeInt,
+        duration: durationInt,
+        token,
+      });
 
-			// If no file uploaded, return an error
-			if (!skill_badge) {
-				res.status(400).json({ error: "Skill badge image is required." });
-			}
+      if (typeof result === "string") {
+        res.status(400).json({ error: result });
+        return;
+      }
 
-			// Extract authorization token from the request header
-			const authorizationHeader = req.headers.authorization ?? "";
-			if (!authorizationHeader.startsWith("Bearer ")) {
-				res.status(401).json({
-					error:
-						"Authorization token is required and must be in the format of 'Bearer <token>'",
-				});
-			}
+      res.status(201).json({
+        message: "Assessment test created successfully!",
+        data: result.assessmentTest,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
 
-			const token = authorizationHeader.split(" ")[1];
+  public async deleteAssessmentTest(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    const { skill_assessment_id } = req.params;
 
-			// Call the service method to create the assessment test
-			const result = await this.assessmentTestService.createAssessmentTest({
-				skill_assessment_name,
-				skill_badge,
-				passing_grade: passingGradeInt,
-				duration: durationInt,
-				token,
-			});
+    if (!skill_assessment_id) {
+      res.status(400).json({ message: "Test ID is required" });
+    }
 
-			// Handle result - either an error message or a success response
-			if (typeof result === "string") {
-				res.status(400).json({ error: result });
-			}
+    try {
+      const result = await this.assessmentTestService.deleteAssessmentTest(
+        Number(skill_assessment_id)
+      );
 
-			res.status(201).json({
-				message: "Assessment test created successfully!",
-			});
-		} catch (error) {
-			console.error(error); // Log the error for debugging
-			res.status(500).json({ error: "Internal server error" });
-		}
-	}
+      if (typeof result === "string") {
+        res.status(400).json({ message: result });
+      }
 
-	public async deleteAssessmentTest(
-		req: Request,
-		res: Response
-	): Promise<void> {
-		const { skill_assessment_id } = req.params;
+      res.status(200).json({
+        message: "Assessment test deleted succesfully ",
+      });
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({ message: `Error: ${err.message}` });
+    }
+  }
 
-		if (!skill_assessment_id) {
-			res.status(400).json({ message: "Test ID is required" });
-		}
+  async updateSkillAssessment(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        skill_assessment_id,
+        skill_assessment_name,
+        passing_grade,
+        duration,
+      } = req.body;
 
-		try {
-			const result = await this.assessmentTestService.deleteAssessmentTest(
-				Number(skill_assessment_id)
-			);
+      const skill_badge = req.file ? req.file.path : "default-badge-url"; // Fallback URL
 
-			if (typeof result === "string") {
-				res.status(400).json({ message: result });
-			}
+      if (!skill_badge) {
+        res.status(400).json({ error: "Skill badge image is required." });
+      }
+      const skill_assessment_idInt = parseInt(
+        skill_assessment_id as string,
+        10
+      );
 
-			res.status(200).json({
-				message: "Assessment test deleted succesfully ",
-			});
-		} catch (error) {
-			const err = error as Error;
-			res.status(500).json({ message: `Error: ${err.message}` });
-		}
-	}
+      const passingGradeInt = parseInt(passing_grade as string, 10);
+      const durationInt = parseInt(duration as string, 10);
 
-	async updateSkillAssessment(req: Request, res: Response): Promise<void> {
-		try {
-			const {
-				skill_assessment_id,
-				skill_assessment_name,
-				passing_grade,
-				duration,
-			} = req.body;
+      const token = req.headers.authorization?.split(" ")[1]; // Extract the token from the Authorization header
+      if (!token) {
+        res.status(401).json({ error: "Authorization token is required" });
+        return;
+      }
+      if (!skill_assessment_idInt) {
+        res.status(400).json({ error: "Skill assessment ID is required" });
+        return;
+      }
+      const result = await this.assessmentTestService.updateAssessmentTest({
+        skill_assessment_id: skill_assessment_idInt,
+        skill_assessment_name,
+        skill_badge,
+        passing_grade: passingGradeInt,
+        duration: durationInt,
+        token,
+      });
+      if (typeof result === "string") {
+        res.status(400).json({ error: result });
+      } else {
+        res.status(200).json({
+          message: "Assessment test updated successfully",
+          data: result.updatedAssessmentTest,
+        });
+      }
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(500)
+        .json({ error: "An unexpected error occurred", details: err.message });
+    }
+  }
 
-			// Extract the file uploaded as `skill_badge`
-			const skill_badge = req.file ? req.file.path : "default-badge-url"; // Fallback URL
+  async getSkillAssessmentList(req: Request, res: Response): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 6;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const name = req.query.name as string | undefined;
+      const sortOrder = req.query.sortOrder as string | undefined;
 
-			if (!skill_badge) {
-				res.status(400).json({ error: "Skill badge image is required." });
-			}
+      const result = await this.assessmentTestService.getSkillAssessmentList(
+        limit,
+        offset,
+        name,
+        sortOrder
+      );
 
-			console.log("Request Body:", req.body);
+      if (result.error) {
+        res.status(500).json({ error: result.error });
+      }
+      res.status(200).json(result);
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        error: "An unexpected error occurred: " + err.message,
+      });
+    }
+  }
 
-			const skill_assessment_idInt = parseInt(
-				skill_assessment_id as string,
-				10
-			);
+  async createQuestions(req: Request, res: Response): Promise<void> {
+    const { skillAssessmentId } = req.params;
+    const { questions } = req.body;
 
-			const passingGradeInt = parseInt(passing_grade as string, 10);
-			const durationInt = parseInt(duration as string, 10);
+    const skillAssessmentIdInt = parseInt(skillAssessmentId as string, 10);
 
-			const token = req.headers.authorization?.split(" ")[1]; // Extract the token from the Authorization header
-			if (!token) {
-				res.status(401).json({ error: "Authorization token is required" });
-				return;
-			}
+    if (!skillAssessmentId || !Array.isArray(questions)) {
+      res.status(400).json({ message: "Invalid input data." });
+      return;
+    }
 
-			// Validate required fields
-			if (!skill_assessment_idInt) {
-				res.status(400).json({ error: "Skill assessment ID is required" });
-				return;
-			}
+    try {
+      const result =
+        await this.assessmentTestService.createSkillAssessmentQuestions(
+          skillAssessmentIdInt,
+          questions
+        );
+      if (typeof result === "string") {
+        res.status(400).json({ message: result });
+      } else {
+        res.status(201).json({
+          message: "Questions successfully added.",
+          createdQuestionsCount: result.createdQuestionsCount,
+        });
+      }
+    } catch (error) {
+      const err = error as Error;
+      res
+        .status(500)
+        .json({ message: `Internal Server Error: ${err.message}` });
+    }
+  }
 
-			// Call the update service
-			const result = await this.assessmentTestService.updateAssessmentTest({
-				skill_assessment_id: skill_assessment_idInt,
-				skill_assessment_name,
-				skill_badge,
-				passing_grade: passingGradeInt,
-				duration: durationInt,
-				token,
-			});
+  async updateSkillAssessmentQuestions(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { skillAssessmentId, questions } = req.body;
 
-			// Handle the service response
-			if (typeof result === "string") {
-				res.status(400).json({ error: result });
-			} else {
-				res.status(200).json({
-					message: "Assessment test updated successfully",
-					data: result.updatedAssessmentTest,
-				});
-			}
-		} catch (error) {
-			const err = error as Error;
-			res
-				.status(500)
-				.json({ error: "An unexpected error occurred", details: err.message });
-		}
-	}
+      if (!skillAssessmentId || !Array.isArray(questions)) {
+        res.status(400).json({
+          status: "error",
+          message:
+            "Invalid request data. Please provide skillAssessmentId and questions array.",
+        });
+        return;
+      }
+      const result =
+        await this.assessmentTestService.updateSkillAssessmentQuestions({
+          skillAssessmentId,
+          questions,
+        });
+      if (result.status === "error") {
+        res.status(400).json(result);
+      } else {
+        res.status(200).json(result);
+      }
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        status: "error",
+        message: `Internal Server Error: ${err.message}`,
+      });
+    }
+  }
+  public async getAssessmentDash(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await this.assessmentTestService.getAssessmentDash();
+      if (result.error) {
+        res.status(500).json({ error: result.error });
+        return;
+      }
+      res.status(200).json(result);
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        error: "Error fetching assessment dashboard: " + err.message,
+      });
+    }
+  }
 
-	async getSkillAssessmentList(req: Request, res: Response): Promise<void> {
-		try {
-			// Extract query parameters
-			const limit = parseInt(req.query.limit as string) || 6;
-			const offset = parseInt(req.query.offset as string) || 0;
-			const name = req.query.name as string | undefined;
-			const sortOrder = req.query.sortOrder as string | undefined;
+  public async getQuestAssessById(req: Request, res: Response): Promise<void> {
+    try {
+      const { skill_assessment_id } = req.params;
 
-			// Call the service method
-			const result = await this.assessmentTestService.getSkillAssessmentList(
-				limit,
-				offset,
-				name,
-				sortOrder
-			);
+      if (!skill_assessment_id) {
+        res.status(400).json({ error: "Skill assessment ID is required." });
+        return;
+      }
 
-			// Check for errors in the service result
-			if (result.error) {
-				res.status(500).json({ error: result.error });
-			}
+      const skillAssessmentIdInt = parseInt(skill_assessment_id, 10);
 
-			// Send the result
-			res.status(200).json(result);
-		} catch (error) {
-			// Handle unexpected errors
-			const err = error as Error;
-			res.status(500).json({
-				error: "An unexpected error occurred: " + err.message,
-			});
-		}
-	}
+      if (isNaN(skillAssessmentIdInt)) {
+        res.status(400).json({ error: "Invalid skill assessment ID format." });
+        return;
+      }
+      const result =
+        await this.assessmentTestService.getQuestAssessById(
+          skillAssessmentIdInt
+        );
 
-	async createQuestions(req: Request, res: Response): Promise<void> {
-		const { skillAssessmentId } = req.params;
-		const { questions } = req.body;
-
-		const skillAssessmentIdInt = parseInt(skillAssessmentId as string, 10);
-
-		if (!skillAssessmentId || !Array.isArray(questions)) {
-			res.status(400).json({ message: "Invalid input data." });
-			return;
-		}
-
-		try {
-			const result =
-				await this.assessmentTestService.createSkillAssessmentQuestions(
-					skillAssessmentIdInt,
-					questions
-				);
-
-			// Return appropriate response based on the service result
-			if (typeof result === "string") {
-				res.status(400).json({ message: result });
-			} else {
-				res.status(201).json({
-					message: "Questions successfully added.",
-					createdQuestionsCount: result.createdQuestionsCount,
-				});
-			}
-		} catch (error) {
-			const err = error as Error;
-			res
-				.status(500)
-				.json({ message: `Internal Server Error: ${err.message}` });
-		}
-	}
-
-	async updateSkillAssessmentQuestion(
-		req: Request,
-		res: Response
-	): Promise<void> {
-		try {
-			const {
-				skillAssessmentId,
-				questionId,
-				question,
-				answer_1,
-				answer_2,
-				answer_3,
-				answer_4,
-				correct_answer,
-			} = req.body;
-
-			// Validate input
-			if (
-				!skillAssessmentId ||
-				!questionId ||
-				!question ||
-				!answer_1 ||
-				!answer_2 ||
-				!answer_3 ||
-				!answer_4 ||
-				!correct_answer
-			) {
-				res.status(400).json({
-					message: "All fields are required.",
-				});
-			}
-
-			// Call the service method
-			const result =
-				await this.assessmentTestService.updateSkillAssessmentQuestion({
-					skillAssessmentId: Number(skillAssessmentId),
-					questionId: Number(questionId),
-					question,
-					answer_1,
-					answer_2,
-					answer_3,
-					answer_4,
-					correct_answer,
-				});
-
-			// Handle service response
-			if (typeof result === "string") {
-				res.status(400).json({ message: result });
-			}
-
-			res.status(200).json({
-				message: result.message,
-				updatedQuestion: result.updatedQuestion,
-			});
-		} catch (error) {
-			const err = error as Error;
-			res.status(500).json({
-				message: "An error occurred while updating the question.",
-				error: err.message,
-			});
-		}
-	}
-
-	
+      if (typeof result === "string") {
+        res.status(404).json({ error: result });
+      } else {
+        res.status(200).json(result);
+      }
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        error: "An error occurred while fetching the skill assessment.",
+        details: err.message,
+      });
+    }
+  }
 }

@@ -38,14 +38,13 @@ export class LocationService {
   }
 
   async searchLocation(searchKeyword: string) {
-    console.log(searchKeyword);
     try {
       const [searchCities, searchProvinces] = await Promise.all([
         this.prisma.city.findMany({
           where: {
             name: {
               contains: searchKeyword,
-              mode: "insensitive", // Case-insensitive search
+              mode: "insensitive",
             },
           },
         }),
@@ -53,7 +52,7 @@ export class LocationService {
           where: {
             name: {
               contains: searchKeyword,
-              mode: "insensitive", // Case-insensitive search
+              mode: "insensitive",
             },
           },
         }),
@@ -65,7 +64,7 @@ export class LocationService {
         data: combinedResults,
       };
     } catch (e) {
-      console.error("Error occurred during search:", e); // Log specific error details
+      console.error("Error occurred during search:", e);
       return {
         success: false,
         message: "Something went wrong, failed to search",

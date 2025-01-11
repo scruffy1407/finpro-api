@@ -30,22 +30,13 @@ export class AuthJwtMiddleware {
           status: res.statusCode,
         });
       }
-
-      // Typecast decoded token to your custom interface
       const user = decoded as JwtPayload;
-      console.log("Decoded token user_id:", user.user_id);
-      console.log("Decoded token role_type:", user.role_type);
-      console.log("Decoded token company_id:", user.companyId);
-      console.log("Decoded token verified:", user.verified);
-      user; // Attach the strongly-typed user object
-      console.log(user, "INI DECODED USER DAPET KGK 1");
-//       (req as any).user = user; // Attach the strongly-typed user object
-      console.log("Decoded token 2 :", decoded);
+      user;
       next();
     });
   }
   authorizeRole(
-    roles: string,
+    roles: string
   ): (req: Request, res: Response, next: NextFunction) => void {
     return async (req: Request, res: Response, next: NextFunction) => {
       const token = req.headers.authorization?.split(" ")[1] as string;
@@ -58,7 +49,7 @@ export class AuthJwtMiddleware {
         });
         return;
       }
-      next(); // Continue to next middleware
+      next();
     };
   }
 
@@ -74,20 +65,4 @@ export class AuthJwtMiddleware {
       next();
     }
   }
-
-  //
-  // authorizeUserId(): (req: Request, res: Response, next: NextFunction) => void {
-  //   return (req: Request, res: Response, next: NextFunction): void => {
-  //     const userId = (req as any).user.id;
-  //     const resourceId = req.params.userId || req.body.userId;
-  //     if (String(userId) !== String(resourceId)) {
-  //       res.status(403).send({
-  //         message: "Forbidden: You can only access your own resources",
-  //         status: res.statusCode,
-  //       });
-  //       return;
-  //     }
-  //     next(); // Continue to next middleware
-  //   };
-  // }
 }

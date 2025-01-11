@@ -19,8 +19,6 @@ export class AuthController {
 
   async requestResetPassword(req: Request, res: Response) {
     const { email } = req.body;
-    console.log(email);
-
     try {
       const response = await this.authService.requestResetPassword(email);
       if (!response.success) {
@@ -41,12 +39,9 @@ export class AuthController {
               status: res.status,
               message: err.message,
             });
-            console.log(err);
           });
       }
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   }
 
   async verifyResetToken(req: Request, res: Response) {
@@ -64,9 +59,7 @@ export class AuthController {
           message: response.message,
         });
       }
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   }
 
   async resetPassword(req: Request, res: Response) {
@@ -88,7 +81,6 @@ export class AuthController {
         });
       }
     } catch (e) {
-      console.log(e);
       res.status(500).send({
         status: res.status,
         message: "Internal server error",
@@ -112,9 +104,7 @@ export class AuthController {
           message: response.message,
         });
       }
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   }
 
   async register(req: Request, res: Response) {
@@ -134,7 +124,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, phone_number, name, password, user_role },
         user_role,
-        bearerToken,
+        bearerToken
       );
 
       if (!result.success) {
@@ -145,7 +135,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string,
+          result.user?.verification_token as string
         )
           .then(() => {
             res.status(200).send({
@@ -185,22 +175,15 @@ export class AuthController {
           message: result.message || "Failed to login: User not found",
         });
       } else {
-        const loginResponse: LoginResponse = {
-          access_token: result.accessToken || "",
-          refresh_token: result.refreshToken || "",
-          oauth_token: "",
-          user: {
-            ...result.user,
-            user_role: result.user.role_type || "jobhunter",
-            name: result.additionalInfo.name,
-            photo: result.additionalInfo.photo,
-          },
-        };
-
         res.status(200).json({
           success: true,
           message: "Successfully logged in",
-          data: loginResponse,
+          data: {
+            access_token: result.accessToken || "",
+            refresh_token: result.refreshToken || "",
+            oauth_token: "",
+            data: result.user,
+          },
         });
       }
     } catch (error: any) {
@@ -277,7 +260,6 @@ export class AuthController {
 
   async refreshAccessToken(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
-    console.log("CONTROLLER", token);
     const decodedToken = await this.authUtils.decodeToken(token as string);
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -286,9 +268,8 @@ export class AuthController {
         const response = await this.authService.refreshAccessToken(
           decodedToken.user_id,
           decodedToken.role_type as RoleType,
-          token as string,
+          token as string
         );
-        console.log(response);
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,
@@ -301,7 +282,6 @@ export class AuthController {
           });
         }
       } catch (e) {
-        console.log(e);
         res.status(500).send({
           status: res.statusCode,
           message: e,
@@ -313,18 +293,14 @@ export class AuthController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
 
-    console.log(decodedToken);
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
       try {
         const response = await this.authService.validateToken(
           decodedToken.user_id,
-          decodedToken.role_type as RoleType,
+          decodedToken.role_type as RoleType
         );
-
-        console.log("RESPONSE VALIDATE TOKEN :", response);
-
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,

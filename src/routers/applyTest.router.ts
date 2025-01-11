@@ -8,14 +8,14 @@ const authJwtMiddleware = new AuthJwtMiddleware();
 const jobHunterTestController = new JobHunterTestController();
 
 applyTestRouter.post(
-	"/applytest",
+	"/applytest/:jobId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	jobHunterTestController.joinPreSelectionTest.bind(jobHunterTestController)
 ); // Authorization middleware
 
 applyTestRouter.get(
-	"/getquestions",
+	"/getquestions/:jobId",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	jobHunterTestController.getPreSelectionQuestions.bind(jobHunterTestController)
@@ -33,6 +33,20 @@ applyTestRouter.post(
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	jobHunterTestController.updateResult.bind(jobHunterTestController)
+);
+
+applyTestRouter.get(
+	"/gettesttime/:applicationId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
+	jobHunterTestController.getTestTime.bind(jobHunterTestController)
+);
+
+applyTestRouter.post(
+	"/updatescoreinterval",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
+	jobHunterTestController.updateCompletionScore.bind(jobHunterTestController)
 );
 
 export default applyTestRouter;

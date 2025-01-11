@@ -5,7 +5,11 @@ import {
   InterviewStatus,
   UpdateStatusInterview,
 } from "../../models/models";
-import { formatDate, formatTime24Hour } from "../../utils/dateFormatter";
+import {
+  formatDate,
+  formatTime24Hour,
+  convertToDate,
+} from "../../utils/dateFormatter";
 
 export class InterviewService {
   private prisma: PrismaClient;
@@ -15,28 +19,15 @@ export class InterviewService {
   }
 
   generateCode(companyName: string) {
-    // Extract the first 3 letters of the company name
     const companyCode = companyName.substring(0, 3).toUpperCase();
-
-    // Get current date in YYYYMMDD format
     const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-
-    // Generate a random 10-character string
     const randomChars = Math.random().toString(36).substring(2, 12);
-
-    // Combine the components into the final code
     const code = `${companyCode}-${currentDate}-${randomChars}`;
     return code;
   }
 
   async setInterviewSchedule(userId: number, data: Interview) {
-    // 1. Check applicant is available or not
-    // If not it will return false and message
-    // 2. User that update is actualy owner of the job
-    // if not it will return false and message
-
     const applicationId = data.applicationId;
-
     try {
       const verifyData = await this.verifyApplicantData(userId, applicationId);
 
@@ -46,58 +37,38 @@ export class InterviewService {
           message: verifyData.message,
         };
       }
-
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      if (applicant?.application_status !== ApplicationStatus.accepted) {
+      if (applicant?.application_status !== ApplicationStatus.interview) {
         return {
           success: false,
           message:
-            "Cannot create interview if the current status is not accepeted",
+            "Cannot create interview if the current status is not interview",
         };
       }
-
       let uniqueCode: string = "";
       let applicantCode: string = "";
-
-      do {
-        uniqueCode = this.generateCode(
-          user?.company[0].company_name || "anonymous",
-        );
-        const checkCode = await this.prisma.interview.findFirst({
-          where: {
-            interview_room_code: uniqueCode,
-          },
-        });
-
-        applicantCode = checkCode?.interview_room_code as string;
-        console.log("CHECK CODE", checkCode);
-        console.log("UNIQUIE CODE", uniqueCode);
-        console.log("APPLICANT CODE", applicantCode);
-      } while (uniqueCode === applicantCode);
-
-      const roomUrl = `http:localhost:3000/applicant/interview/meet?room=${uniqueCode}`;
-      console.log("OUTER UNIQUE CODE", uniqueCode);
-      console.log("ROOM URL", roomUrl);
-
       const createInterview = await this.prisma.interview.create({
         data: {
           applicationId: data.applicationId,
           interview_date: new Date(data.interviewDate),
           interview_room_code: uniqueCode,
-          interview_url: roomUrl,
-          interview_time_start: new Date(data.interviewTimeStart),
-          interview_time_end: new Date(data.interviewTimeEnd),
+          interview_url: data.interviewUrl as string,
+          interview_time_start: convertToDate(
+            data.interviewTimeStart as string,
+            data.interviewDate as string,
+          ),
+          interview_time_end: convertToDate(
+            data.interviewTimeEnd as string,
+            data.interviewDate as string,
+          ),
           created_at: new Date(),
           updated_at: new Date(),
-          interview_descrption: data.interviewDescrption,
+          interview_descrption: data.interviewDescription,
           interview_status: InterviewStatus.scheduled,
         },
       });
-
-      console.log(createInterview);
-
       const updateStatus = await this.updateStatusApplicantInterview(
         applicant.application_id,
       );
@@ -128,11 +99,11 @@ export class InterviewService {
             interviewTimeStart: formatTime24Hour(
               createInterview.interview_time_end,
             ),
+            interviewDescription: createInterview.interview_descrption,
           } as InterviewEmail,
         };
       }
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "Failed to create interview",
@@ -142,8 +113,6 @@ export class InterviewService {
 
   async updateInterviewInformation(userId: number, updateData: Interview) {
     const interviewId = updateData.interviewId as number;
-
-    console.log("INTERVIEW CONTROLLER", interviewId);
 
     try {
       const interview = await this.prisma.interview.findUnique({
@@ -157,7 +126,6 @@ export class InterviewService {
           message: "Interview not found",
         };
       }
-      console.log("CONTROLLER", updateData);
 
       const verifyData = await this.verifyApplicantData(
         userId,
@@ -173,42 +141,46 @@ export class InterviewService {
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
-      // if (user?.company[0].company_id !== applicant?.jobPost.companyId) {
-      //   return {
-      //     success: false,
-      //     message: "User not authorize to update this data",
-      //   };
-      // }
       const updateInterview = await this.prisma.interview.update({
         where: {
           interview_id: interviewId,
         },
         data: {
-          interview_descrption: updateData.interviewDescrption,
+          interview_descrption: updateData.interviewDescription,
+          interview_url: updateData.interviewUrl as string,
           interview_date: new Date(updateData.interviewDate),
-          interview_time_start: new Date(updateData.interviewTimeStart),
-          interview_time_end: new Date(updateData.interviewTimeEnd),
+          interview_time_start: convertToDate(
+            updateData.interviewTimeStart as string,
+            updateData.interviewDate as string,
+          ),
+          interview_time_end: convertToDate(
+            updateData.interviewTimeEnd as string,
+            updateData.interviewDate as string,
+          ),
           updated_at: new Date(),
         },
       });
 
-      console.log("UPDATE DATA", updateInterview);
-
       return {
         success: true,
+        updateInterview,
         interviewEmail: {
           email: applicant?.jobHunter.email,
           companyName: user?.company[0].company_name,
           jobTitle: applicant?.jobPost.job_title,
           name: applicant?.jobHunter.name,
           invitatationLink: updateInterview.interview_url,
-          interviewdDate: formatDate(updateData.interviewDate),
-          interviewTimeEnd: formatTime24Hour(updateData.interviewTimeEnd),
-          interviewTimeStart: formatTime24Hour(updateData.interviewTimeStart),
+          interviewdDate: formatDate(updateData.interviewDate as Date),
+          interviewTimeEnd: formatTime24Hour(
+            updateData.interviewTimeEnd as Date,
+          ),
+          interviewTimeStart: formatTime24Hour(
+            updateData.interviewTimeStart as Date,
+          ),
+          interviewDescription: updateInterview.interview_descrption,
         } as InterviewEmail,
       };
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "Failed to update interview",
@@ -218,7 +190,6 @@ export class InterviewService {
 
   async verifyApplicantData(userId: number, applicationId: number) {
     try {
-      //   Check User
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: userId,
@@ -232,15 +203,10 @@ export class InterviewService {
           },
         },
       });
-      console.log("USERRRR", user);
       if (!user) {
         return { success: false, message: `User not found` };
       }
       const companyId = user.company[0].company_id;
-
-      console.log("USER AND COMPANY ID", user, companyId);
-
-      //   Check applicant
       const applicant = await this.prisma.application.findUnique({
         where: {
           application_id: applicationId,
@@ -266,7 +232,6 @@ export class InterviewService {
           message: "Applicant not fount",
         };
       }
-      console.log(applicant);
       if (applicant.jobPost.companyId !== companyId) {
         return {
           success: false,
@@ -300,7 +265,6 @@ export class InterviewService {
           application_status: ApplicationStatus.interview,
         },
       });
-      console.log(updateStatus);
       if (updateStatus) {
         return {
           success: true,
@@ -334,7 +298,6 @@ export class InterviewService {
           message: "Interview not found",
         };
       }
-      console.log("CONTROLLER", data);
 
       const verifyData = await this.verifyApplicantData(
         userId,

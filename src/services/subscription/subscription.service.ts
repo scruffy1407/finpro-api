@@ -15,7 +15,6 @@ export class SubscritionService {
   }
 
   async checkAndProcessSubscriptions() {
-    console.log("SCHEDULER");
 
     try {
       const today = new Date();
@@ -23,7 +22,6 @@ export class SubscritionService {
       const threeDaysAgo = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
       threeDaysAgo.setDate(today.getDate() - 3);
-      console.log(threeDaysAgo, today, tomorrow);
 
       const subscriptions = await this.prisma.jobHunterSubscription.findMany({
         where: {
@@ -37,10 +35,6 @@ export class SubscritionService {
           jobHunter: true,
         },
       });
-
-      console.log("LIST SUBS :", subscriptions);
-      console.log("-------------------------------------");
-
       // Process expiring subscriptions
       for (const subscription of subscriptions) {
         const timeToExpiration = this.calculateTimeToExpiration(
@@ -71,7 +65,6 @@ export class SubscritionService {
 
         // Check for expired subscriptions
         if ((subscription.subscription_end_date as Date) < today) {
-          console.log("Expired Subs founded");
           await this.updateExpiredSubscription(
             subscription.job_hunter_subscription_id,
           );
@@ -124,9 +117,7 @@ export class SubscritionService {
 
   private async sendReminder(email: string, dataReminder: DataReminder) {
     try {
-      console.log(`Sending reminder to email :`, email);
       const response = await sendEmailSubsReminder(email, dataReminder);
-      console.log(response);
     } catch (error) {
       console.error("Error sending reminder email:", error);
     }
@@ -134,9 +125,7 @@ export class SubscritionService {
 
   private async sendSubsExpiredEmail(email: string, emailData: DataReminder) {
     try {
-      console.log(`Sending reminder to email :`, email);
       const response = await sendEmailSubExpired(email, emailData);
-      console.log(response);
     } catch (error) {
       console.error("Error sending reminder email:", error);
     }

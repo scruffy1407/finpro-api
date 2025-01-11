@@ -24,7 +24,6 @@ export class InterviewController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     const data: Interview = req.body as Interview;
-    console.log(data);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -32,14 +31,15 @@ export class InterviewController {
       try {
         const response = await this.interviewService.setInterviewSchedule(
           decodedToken.user_id,
-          data,
+          data
         );
         if (response.success) {
           sendInterviewEmail(response.interviewEmail as InterviewEmail)
             .then(() => {
-              res.status(200).send({
+              res.status(201).send({
                 status: res.status,
                 message: "interview created and send",
+                data: response.data,
               });
             })
             .catch((err) => {
@@ -47,7 +47,6 @@ export class InterviewController {
                 status: res.status,
                 message: err.message,
               });
-              console.log(err);
             });
         } else {
           res.status(400).send({
@@ -68,7 +67,6 @@ export class InterviewController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     const data: Interview = req.body as Interview;
-    console.log("DATA EDIT", data);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -76,13 +74,14 @@ export class InterviewController {
       try {
         const response = await this.interviewService.updateInterviewInformation(
           decodedToken.user_id,
-          data,
+          data
         );
         if (response.success) {
           resendInterviewEmail(response.interviewEmail as InterviewEmail)
             .then(() => {
               res.status(200).send({
                 status: res.status,
+                data: response.updateInterview,
                 message: "interview update and send to user",
               });
             })
@@ -91,7 +90,6 @@ export class InterviewController {
                 status: res.status,
                 message: err.message,
               });
-              console.log(err);
             });
         } else {
           res.status(400).send({
@@ -111,15 +109,13 @@ export class InterviewController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
     const data: UpdateStatusInterview = req.body as UpdateStatusInterview;
-    console.log("Update Satus", data);
-
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
       try {
         const response = await this.interviewService.updateStatusInterview(
           decodedToken?.user_id,
-          data,
+          data
         );
         if (response.success) {
           res.status(200).send({

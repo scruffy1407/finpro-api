@@ -536,7 +536,7 @@ enum ApplicationStatus {
 enum CompletionStatusSkillAssessment {
   failed
   pass
-  ongoing
+  ongoingn
 
   @@schema("SkillAssessment")
 }
@@ -615,7 +615,7 @@ enum CompanyIndustry {
   mediaandentertainment
   governmentandnonprofit
   others
-
+  
   @@schema("Company")
 }
 

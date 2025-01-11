@@ -24,7 +24,6 @@ export class CompanyAdmin {
       console.error("No company found for this user.");
       return null;
     }
-
     const jobPost = await this.prisma.jobPost.findUnique({
       where: { job_id: jobId },
       include: {
@@ -44,7 +43,6 @@ export class CompanyAdmin {
       console.error("Unauthorized to access this job post.");
       return null;
     }
-
     return jobPost;
   }
 
@@ -79,36 +77,63 @@ export class CompanyAdmin {
     });
   }
 
-  async getJobApplicants(jobId: number, companyId: number) {
+  async getJobApplicants(jobId: number, userId: number, fetchType: string) {
     try {
-      const applicants = await this.prisma.jobPost.findUnique({
-        where: { job_id: jobId },
-        include: {
-          applyJob: {
-            include: {
-              jobHunter: {
-                select: {
-                  job_hunter_id: true,
-                  name: true,
-                  email: true,
-                  resume: true,
-                },
-              },
-            },
-          },
-        },
-      });
+      const companyId = await this.getCompanyId(userId);
 
-      if (applicants?.companyId !== companyId) {
-        console.error("Unauthorized to access other company job");
+      if (!companyId) {
+        console.error("No company found for this user.");
         return {
           success: false,
-          message: "Unauthorized to access other company job",
+          message: "No company found for this user",
         };
       }
 
-      console.log("Fetched applicants data:", applicants);
+      const job = await this.prisma.jobPost.findUnique({
+        where: {
+          job_id: jobId,
+        },
+      });
+      if (!job) {
+        return {
+          success: false,
+          message: "Job not available",
+        };
+      }
 
+      if (job.companyId !== companyId) {
+        return {
+          success: false,
+          message: "User not authorize to access this job",
+        };
+      }
+
+      const whereCondition: any = {
+        jobId: jobId,
+      };
+
+      if (fetchType === "interview") {
+        whereCondition.application_status = "interview";
+      } else if (fetchType === "accepted") {
+        whereCondition.application_status = "accepted";
+      } else if (fetchType === "rejected") {
+        whereCondition.application_status = "rejected";
+      }
+
+      const applicants = await this.prisma.application.findMany({
+        where: whereCondition,
+        include: {
+          jobHunter: {
+            select: {
+              job_hunter_id: true,
+              name: true,
+              email: true,
+              resume: true,
+            },
+          },
+          interview: true,
+        },
+      });
       return { success: true, applicants };
     } catch (error) {
       console.error("Error fetching job applicants:", error);
@@ -144,7 +169,7 @@ export class CompanyAdmin {
   async updateApplicationStatus(
     applicationId: number,
     status: ApplicationStatus,
-    userId: number
+    userId: number,
   ) {
     const companyId = await this.getCompanyId(userId);
     if (!companyId) {
@@ -182,7 +207,10 @@ export class CompanyAdmin {
       console.error("Application not found or unauthorized.");
       return null;
     }
-    if (existingApplication.application_status !== ApplicationStatus.onreview) {
+    if (
+      existingApplication.application_status !== ApplicationStatus.onreview &&
+      existingApplication.application_status !== ApplicationStatus.interview
+    ) {
       console.error("Application status can no longer be updated.");
       return null;
     }
@@ -214,7 +242,6 @@ export class CompanyAdmin {
         console.error("Error sending application status email:", error);
       }
     }
-
     return updateResult;
   }
 
@@ -232,8 +259,6 @@ export class CompanyAdmin {
       if (!jobPost) {
         return "Job post not found.";
       }
-
-      // Ensure the job belongs to the user's company
       if (jobPost.companyId !== companyId) {
         return "Unauthorized to delete this job post.";
       }
@@ -271,7 +296,6 @@ export class CompanyAdmin {
           updated_at: new Date(),
         },
       });
-
       return "Job post deleted successfully.";
     } catch (error) {
       const err = error as Error;
@@ -279,7 +303,6 @@ export class CompanyAdmin {
     }
   }
 
-  // Get job post status with user authorization
   async getJobStatus(jobId: number, userId: number): Promise<boolean> {
     try {
       const companyId = await this.getCompanyId(userId);
@@ -315,7 +338,7 @@ export class CompanyAdmin {
   async toggleJobStatus(
     jobId: number,
     status: boolean,
-    userId: number
+    userId: number,
   ): Promise<string> {
     try {
       const companyId = await this.getCompanyId(userId);

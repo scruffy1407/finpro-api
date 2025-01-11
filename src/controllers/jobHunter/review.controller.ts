@@ -15,9 +15,7 @@ export class ReviewController {
   async createReview(req: Request, res: Response) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
-
     const reviewData: ReviewData = req.body as ReviewData;
-    console.log(reviewData);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");
@@ -25,7 +23,7 @@ export class ReviewController {
       try {
         const response = await this.reviewService.createReview(
           decodedToken.user_id,
-          reviewData,
+          reviewData
         );
         if (response.success) {
           res.status(201).send({

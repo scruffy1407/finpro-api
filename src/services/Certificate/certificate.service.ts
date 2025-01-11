@@ -8,8 +8,33 @@ export class CertificateService {
     this.prisma = new PrismaClient();
   }
 
+  async getCertificateData(userId: number) {
+    try {
+      return await this.prisma.baseUsers.findUnique({
+        where: { user_id: userId },
+        include: {
+          jobHunter: {
+            include: {
+              skillAssessmentCompletion: {
+                where: {
+                  completion_status: 'pass',
+                },
+                include: {
+                  skillAssessment: true,
+                  certificate: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return { success: false, message: "Failed to fetch user data." };
+    }
+  }
+
   async verifyCertficate(certificateCode: string) {
-    console.log(certificateCode);
     try {
       const certificate = await this.prisma.certificate.findUnique({
         where: {
@@ -40,7 +65,7 @@ export class CertificateService {
         },
       };
     } catch (e) {
-      return { success: false, message: "failed to  get certificate" };
+      return { success: false, message: "Failed to Get Certificate" };
     }
   }
 }

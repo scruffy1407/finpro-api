@@ -54,7 +54,6 @@ export class MidtransUtils {
         data: response.data,
       };
     } catch (err: any) {
-      console.log(err);
       return {
         success: false,
         message: err,
@@ -123,7 +122,6 @@ export class MidtransUtils {
         return { success: false, message: "Failed to cancel order" };
       }
     } catch (e) {
-      console.log(e);
       return { success: false, message: "Failed to cancel order" };
     }
   }

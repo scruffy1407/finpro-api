@@ -27,7 +27,7 @@ export class PaymentController {
       try {
         const response = await this.paymentService.createOrder(
           decodedToken.user_id,
-          Number(subscriptionId),
+          Number(subscriptionId)
         );
         if (response.success) {
           res.status(201).send({
@@ -85,7 +85,6 @@ export class PaymentController {
   // }
 
   async verifyOrderComplete(req: Request, res: Response) {
-    console.log(req.body);
     const {
       status_code,
       transaction_status,
@@ -107,21 +106,15 @@ export class PaymentController {
       transactionId: order_id,
     };
 
-    console.log("UPDATE DATA", data);
-
     try {
-      console.log("ORDER ID", order_id);
       const response = await this.paymentService.midtransUpdateStatus(data);
-      console.log("RESPONSE CONTROLLER", response);
       if (response.success) {
         if (data.status === 200 && response.data) {
-          console.log("innerEmail Exec");
           sendEmailPaymentComplete(
             response.data.email as string,
-            response.data as PaymentComplete,
+            response.data as PaymentComplete
           )
             .then((response) => {
-              console.log(response);
               res.status(200).send({
                 status: res.statusCode,
                 message: "Payment Complete and send",
@@ -160,8 +153,6 @@ export class PaymentController {
     const orderId = req.params.orderId;
     const pass = req.body.pass;
 
-    console.log(orderId);
-
     if (!decodedToken) {
       res.status(401).send("No token found.");
     } else {
@@ -169,7 +160,7 @@ export class PaymentController {
         const response = await this.paymentService.verifyPayment(
           decodedToken.user_id,
           orderId,
-          pass,
+          pass
         );
         if (response.success) {
           res.status(200).send({
@@ -208,7 +199,7 @@ export class PaymentController {
           decodedToken.user_id,
           status,
           limit,
-          offset,
+          offset
         );
         if (response.success) {
           res.status(200).send({

@@ -119,7 +119,6 @@ export class JobHunterController {
           decodedToken.user_id,
           updateImage,
         );
-        console.log(response);
         if (response.success) {
           res.status(200).send({
             status: res.statusCode,
