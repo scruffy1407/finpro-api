@@ -150,6 +150,7 @@ export class PaymentService {
             created_at: new Date(),
             subscriptionId: data.itemInfo.subscriptionId,
             transaction_status: "pending",
+            redirect_link: midTransReturn.data.redirect_url,
           },
         });
         if (!createOrder) {
@@ -187,6 +188,9 @@ export class PaymentService {
         where: {
           invoice_transaction: paymentData.transactionId,
         },
+        include: {
+          payment: true,
+        },
       });
       if (!checkTransaction) {
         return {
@@ -213,8 +217,31 @@ export class PaymentService {
           success: true,
           message: createPayment.message,
         };
-      }
+      } else if (paymentData.status === 202) {
+        await this.prisma.transaction.update({
+          where: {
+            invoice_transaction: paymentData.transactionId,
+          },
+          data: {
+            transaction_status: "failed",
+          },
+        });
 
+        await this.prisma.payment.update({
+          where: {
+            payment_id: checkTransaction.payment[0].payment_id,
+          },
+          data: {
+            payment_status: "failed",
+            updated_at: new Date(),
+          },
+        });
+
+        return {
+          success: true,
+          message: "Update payment to failed",
+        };
+      }
       // UPDATE PAYMENT
       else {
         const updatePayment = await this.updateStatusPayment(
@@ -646,6 +673,9 @@ export class PaymentService {
         where: whereConditions,
         skip: offset,
         take: limit,
+        orderBy: {
+          created_at: "desc",
+        },
         select: {
           invoice_transaction: true,
           transaction_status: true,

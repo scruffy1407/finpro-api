@@ -40,11 +40,13 @@ export async function jobAccept(email: string) {}
 
 export async function sendInterviewEmail(interviewEmail: InterviewEmail) {
   const templatePath = path.join(__dirname, "/views/", "interviewEmail.ejs");
-  const html = await ejs.renderFile(templatePath, {});
+  const html = await ejs.renderFile(templatePath, {
+    interviewEmail,
+  });
   const mailOption = {
     from: "fareldeksano000@gmail.com", // sender address
     to: interviewEmail.email, // list of receivers
-    subject: `YEYY! You got the interview for ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
+    subject: `PATHWAY | Interview Invitation for ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
     text: "Hello world?", // plain text body
     html: html,
   };
@@ -55,13 +57,16 @@ export async function resendInterviewEmail(interviewEmail: InterviewEmail) {
   const templatePath = path.join(
     __dirname,
     "/views/",
-    "resendInterviewEmail.ejs"
+    "resendInterviewEmail.ejs",
   );
-  const html = await ejs.renderFile(templatePath, {});
+  const html = await ejs.renderFile(templatePath, {
+    interviewEmail,
+  });
+
   const mailOption = {
     from: "fareldeksano000@gmail.com", // sender address
     to: interviewEmail.email, // list of receivers
-    subject: `UPDATE | Update schedule interview for ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
+    subject: `PATHWAY | Update Interview Invitation ${interviewEmail.jobTitle} at ${interviewEmail.companyName}`, // Subject line
     text: "Hello world?", // plain text body
     html: html,
   };
@@ -70,7 +75,7 @@ export async function resendInterviewEmail(interviewEmail: InterviewEmail) {
 
 export async function sendEmailVerification(
   email: string,
-  verificationToken: string
+  verificationToken: string,
 ) {
   const templatePath = path.join(__dirname, "/views/", "verifyEmail.ejs");
   const href = `http://localhost:3000/auth/register/verify-email/${verificationToken}`;
@@ -91,7 +96,7 @@ export async function sendEmailVerification(
 
 export async function sendEmailPaymentComplete(
   email: string,
-  dataOrder: PaymentComplete
+  dataOrder: PaymentComplete,
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -100,7 +105,7 @@ export async function sendEmailPaymentComplete(
   const templatePath = path.join(
     __dirname,
     "/views/",
-    "PaymentCompleteEmail.ejs"
+    "PaymentCompleteEmail.ejs",
   );
 
   const html = await ejs.renderFile(templatePath, {
@@ -119,7 +124,7 @@ export async function sendEmailPaymentComplete(
 
 export async function sendEmailSubsReminder(
   email: string,
-  emailData: DataReminder
+  emailData: DataReminder,
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -143,7 +148,7 @@ export async function sendEmailSubsReminder(
 
 export async function sendEmailSubExpired(
   email: string,
-  emailData: DataReminder
+  emailData: DataReminder,
 ) {
   console.log("SENDING EMAIL");
   console.log("NODEMAILER", email);
@@ -172,7 +177,7 @@ export async function sendApplicationStatusEmail(
     applicationStatus: string;
     jobName: string;
     jobTitle: string;
-  }
+  },
 ) {
   const templatePath = path.join(__dirname, "/views/", "applicationStatus.ejs");
   const formattedData = {

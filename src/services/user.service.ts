@@ -51,17 +51,19 @@ export class CompanyService {
         company_id: company.company[0].company_id,
         company_name: company.company[0].company_name,
         company_province: company.company[0].company_province ?? "",
+        phone_number: company.phone_number ?? "",
         company_city: company.company[0].company_city ?? "",
         company_description: company.company[0].company_description ?? "",
         company_industry: company.company[0].company_industry ?? "",
         company_logo: company.company[0].logo ?? "",
         company_size: company.company[0].company_size ?? "",
         email: company.email,
-        address_detail: company.company[0].address_details ?? "",
+        address_details: company.company[0].address_details ?? "",
         latitude: company.company[0].latitude as number,
         longitude: company.company[0].longitude as number,
+        cityId: company.company[0].cityId as number,
       };
-
+      console.log(companyResp, "BAMBANG SERVICEE");
       return {
         success: true,
         companyResp,
@@ -76,8 +78,9 @@ export class CompanyService {
   }
 
   async updateCompanyDetail(user_id: number, updateData: CompanyGeneralInfo) {
-    const { company_id } = updateData;
+    const { companyId } = updateData;
     try {
+      console.log(updateData, "POOPP SERVICEEE");
       const company = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
@@ -94,10 +97,7 @@ export class CompanyService {
         };
       }
 
-      console.log(company?.company[0]);
-      console.log(company_id);
-
-      if (company?.company[0].company_id !== company_id) {
+      if (company?.company[0].company_id !== companyId) {
         return {
           success: false,
           message: "User are not authorized to update",
@@ -117,35 +117,46 @@ export class CompanyService {
       //   };
       // }
 
-      const updateCompany = await this.prisma.company.update({
-        where: {
-          company_id: company_id,
-        },
-        data: {
-          company_name: updateData.company_name,
-          company_description: updateData.company_description,
-          company_industry: updateData.company_industry,
-          company_size: updateData.company_size,
-          company_province: updateData.company_province,
-          company_city: updateData.company_city,
-          // longitude: location.success ? location.longitude : null,
-          // latitude: location.success ? location.latitude : null,
-          longitude: null,
-          latitude: null,
-        },
-      });
+      const [updatedCompany, updatedUser] = await this.prisma.$transaction([
+        this.prisma.company.update({
+          where: {
+            company_id: companyId,
+          },
+          data: {
+            company_name: updateData.company_name,
+            address_details: updateData.address_details,
+            company_description: updateData.company_description,
+            company_industry: updateData.company_industry,
+            company_size: updateData.company_size,
+            company_province: updateData.company_province,
+            company_city: updateData.company_city,
+            cityId: updateData.cityId,
+            longitude: null,
+            latitude: null,
+          },
+        }),
+        this.prisma.baseUsers.update({
+          where: {
+            user_id: user_id,
+          },
+          data: {
+            phone_number: updateData.phone_number,
+          },
+        }),
+      ]);
 
-      console.log("data", updateCompany);
+      console.log("data", updatedCompany);
 
       return {
         success: true,
-        data: updateCompany,
+        company: updatedCompany,
+        user: updatedUser,
       };
     } catch (e) {
       console.log(e);
       return {
         success: false,
-        message: "Cannot update the company",
+        message: "Cannot update the company or user",
         detail: e,
       };
     }
@@ -172,16 +183,16 @@ export class CompanyService {
         };
       }
 
-      if (company?.company[0].company_id !== id) {
-        return {
-          success: false,
-          message: "User are not authorized to update",
-        };
-      }
+      // if (company?.company[0].company_id !== id) {
+      //   return {
+      //     success: false,
+      //     message: "User are not authorized to update",
+      //   };
+      // }
 
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
-        updateData.image,
+        updateData.image
       );
       if (!uploadImage.success) {
         return {
@@ -193,7 +204,7 @@ export class CompanyService {
 
       await this.prisma.company.update({
         where: {
-          company_id: id,
+          company_id: company.company[0].company_id,
         },
         data: {
           logo: uploadImage.data as string,
@@ -229,7 +240,7 @@ export class CompanyService {
             value: company.company_id,
             label: company.company_name,
           };
-        },
+        }
       );
       console.log(searchResult);
       return {
