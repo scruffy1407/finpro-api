@@ -536,7 +536,7 @@ enum ApplicationStatus {
 enum CompletionStatusSkillAssessment {
   failed
   pass
-  ongoingn
+  ongoing
 
   @@schema("SkillAssessment")
 }
