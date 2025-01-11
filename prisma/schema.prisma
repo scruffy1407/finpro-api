@@ -341,7 +341,7 @@ model Category {
 
 model JobPost {
   job_id                Int      @id @default(autoincrement())
-  preSelectionTestId    Int
+  preSelectionTestId    Int?
   companyId             Int
   categoryId            Int
   selection_text_active Boolean  @default(false)
@@ -365,7 +365,7 @@ model JobPost {
 
   company          Company          @relation(fields: [companyId], references: [company_id])
   category         Category         @relation(fields: [categoryId], references: [category_id])
-  preSelectionTest PreSelectionTest @relation(fields: [preSelectionTestId], references: [test_id])
+  preSelectionTest PreSelectionTest? @relation(fields: [preSelectionTestId], references: [test_id])
 
   @@schema("Company")
 }
