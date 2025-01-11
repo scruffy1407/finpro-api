@@ -23,8 +23,6 @@ const validateFileType = (
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  console.log(file);
-  console.log(path.extname(file.originalname));
   const allowedExtensions = [".png", ".jpg", ".jpeg"];
   const extname = path.extname(file.originalname).toLowerCase();
   if (!allowedExtensions.includes(extname)) {
@@ -39,7 +37,7 @@ const validateFileType = (
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 2 * 1024 * 1024, // batas ukuran file max 2MB,
+    fileSize: 2 * 1024 * 1024,
   },
   fileFilter: validateFileType,
 });

@@ -59,7 +59,6 @@ export class CompanyController {
       cityId,
       provinceId,
     }: CompanyGeneralInfo = req.body as CompanyGeneralInfo;
-    console.log(req.body, "ADIT CONTROLLER");
     const updateData: CompanyGeneralInfo = {
       companyId,
       company_province,
@@ -109,8 +108,6 @@ export class CompanyController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const { company_id } = req.body;
     const image = req.file ? req.file.path || "" : "";
-    console.log("Controller company id", company_id);
-    console.log("image", image);
     const updateImage: UpdateImage = {
       id: Number(company_id),
       image: image,
@@ -149,7 +146,6 @@ export class CompanyController {
 
   async searchCompany(req: Request, res: Response) {
     const keyword = req.query.q as string;
-    console.log(keyword);
     try {
       const response = await this.companyService.searchCompany(keyword);
       if (response.success) {

@@ -10,7 +10,6 @@ export class SubscriptionController {
 
   async startReminderJob(req: Request, res: Response) {
     this.subscriptionService.startReminderJob();
-    console.log("Reminder Job started");
     res.status(200).json({ message: "Reminder job started" });
   }
 }

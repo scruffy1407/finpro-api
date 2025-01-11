@@ -24,7 +24,6 @@ export class CompanyAdmin {
       console.error("No company found for this user.");
       return null;
     }
-
     const jobPost = await this.prisma.jobPost.findUnique({
       where: { job_id: jobId },
       include: {
@@ -44,7 +43,6 @@ export class CompanyAdmin {
       console.error("Unauthorized to access this job post.");
       return null;
     }
-
     return jobPost;
   }
 
@@ -136,11 +134,6 @@ export class CompanyAdmin {
           interview: true,
         },
       });
-
-      console.log("APPLICANTS", applicants, companyId);
-
-      console.log("Fetched applicants data:", applicants);
-
       return { success: true, applicants };
     } catch (error) {
       console.error("Error fetching job applicants:", error);
@@ -249,7 +242,6 @@ export class CompanyAdmin {
         console.error("Error sending application status email:", error);
       }
     }
-
     return updateResult;
   }
 
@@ -267,8 +259,6 @@ export class CompanyAdmin {
       if (!jobPost) {
         return "Job post not found.";
       }
-
-      // Ensure the job belongs to the user's company
       if (jobPost.companyId !== companyId) {
         return "Unauthorized to delete this job post.";
       }
@@ -306,7 +296,6 @@ export class CompanyAdmin {
           updated_at: new Date(),
         },
       });
-
       return "Job post deleted successfully.";
     } catch (error) {
       const err = error as Error;
@@ -314,7 +303,6 @@ export class CompanyAdmin {
     }
   }
 
-  // Get job post status with user authorization
   async getJobStatus(jobId: number, userId: number): Promise<boolean> {
     try {
       const companyId = await this.getCompanyId(userId);

@@ -57,7 +57,6 @@ export class LocationService {
   }
 
   async searchLocation(searchKeyword: string) {
-    console.log(searchKeyword);
     try {
       const [searchCities, searchProvinces] = await Promise.all([
         this.prisma.city.findMany({

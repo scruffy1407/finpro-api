@@ -309,8 +309,6 @@ export class CompanyController {
 	async getDetailCompanyPage(req: Request, res: Response) {
 		try {
 			const companyId = req.params.companyId;
-			console.log("INI COMPANYID", companyId);
-
 			const response = await this.companyService.getDetailCompanyPage(
 				Number(companyId)
 			);
@@ -343,7 +341,6 @@ export class CompanyController {
 			companyProvince,
 			hasJob = false,
 		} = req.query;
-		console.log("CONTROLLER", page);
 		try {
 			const response = await this.companyService.getCompanyList(
 				companyName as string,

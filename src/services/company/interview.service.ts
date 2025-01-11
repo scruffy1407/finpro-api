@@ -19,28 +19,15 @@ export class InterviewService {
   }
 
   generateCode(companyName: string) {
-    // Extract the first 3 letters of the company name
     const companyCode = companyName.substring(0, 3).toUpperCase();
-
-    // Get current date in YYYYMMDD format
     const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-
-    // Generate a random 10-character string
     const randomChars = Math.random().toString(36).substring(2, 12);
-
-    // Combine the components into the final code
     const code = `${companyCode}-${currentDate}-${randomChars}`;
     return code;
   }
 
   async setInterviewSchedule(userId: number, data: Interview) {
-    // 1. Check applicant is available or not
-    // If not it will return false and message
-    // 2. User that update is actualy owner of the job
-    // if not it will return false and message
-
     const applicationId = data.applicationId;
-
     try {
       const verifyData = await this.verifyApplicantData(userId, applicationId);
 
@@ -50,7 +37,6 @@ export class InterviewService {
           message: verifyData.message,
         };
       }
-
       const applicant = verifyData.data?.applicant;
       const user = verifyData.data?.user;
 
@@ -61,30 +47,8 @@ export class InterviewService {
             "Cannot create interview if the current status is not interview",
         };
       }
-
       let uniqueCode: string = "";
       let applicantCode: string = "";
-
-      // do {
-      //   uniqueCode = this.generateCode(
-      //     user?.company[0].company_name || "anonymous",
-      //   );
-      //   const checkCode = await this.prisma.interview.findFirst({
-      //     where: {
-      //       interview_room_code: uniqueCode,
-      //     },
-      //   });
-      //
-      //   applicantCode = checkCode?.interview_room_code as string;
-      //   console.log("CHECK CODE", checkCode);
-      //   console.log("UNIQUIE CODE", uniqueCode);
-      //   console.log("APPLICANT CODE", applicantCode);
-      // } while (uniqueCode === applicantCode);
-      //
-      // const roomUrl = `http:localhost:3000/applicant/interview/meet?room=${uniqueCode}`;
-      // console.log("OUTER UNIQUE CODE", uniqueCode);
-      // console.log("ROOM URL", roomUrl);
-
       const createInterview = await this.prisma.interview.create({
         data: {
           applicationId: data.applicationId,
@@ -105,9 +69,6 @@ export class InterviewService {
           interview_status: InterviewStatus.scheduled,
         },
       });
-
-      console.log(createInterview);
-
       const updateStatus = await this.updateStatusApplicantInterview(
         applicant.application_id,
       );
@@ -143,7 +104,6 @@ export class InterviewService {
         };
       }
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "Failed to create interview",
@@ -153,8 +113,6 @@ export class InterviewService {
 
   async updateInterviewInformation(userId: number, updateData: Interview) {
     const interviewId = updateData.interviewId as number;
-
-    console.log("INTERVIEW CONTROLLER", interviewId);
 
     try {
       const interview = await this.prisma.interview.findUnique({
@@ -168,7 +126,6 @@ export class InterviewService {
           message: "Interview not found",
         };
       }
-      console.log("CONTROLLER", updateData);
 
       const verifyData = await this.verifyApplicantData(
         userId,
@@ -204,8 +161,6 @@ export class InterviewService {
         },
       });
 
-      console.log("UPDATE DATA", updateInterview);
-
       return {
         success: true,
         updateInterview,
@@ -226,7 +181,6 @@ export class InterviewService {
         } as InterviewEmail,
       };
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "Failed to update interview",
@@ -236,7 +190,6 @@ export class InterviewService {
 
   async verifyApplicantData(userId: number, applicationId: number) {
     try {
-      //   Check User
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: userId,
@@ -250,15 +203,10 @@ export class InterviewService {
           },
         },
       });
-      console.log("USERRRR", user);
       if (!user) {
         return { success: false, message: `User not found` };
       }
       const companyId = user.company[0].company_id;
-
-      console.log("USER AND COMPANY ID", user, companyId);
-
-      //   Check applicant
       const applicant = await this.prisma.application.findUnique({
         where: {
           application_id: applicationId,
@@ -284,7 +232,6 @@ export class InterviewService {
           message: "Applicant not fount",
         };
       }
-      console.log(applicant);
       if (applicant.jobPost.companyId !== companyId) {
         return {
           success: false,
@@ -318,7 +265,6 @@ export class InterviewService {
           application_status: ApplicationStatus.interview,
         },
       });
-      console.log(updateStatus);
       if (updateStatus) {
         return {
           success: true,
@@ -352,7 +298,6 @@ export class InterviewService {
           message: "Interview not found",
         };
       }
-      console.log("CONTROLLER", data);
 
       const verifyData = await this.verifyApplicantData(
         userId,

@@ -38,9 +38,6 @@ export class JobHunterService {
 					message: "Cannot access this data",
 				};
 			}
-
-			console.log(jobHunter);
-
 			const jobHunterResp: JobHunterGeneralInfo = {
 				jobHunterId: jobHunter.jobHunter[0].job_hunter_id,
 				photo: jobHunter.jobHunter[0].photo as string,
@@ -53,7 +50,6 @@ export class JobHunterService {
 				cityId: jobHunter.jobHunter[0].cityId as number,
 				summary: jobHunter.jobHunter[0].summary as string,
 			};
-			console.log(jobHunterResp);
 			return {
 				success: true,
 				jobHunterResp,
@@ -127,7 +123,6 @@ export class JobHunterService {
 
 	async updateUserImage(user_id: number, updateData: UpdateImage) {
 		const { id } = updateData;
-		console.log("INIT UPDATE DATA", updateData);
 		try {
 			const jobHunter = await this.prisma.baseUsers.findUnique({
 				where: {
@@ -144,7 +139,6 @@ export class JobHunterService {
 					message: "Cannot find company",
 				};
 			}
-			console.log("COMPARE", jobHunter?.jobHunter[0].job_hunter_id, id);
 
 			if (jobHunter?.jobHunter[0].job_hunter_id !== id) {
 				return {
@@ -157,7 +151,6 @@ export class JobHunterService {
 				jobHunter.role_type,
 				updateData.image
 			);
-			console.log(uploadImage);
 
 			if (!uploadImage.success) {
 				return {
@@ -239,7 +232,6 @@ export class JobHunterService {
 				data: validateData[validateData.length - 1],
 			};
 		} catch (e) {
-			console.log(e);
 			return {
 				success: false,
 				message: "Cannot access this data",

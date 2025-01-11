@@ -22,9 +22,6 @@ class ApplyJobController {
     const { jobHunterId, jobId, expected_salary } = req.body;
     const file = req.file;
     const accessToken = req.headers.authorization?.split(" ")[1];
-
-    console.log("Received apply job request. Body:", req.body, "File:", file);
-
     if (!accessToken) {
       res
         .status(401)
@@ -82,7 +79,6 @@ class ApplyJobController {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token);
     const { offset = 0, limit = 6, status } = req.query;
-    console.log("CONTROLLER", limit, offset, status);
     if (!decodedToken) {
       res.status(400).send({
         status: 400,
@@ -204,8 +200,6 @@ class ApplyJobController {
   async verifyApplyJob(req: Request, res: Response) {
     try {
       const { apply, job } = req.query;
-      console.log(apply, job);
-
       if (apply !== "true" || !apply) {
         res.status(400).send({
           status: res.statusCode,

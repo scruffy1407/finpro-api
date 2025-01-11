@@ -36,7 +36,6 @@ export class DropboxTokenManager {
       );
 
       this.accessToken = response.data.access_token;
-      console.log("Access token refreshed:", this.accessToken);
     } catch (error : any) {
       console.error("Error refreshing Dropbox token:", error.message);
     }

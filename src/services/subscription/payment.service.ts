@@ -113,8 +113,6 @@ export class PaymentService {
         isUniqueCode = true;
       } while (!isUniqueCode);
 
-      console.log("UNIQUEEEE", uniqueCode);
-
       if (!uniqueCode) {
         return {
           success: false,
@@ -182,7 +180,6 @@ export class PaymentService {
   async cancelStatusOrder(userId: number, orderId: string) {}
 
   async midtransUpdateStatus(paymentData: createPayment) {
-    console.log("SERVICE PAYMENT DATA :", paymentData);
     try {
       const checkTransaction = await this.prisma.transaction.findUnique({
         where: {
@@ -211,8 +208,6 @@ export class PaymentService {
             message: "Failed to create payment",
           };
         }
-
-        console.log("PAYMENT CREATED");
         return {
           success: true,
           message: createPayment.message,
@@ -264,7 +259,6 @@ export class PaymentService {
             transaction_status: "success",
           },
         });
-        console.log("PAYMENT UPDATED");
 
         const userTransaction = await this.prisma.transaction.findUnique({
           where: {
@@ -352,8 +346,6 @@ export class PaymentService {
           created_at: new Date(),
         },
       });
-
-      console.log("CREATE PAYMENT", createPayment);
       return {
         success: true,
         data: createPayment,

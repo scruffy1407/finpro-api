@@ -12,7 +12,6 @@ export class WorkingExpService {
   }
 
   async getListWorkingExperience(user_id: number, wReview: boolean) {
-    console.log("INNER REVIEW", wReview);
     try {
       const user = await this.userService.validateJobHunter(user_id);
       if (!user.success) {
@@ -44,8 +43,6 @@ export class WorkingExpService {
       });
 
       const workExperiences = listWork?.workExperience;
-
-      console.log(workExperiences);
       return {
         success: true,
         data: workExperiences,
@@ -60,7 +57,6 @@ export class WorkingExpService {
   }
 
   async createWorkingExperience(user_id: number, data: WorkingExperience) {
-    console.log(data, "DATA DATA DATAAAAAAAA");
     const { jobHunterId, startDate, endDate } = data;
 
     const start = new Date(startDate);
@@ -83,8 +79,6 @@ export class WorkingExpService {
           message: user.message,
         };
       }
-
-      console.log(user);
 
       const company = await this.prisma.company.findUnique({
         where: {

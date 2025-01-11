@@ -23,7 +23,6 @@ export class AuthJwtMiddleware {
       });
       return;
     }
-    console.log("TOKENNN GESSSS", token);
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
       if (err) {
         return res.status(401).send({
@@ -31,15 +30,13 @@ export class AuthJwtMiddleware {
           status: res.statusCode,
         });
       }
-
-      // Typecast decoded token to your custom interface
       const user = decoded as JwtPayload;
-      user; // Attach the strongly-typed user object
+      user;
       next();
     });
   }
   authorizeRole(
-    roles: string,
+    roles: string
   ): (req: Request, res: Response, next: NextFunction) => void {
     return async (req: Request, res: Response, next: NextFunction) => {
       const token = req.headers.authorization?.split(" ")[1] as string;
@@ -52,7 +49,7 @@ export class AuthJwtMiddleware {
         });
         return;
       }
-      next(); // Continue to next middleware
+      next();
     };
   }
 
@@ -68,20 +65,4 @@ export class AuthJwtMiddleware {
       next();
     }
   }
-
-  //
-  // authorizeUserId(): (req: Request, res: Response, next: NextFunction) => void {
-  //   return (req: Request, res: Response, next: NextFunction): void => {
-  //     const userId = (req as any).user.id;
-  //     const resourceId = req.params.userId || req.body.userId;
-  //     if (String(userId) !== String(resourceId)) {
-  //       res.status(403).send({
-  //         message: "Forbidden: You can only access your own resources",
-  //         status: res.statusCode,
-  //       });
-  //       return;
-  //     }
-  //     next(); // Continue to next middleware
-  //   };
-  // }
 }

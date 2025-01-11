@@ -35,7 +35,6 @@ export class CertificateService {
   }
 
   async verifyCertficate(certificateCode: string) {
-    console.log(certificateCode);
     try {
       const certificate = await this.prisma.certificate.findUnique({
         where: {
@@ -66,7 +65,7 @@ export class CertificateService {
         },
       };
     } catch (e) {
-      return { success: false, message: "failed to get certificate" };
+      return { success: false, message: "Failed to Get Certificate" };
     }
   }
 }

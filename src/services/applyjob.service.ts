@@ -11,7 +11,7 @@ export class ApplyJob {
   }
 
   async uploadResumeToDropbox(
-    file: Express.Multer.File,
+    file: Express.Multer.File
   ): Promise<string | undefined> {
     try {
       const tokenManager = DropboxTokenManager.getInstance();
@@ -28,7 +28,6 @@ export class ApplyJob {
 
       return sharedLinkResponse.result.url;
     } catch (error) {
-      console.log(error);
       return "Failed to upload Resume File";
     }
   }
@@ -36,7 +35,7 @@ export class ApplyJob {
   async applyJob(
     data: Application,
     file: Express.Multer.File,
-    accessToken: string,
+    accessToken: string
   ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
@@ -61,28 +60,6 @@ export class ApplyJob {
           message: "Unauthorized access to apply for the job.",
         };
       }
-
-      // PENJAGAAN BUAT ISI DATA DIRI SEBELUM APPLYJOB (UNCOMMENT ABIS LIVE)
-      // const requiredFields: Array<keyof typeof jobHunter> = [
-      //   "name",
-      //   "gender",
-      //   "dob",
-      //   "location_city",
-      //   "location_province",
-      // ];
-
-      // const missingFields = requiredFields.filter((field) => !jobHunter[field]);
-
-      // if (missingFields.length > 0) {
-      //   return {
-
-      //     error: `The following fields are missing: ${missingFields.join(", ")}.`,
-
-      //     error: The following fields are missing: ${missingFields.join(", ")}.,
-
-      //   };
-      // }
-
       const jobExists = await this.prisma.jobPost.findUnique({
         where: { job_id: data.jobId },
       });
@@ -149,15 +126,13 @@ export class ApplyJob {
     });
   }
 
-  // Applicant List Page
   async getUserApplications(
-    limit: number = 6, // Fetch 10 posts initially, to load more later
+    limit: number = 6,
     offset: number = 0,
     userId: number,
-    status?: string,
+    status?: string
   ) {
     try {
-      //   Check User
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: userId,
@@ -172,15 +147,6 @@ export class ApplyJob {
           message: "User not found",
         };
       }
-
-      //   Get List job
-      // Data that will display in frontend
-      // 1.Jobs Name
-      // 2. Application ID
-      // 3. Jobs Detail Like : JobsId,Jobs Type,Jobs Space, Jobs Salary
-      // 4. Application Status
-      // 5. Apply Date
-
       const whereConditions: any = {
         jobHunterId: user.jobHunter[0].job_hunter_id,
         application_status: status as ApplicationStatus,
@@ -188,8 +154,8 @@ export class ApplyJob {
 
       const applicationUser = await this.prisma.application.findMany({
         where: whereConditions,
-        skip: offset, // Skip posts based on the offset
-        take: limit, // Limit the number of records per request (max 6)
+        skip: offset,
+        take: limit,
         orderBy: {
           created_at: "desc",
         },
@@ -233,7 +199,6 @@ export class ApplyJob {
     }
   }
 
-  // BOOKMARK SERVICES
   async createBookmark(userId: number, jobPostId: number) {
     try {
       const user = await this.prisma.baseUsers.findUnique({
@@ -317,7 +282,6 @@ export class ApplyJob {
           },
         },
       });
-
       return bookmarks;
     } catch (error) {
       console.error("Error fetching bookmarks:", error);

@@ -9,15 +9,6 @@ export class ReviewService {
   }
 
   async createReview(userId: number, data: ReviewData) {
-    // Pastikan sebelum masuk ke controller harus terdapat middleware untuk cek field sudah terisi semua
-
-    //1.Harus check user nya ada atau tidak
-    //2.Check apakah user benar memiliki work exprience itu, jika tidak return failed
-    //3.Jika work experience dan user sudah valid, kita harus check apakah company sudah memiliki review dari workexperience tersebut
-    // 4. Jika semua sudah aman, kita bisa create review
-
-    console.log(userId);
-
     try {
       const user = await this.prisma.baseUsers.findUnique({
         where: {
@@ -104,7 +95,6 @@ export class ReviewService {
         success: true,
       };
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "something went wrong,failed to create review",

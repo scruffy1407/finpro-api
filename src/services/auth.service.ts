@@ -4,9 +4,9 @@ import { PrismaClient, RoleType, RegisterBy } from "@prisma/client";
 import { Auth } from "../models/models";
 import { AuthUtils } from "../utils/auth.utils";
 import {
-	registerSchema,
-	loginSchema,
-	validatePassword,
+  registerSchema,
+  loginSchema,
+  validatePassword,
 } from "../validators/auth.validator";
 import environment from "dotenv";
 
@@ -66,10 +66,8 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email,
+      validatedData.email
     );
-
-    // Create Base user
     try {
       baseUser = await this.prisma.baseUsers.create({
         data: {
@@ -91,10 +89,8 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name,
-      ); // create Job Hunter\\
-
-      console.log(jobHunter);
+        validatedData.name
+      );
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
           where: {
@@ -122,7 +118,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name,
+        validatedData.name
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -218,7 +214,7 @@ export class AuthService {
       data: {
         subscription_active: false,
         subscriptionTable: {
-          connect: { subscription_id: 1 }, // 1 = Free, 2 = Standard, 3 = Premium
+          connect: { subscription_id: 1 },
         },
       },
     });
@@ -403,7 +399,7 @@ export class AuthService {
         user.user_id,
         user.role_type,
         user.verified,
-        company_id,
+        company_id
       );
 
     await this.prisma.baseUsers.update({
@@ -435,7 +431,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" },
+        { expiresIn: "3d" }
       );
 
       return { success: true, accessToken };
@@ -470,17 +466,8 @@ export class AuthService {
   async refreshAccessToken(
     user_id: number,
     user_role: RoleType,
-    token: string,
+    token: string
   ) {
-    // Decode refresh token to get id
-    // check if the user of the token is available in data base
-    // if the user available, check whether the token is match
-    // generate a new access token
-
-    // Check user is available based on id
-
-    console.log("SERVICE TOKEN", token);
-
     const user = await this.prisma.baseUsers.findUnique({
       where: {
         user_id: user_id,
@@ -492,8 +479,6 @@ export class AuthService {
         message: "User not found",
       };
     }
-
-    // Check if the refresh token is match wiyh the user
     if (user.refresh_token !== token) {
       return {
         success: false,
@@ -501,11 +486,10 @@ export class AuthService {
       };
     }
 
-    // generate new token
     const accessToken = await this.AuthUtils.generateAccessToken(
       user_id,
       user_role,
-      user.verified,
+      user.verified
     );
 
     await this.prisma.baseUsers.update({
@@ -520,18 +504,14 @@ export class AuthService {
     return { success: true, accessToken };
   }
 
-  // /api/auth/validate-token
   async validateToken(user_id: number, role_type: RoleType) {
-    // Check user is available based on id
-
     if (role_type === RoleType.company) {
-      // Fetch company-specific data
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
         },
         include: {
-          company: true, // Include company details
+          company: true,
         },
       });
       if (!user) {
@@ -548,7 +528,6 @@ export class AuthService {
     }
 
     if (role_type === RoleType.jobhunter) {
-      // Fetch jobHunter-specific data
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
@@ -579,7 +558,6 @@ export class AuthService {
     }
 
     if (role_type === RoleType.developer) {
-      // Fetch jobHunter-specific data
       const user = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,

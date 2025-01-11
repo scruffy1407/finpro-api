@@ -8,15 +8,11 @@ import {
 export const validateInterviewData = (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   const data: Interview = req.body as Interview;
-  console.log(data);
-  // Validate time consistency
   const startTime = new Date(data.interviewTimeStart);
   const endTime = new Date(data.interviewTimeEnd);
-
-  // Validate non-empty fields
   if (
     !data.interviewDate ||
     !data.interviewTimeStart ||
@@ -34,7 +30,7 @@ export const validateInterviewData = (
 export const validateUpdateStatus = (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   const data: UpdateStatusInterview = req.body as UpdateStatusInterview;
   if (!data.interviewStatus || !data.interviewId || !data.applicationId) {

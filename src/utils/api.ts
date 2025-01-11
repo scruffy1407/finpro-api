@@ -3,13 +3,10 @@ import axios from "axios";
 axios.defaults.baseURL = "https://kodepos.vercel.app";
 
 export async function getLocationDetail(province: string, city: string) {
-  console.log("tes");
 
   try {
     const responseLocation = await axios.get(`/search/?q=${province} ${city}`);
-    console.log(responseLocation);
     if (responseLocation.status === 200) {
-      console.log("execute");
       return {
         success: true,
         latitude: responseLocation.data[0].latitude,
@@ -17,7 +14,6 @@ export async function getLocationDetail(province: string, city: string) {
         message: "Success get location data",
       };
     } else {
-      console.log("execute false");
       return {
         success: false,
         latitude: 0,
@@ -27,7 +23,6 @@ export async function getLocationDetail(province: string, city: string) {
     }
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.code === "ECONNREFUSED") {
-      // Handle network error (e.g., no internet connection)
       return {
         success: false,
         message: "Failed to get location data due to network error",

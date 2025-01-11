@@ -10,7 +10,6 @@ export class LocationController {
 
   async getUserLocation(req: Request, res: Response) {
     const cityId = Number(req.params.cityId);
-    console.log("CITY ID", cityId);
     try {
       const response = await this.locationService.getUserLocation(cityId);
       if (response.success) {
@@ -35,7 +34,6 @@ export class LocationController {
   async getAllProvince(req: Request, res: Response) {
     try {
       const response = await this.locationService.getAllProvince();
-
       if (response.success) {
         res.status(200).send({
           status: res.statusCode,
@@ -57,7 +55,6 @@ export class LocationController {
 
   async getCityByProvince(req: Request, res: Response) {
     const provinceId = Number(req.params.provinceId);
-    console.log("PROVINCE ID", provinceId);
     try {
       const response = await this.locationService.getCityByProvince(provinceId);
       if (response.success) {
@@ -83,7 +80,7 @@ export class LocationController {
     const searchString: string = req.query.q as string;
     try {
       const response = await this.locationService.searchLocation(
-        searchString as string,
+        searchString as string
       );
 
       if (response.success) {

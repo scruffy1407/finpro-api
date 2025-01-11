@@ -21,7 +21,7 @@ export class EducationController {
     } else {
       try {
         const response = await this.educationService.getListEducation(
-          decodedToken.user_id,
+          decodedToken.user_id
         );
         if (response.success) {
           res.status(200).send({
@@ -58,15 +58,13 @@ export class EducationController {
       jobHunterId: data.jobHunterId,
     };
 
-    console.log("EDUCATION", createEducationData);
-
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
       try {
         const response = await this.educationService.createEducation(
           decodedToken.user_id,
-          createEducationData,
+          createEducationData
         );
         if (response.success) {
           res.status(201).send({
@@ -103,8 +101,6 @@ export class EducationController {
       jobHunterId: Number(req.body.jobHunterId),
     };
 
-    console.log(updateEducationData);
-
     if (!decodedToken) {
       res.status(404).send("No token found.");
     } else {
@@ -112,7 +108,7 @@ export class EducationController {
         const response = await this.educationService.updateEducation(
           decodedToken.user_id,
           education_id,
-          updateEducationData,
+          updateEducationData
         );
         if (response.success) {
           res.status(200).send({
@@ -146,7 +142,7 @@ export class EducationController {
       try {
         const response = await this.educationService.deleteEducation(
           decodedToken.user_id,
-          education_id,
+          education_id
         );
         if (response.success) {
           res.status(200).send({

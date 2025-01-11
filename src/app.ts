@@ -45,7 +45,7 @@ app.use(passport.session());
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
+      process.env.CLIENT_URL as string,
       "https://4de4-2001-448a-2002-26e4-4844-65ac-bd25-7408.ngrok-free.app", // NGROK ONLY
     ],
     credentials: true,
@@ -59,8 +59,6 @@ const tokenManager = DropboxTokenManager.getInstance();
 app.use("/subscriptions", subscriptionRoutes);
 
 cron.schedule("*/5 * * * *", async () => {
-  //EVERY 5 MINUTES REFRESH
-  console.log("Refreshing Dropbox Access Token...");
   await tokenManager.refreshAccessToken();
 });
 
@@ -70,14 +68,14 @@ cron.schedule("*/5 * * * *", async () => {
 })();
 
 // AUTH
-app.use("/auth", authRouter); // UNSECURE REQUEST WITHOUT TOKEN
-app.use("/api/user/auth", authRouter); // SECURE REQUEST WITH TOKEN
+app.use("/auth", authRouter);
+app.use("/api/user/auth", authRouter);
 
 // LOCATION
 app.use("/api", locationRouter);
 
 // USER
-app.use("/api/user", userRouter); // SECURE REQUEST WITH TOKEN
+app.use("/api/user", userRouter);
 
 // APPLY JOB
 app.use("/applyjob", applyJobRouter);

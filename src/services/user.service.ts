@@ -21,7 +21,6 @@ export class CompanyService {
     this.userService = new UserService();
   }
 
-  //   COMPANY
   async getCompanyDetail(user_id: number) {
     try {
       const company = await this.prisma.baseUsers.findUnique({
@@ -63,7 +62,6 @@ export class CompanyService {
         longitude: company.company[0].longitude as number,
         cityId: company.company[0].cityId as number,
       };
-      console.log(companyResp, "BAMBANG SERVICEE");
       return {
         success: true,
         companyResp,
@@ -80,7 +78,6 @@ export class CompanyService {
   async updateCompanyDetail(user_id: number, updateData: CompanyGeneralInfo) {
     const { companyId } = updateData;
     try {
-      console.log(updateData, "POOPP SERVICEEE");
       const company = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
@@ -103,20 +100,6 @@ export class CompanyService {
           message: "User are not authorized to update",
         };
       }
-
-      // const location = await getLocationDetail(
-      //   updateData.company_province,
-      //   updateData.company_city,
-      // );
-
-      // if (!location.success) {
-      //   console.error("Error fetching location:", location.message);
-      //   return {
-      //     success: false,
-      //     message: "Failed to update company: " + location.message,
-      //   };
-      // }
-
       const [updatedCompany, updatedUser] = await this.prisma.$transaction([
         this.prisma.company.update({
           where: {
@@ -144,16 +127,12 @@ export class CompanyService {
           },
         }),
       ]);
-
-      console.log("data", updatedCompany);
-
       return {
         success: true,
         company: updatedCompany,
         user: updatedUser,
       };
     } catch (e) {
-      console.log(e);
       return {
         success: false,
         message: "Cannot update the company or user",
@@ -164,9 +143,6 @@ export class CompanyService {
 
   async updateCompanyImage(user_id: number, updateData: UpdateImage) {
     const { id } = updateData;
-    console.log("id", id);
-    console.log(updateData.image);
-
     try {
       const company = await this.prisma.baseUsers.findUnique({
         where: {
@@ -182,14 +158,6 @@ export class CompanyService {
           message: "Cannot find company",
         };
       }
-
-      // if (company?.company[0].company_id !== id) {
-      //   return {
-      //     success: false,
-      //     message: "User are not authorized to update",
-      //   };
-      // }
-
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
         updateData.image
@@ -230,7 +198,7 @@ export class CompanyService {
         where: {
           company_name: {
             contains: keyword,
-            mode: "insensitive", // Case-insensitive search
+            mode: "insensitive",
           },
         },
       });
@@ -242,7 +210,6 @@ export class CompanyService {
           };
         }
       );
-      console.log(searchResult);
       return {
         success: true,
         data: searchResult,

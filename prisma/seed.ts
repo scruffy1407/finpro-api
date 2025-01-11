@@ -18,7 +18,6 @@ async function seed() {
   try {
     await seedProvinces();
     await seedCities();
-    console.log("Seeding complete.");
   } catch (error) {
     console.error("Error seeding:", error);
   } finally {
@@ -59,12 +58,10 @@ async function seedCities() {
       .on("end", async () => {
         try {
           for (const row of results) {
-            console.log(row);
-            console.log(results);
             const dataToInsert = {
-              city_id: parseInt(row.city_id), // Use city_id
+              city_id: parseInt(row.city_id),
               name: titleCase(row.name),
-              provinceId: parseInt(row.provinceId), // Correct foreign key field
+              provinceId: parseInt(row.provinceId),
             };
             await prisma.city.create({ data: dataToInsert });
           }
