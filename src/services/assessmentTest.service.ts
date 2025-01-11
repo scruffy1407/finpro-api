@@ -8,8 +8,6 @@ import { AuthUtils } from "../utils/auth.utils";
 import { UserService } from "./baseUser/user.service";
 import fs from "fs";
 
-
-
 export class AssessmentTestService {
 	private prisma: PrismaClient;
 	private authUtils: AuthUtils;
@@ -367,70 +365,192 @@ export class AssessmentTestService {
 		}
 	}
 
-	async updateSkillAssessmentQuestion({
+	async updateSkillAssessmentQuestions({
 		skillAssessmentId,
-		questionId,
-		question,
-		answer_1,
-		answer_2,
-		answer_3,
-		answer_4,
-		correct_answer,
+		questions,
 	}: {
 		skillAssessmentId: number;
-		questionId: number; // The ID of the question to be updated
-		question: string;
-		answer_1: string;
-		answer_2: string;
-		answer_3: string;
-		answer_4: string;
-		correct_answer: string;
+		questions: {
+			questionId: number;
+			question: string;
+			answer_1: string;
+			answer_2: string;
+			answer_3: string;
+			answer_4: string;
+			correct_answer: string;
+		}[];
 	}): Promise<any> {
 		try {
-			// Step 1: Find the skill assessment by ID and get related questions
+			// Step 1: Check if the skill assessment exists
 			const skillAssessment = await this.prisma.skillAssessment.findUnique({
 				where: { skill_assessment_id: skillAssessmentId },
 				include: { skillAssessmentQuestion: true }, // Include related questions
 			});
 
 			if (!skillAssessment) {
-				return "Skill assessment not found.";
+				return { status: "error", message: "Skill assessment not found." };
 			}
 
-			// Step 2: Ensure the question exists within this skill assessment
-			const existingQuestion = skillAssessment.skillAssessmentQuestion.find(
-				(q) => q.skill_assessment_question_id === questionId
-			);
+			// Step 2: Initialize an array to collect update promises
+			const updatePromises = [];
 
-			if (!existingQuestion) {
-				return "Question not found in the specified skill assessment.";
-			}
-
-			// Step 3: Validate that the correct_answer is one of the options
-			if (![answer_1, answer_2, answer_3, answer_4].includes(correct_answer)) {
-				return "Correct answer must be one of the provided options.";
-			}
-
-			// Step 4: Update the question
-			const updatedQuestion = await this.prisma.skillAsessmentQuestion.update({
-				where: { skill_assessment_question_id: questionId },
-				data: {
-					question,
+			// Step 3: Process each question in the provided array
+			for (const question of questions) {
+				const {
+					questionId,
+					question: questionText,
 					answer_1,
 					answer_2,
 					answer_3,
 					answer_4,
 					correct_answer,
-				},
-			});
+				} = question;
 
+				// Check for missing or invalid questionId
+				if (!questionId) {
+					updatePromises.push(Promise.reject("Invalid questionId."));
+					continue;
+				}
+
+				// Find the specific question to update
+				const questionToUpdate =
+					await this.prisma.skillAsessmentQuestion.findUnique({
+						where: { skill_assessment_question_id: questionId },
+					});
+
+				if (!questionToUpdate) {
+					updatePromises.push(
+						Promise.reject(`Question with ID ${questionId} not found.`)
+					);
+					continue;
+				}
+
+				// Validate that the correct_answer matches one of the provided options
+				if (
+					![answer_1, answer_2, answer_3, answer_4].includes(correct_answer)
+				) {
+					updatePromises.push(
+						Promise.reject(
+							`Correct answer must be one of the provided options for question ID ${questionId}.`
+						)
+					);
+					continue;
+				}
+
+				// Add the update operation to the promises array
+				updatePromises.push(
+					this.prisma.skillAsessmentQuestion.update({
+						where: { skill_assessment_question_id: questionId },
+						data: {
+							question: questionText,
+							answer_1,
+							answer_2,
+							answer_3,
+							answer_4,
+							correct_answer,
+						},
+					})
+				);
+			}
+
+			// Step 4: Execute all updates and handle errors
+			const updateResults = await Promise.allSettled(updatePromises);
+
+			// Extract any errors
+			const errors = updateResults
+				.filter((result) => result.status === "rejected")
+				.map((result) => (result as PromiseRejectedResult).reason);
+
+			if (errors.length > 0) {
+				return {
+					status: "error",
+					message: `Error(s) occurred while updating questions: ${errors.join(", ")}`,
+				};
+			}
+
+			// Step 5: Return success response
 			return {
-				message: "Question successfully updated.",
-				updatedQuestion,
+				status: "success",
+				message: "All questions updated successfully.",
 			};
 		} catch (error) {
 			const err = error as Error;
-			return `Error updating question: ${err.message}`;
+			return {
+				status: "error",
+				message: `Error updating questions: ${err.message}`,
+			};
+		}
+	}
+
+	async getAssessmentDash() {
+		try {
+			// Fetch all skill assessments and count related questions
+			const assessments = await this.prisma.skillAssessment.findMany({
+				where: {
+					deleted: false, // Fetch only non-deleted assessments
+				},
+				include: {
+					_count: {
+						select: { skillAssessmentQuestion: true }, // Count related questions
+					},
+				},
+			});
+
+			// Return the fetched data
+			return { data: assessments };
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching assessments: " + err.message };
+		}
+	}
+
+	async getQuestAssessById(skillAssessmentId: number): Promise<any> {
+		try {
+			// Fetch the assessment test details along with associated questions
+			const assessmentTest = await this.prisma.skillAssessment.findUnique({
+				where: { skill_assessment_id: skillAssessmentId },
+				include: {
+					skillAssessmentQuestion: {
+						select: {
+							skill_assessment_question_id: true,
+							number: true,
+							question: true,
+							answer_1: true,
+							answer_2: true,
+							answer_3: true,
+							answer_4: true,
+							correct_answer: true,
+							created_at: true,
+							updated_at: true,
+						},
+						orderBy: {
+							skill_assessment_question_id: "asc", // Order questions by skill_assessment_question_id in ascending order
+						},
+					},
+				},
+			});
+
+			if (!assessmentTest) {
+				return { error: "Skill assessment not found." };
+			}
+
+			// Return the details of the assessment test and its questions
+			return {
+				assessmentTest: {
+					skill_assessment_id: assessmentTest.skill_assessment_id,
+					skill_assessment_name: assessmentTest.skill_assessment_name,
+					skill_badge: assessmentTest.skill_badge,
+					passing_grade: assessmentTest.passing_grade,
+					duration: assessmentTest.duration,
+					deleted: assessmentTest.deleted,
+					created_at: assessmentTest.created_at,
+					updated_at: assessmentTest.updated_at,
+					questions: assessmentTest.skillAssessmentQuestion,
+				},
+			};
+		} catch (error) {
+			const err = error as Error;
+			return { error: `Error fetching skill assessment: ${err.message}` };
 		}
 	}
 }

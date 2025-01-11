@@ -4,9 +4,9 @@ import { PrismaClient, RoleType, RegisterBy } from "@prisma/client";
 import { Auth } from "../models/models";
 import { AuthUtils } from "../utils/auth.utils";
 import {
-  registerSchema,
-  loginSchema,
-  validatePassword,
+	registerSchema,
+	loginSchema,
+	validatePassword,
 } from "../validators/auth.validator";
 import environment from "dotenv";
 

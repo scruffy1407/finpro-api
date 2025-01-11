@@ -14,36 +14,31 @@ export class AssessmentTestController {
 		res: Response
 	): Promise<void> {
 		try {
-			console.log("Received file:", req.file); // This will log the file object uploaded by Multer.
+			console.log("Received file:", req.file); // Log the uploaded file
 
-			// Extract fields from the request body
 			const { skill_assessment_name, passing_grade, duration } = req.body;
-
 			const passingGradeInt = parseInt(passing_grade as string, 10);
 			const durationInt = parseInt(duration as string, 10);
+			const skill_badge = req.file ? req.file.path : "default-badge-url";
 
-			// Extract the file uploaded as `skill_badge`
-			const skill_badge = req.file ? req.file.path : "default-badge-url"; // Fallback URL
+			console.log("Skill badge path:", skill_badge);
 
-			console.log("Skill badge path:", skill_badge); // Log the file path
-
-			// If no file uploaded, return an error
 			if (!skill_badge) {
 				res.status(400).json({ error: "Skill badge image is required." });
+				return;
 			}
 
-			// Extract authorization token from the request header
 			const authorizationHeader = req.headers.authorization ?? "";
 			if (!authorizationHeader.startsWith("Bearer ")) {
 				res.status(401).json({
 					error:
 						"Authorization token is required and must be in the format of 'Bearer <token>'",
 				});
+				return;
 			}
 
 			const token = authorizationHeader.split(" ")[1];
 
-			// Call the service method to create the assessment test
 			const result = await this.assessmentTestService.createAssessmentTest({
 				skill_assessment_name,
 				skill_badge,
@@ -52,16 +47,17 @@ export class AssessmentTestController {
 				token,
 			});
 
-			// Handle result - either an error message or a success response
 			if (typeof result === "string") {
 				res.status(400).json({ error: result });
+				return;
 			}
 
 			res.status(201).json({
 				message: "Assessment test created successfully!",
+				data: result.assessmentTest, // Include assessment details
 			});
 		} catch (error) {
-			console.error(error); // Log the error for debugging
+			console.error("Error:", error); // Log error
 			res.status(500).json({ error: "Internal server error" });
 		}
 	}
@@ -226,68 +222,101 @@ export class AssessmentTestController {
 		}
 	}
 
-	async updateSkillAssessmentQuestion(
+	async updateSkillAssessmentQuestions(
 		req: Request,
 		res: Response
 	): Promise<void> {
 		try {
-			const {
-				skillAssessmentId,
-				questionId,
-				question,
-				answer_1,
-				answer_2,
-				answer_3,
-				answer_4,
-				correct_answer,
-			} = req.body;
+			const { skillAssessmentId, questions } = req.body;
 
-			// Validate input
-			if (
-				!skillAssessmentId ||
-				!questionId ||
-				!question ||
-				!answer_1 ||
-				!answer_2 ||
-				!answer_3 ||
-				!answer_4 ||
-				!correct_answer
-			) {
+			// Validate request body
+			if (!skillAssessmentId || !Array.isArray(questions)) {
 				res.status(400).json({
-					message: "All fields are required.",
+					status: "error",
+					message:
+						"Invalid request data. Please provide skillAssessmentId and questions array.",
 				});
+				return;
 			}
 
-			// Call the service method
+			// Call the service function to handle the logic
 			const result =
-				await this.assessmentTestService.updateSkillAssessmentQuestion({
-					skillAssessmentId: Number(skillAssessmentId),
-					questionId: Number(questionId),
-					question,
-					answer_1,
-					answer_2,
-					answer_3,
-					answer_4,
-					correct_answer,
+				await this.assessmentTestService.updateSkillAssessmentQuestions({
+					skillAssessmentId,
+					questions,
 				});
 
-			// Handle service response
-			if (typeof result === "string") {
-				res.status(400).json({ message: result });
+			// Check the result and respond accordingly
+			if (result.status === "error") {
+				res.status(400).json(result); // Bad Request
+			} else {
+				res.status(200).json(result); // Success
 			}
-
-			res.status(200).json({
-				message: result.message,
-				updatedQuestion: result.updatedQuestion,
-			});
 		} catch (error) {
 			const err = error as Error;
 			res.status(500).json({
-				message: "An error occurred while updating the question.",
-				error: err.message,
+				status: "error",
+				message: `Internal Server Error: ${err.message}`,
 			});
 		}
 	}
 
-	
+	// Controller for fetching assessment dashboard (including question count)
+	public async getAssessmentDash(req: Request, res: Response): Promise<void> {
+		try {
+			// Call the service method to fetch all assessments
+			const result = await this.assessmentTestService.getAssessmentDash();
+
+			// If there's an error message in the result
+			if (result.error) {
+				res.status(500).json({ error: result.error });
+				return;
+			}
+
+			// Return the fetched data
+			res.status(200).json(result);
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({
+				error: "Error fetching assessment dashboard: " + err.message,
+			});
+		}
+	}
+
+	// Method to fetch skill assessment by ID, including its questions
+	public async getQuestAssessById(req: Request, res: Response): Promise<void> {
+		try {
+			const { skill_assessment_id } = req.params;
+
+			if (!skill_assessment_id) {
+				res.status(400).json({ error: "Skill assessment ID is required." });
+				return;
+			}
+
+			const skillAssessmentIdInt = parseInt(skill_assessment_id, 10);
+
+			if (isNaN(skillAssessmentIdInt)) {
+				res.status(400).json({ error: "Invalid skill assessment ID format." });
+				return;
+			}
+
+			// Fetch the skill assessment and its questions using the service
+			const result =
+				await this.assessmentTestService.getQuestAssessById(
+					skillAssessmentIdInt
+				);
+
+			if (typeof result === "string") {
+				res.status(404).json({ error: result }); // Handle errors returned by the service
+			} else {
+				res.status(200).json(result); // Return the assessment and its questions
+			}
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({
+				error: "An error occurred while fetching the skill assessment.",
+				details: err.message,
+			});
+		}
+	}
 }

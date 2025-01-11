@@ -48,7 +48,7 @@ devRouter.put(
 	"/editquest",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("developer").bind(authJwtMiddleware),
-	assessmentTestController.updateSkillAssessmentQuestion.bind(
+	assessmentTestController.updateSkillAssessmentQuestions.bind(
 		assessmentTestController
 	)
 );
@@ -76,6 +76,18 @@ devRouter.put(
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	applyAssessmentTestController.updateResult.bind(applyAssessmentTestController)
+);
+
+devRouter.get(
+	"/getassessmenttestdash",
+	assessmentTestController.getAssessmentDash.bind(assessmentTestController)
+);
+
+devRouter.get(
+	"/getassessquestbyId/:skill_assessment_id",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("developer").bind(authJwtMiddleware),
+	assessmentTestController.getQuestAssessById.bind(assessmentTestController)
 );
 
 export default devRouter;
