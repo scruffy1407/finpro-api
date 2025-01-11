@@ -538,7 +538,9 @@ export class PreSelectionTestService {
 				},
 				select: {
 					test_id: true,
+					passing_grade: true,
 					test_name: true,
+					duration: true,
 					companyId: true, // Include the companyId to check the relationship
 				},
 			});
@@ -556,6 +558,8 @@ export class PreSelectionTestService {
 			return {
 				test_id: preSelectionTest.test_id,
 				test_name: preSelectionTest.test_name,
+				passing_grade: preSelectionTest.passing_grade,
+				duration: preSelectionTest.duration,
 			};
 		} catch (error) {
 			const err = error as Error;
@@ -664,6 +668,57 @@ export class PreSelectionTestService {
 		} catch (error) {
 			const err = error as Error;
 			return `Error: ${err.message}`;
+		}
+	}
+
+	async getPreSelectionTestByIdHead(
+		token: string,
+		testId: number
+	): Promise<any> {
+		try {
+			// Decode the provided token to retrieve the user's ID
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return { error: "Invalid token or user ID not found" };
+			}
+
+			const userId = decodedToken.user_id;
+
+			// Fetch the pre-selection test based on testId
+			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
+				where: {
+					test_id: testId, // Use test_id as the unique identifier
+				},
+				select: {
+					test_id: true,
+					passing_grade: true,
+					test_name: true,
+					duration: true,
+					jobPost: {
+						select: {
+							job_id: true,
+						},
+					},
+				},
+			});
+
+			if (!preSelectionTest) {
+				return { error: "Pre-selection test not found" };
+			}
+
+			const jobIds = preSelectionTest.jobPost.map((job) => job.job_id);
+
+			// Return only the relevant fields: test_id, test_name, passing_grade, and duration
+			return {
+				test_id: preSelectionTest.test_id,
+				test_name: preSelectionTest.test_name,
+				passing_grade: preSelectionTest.passing_grade,
+				duration: preSelectionTest.duration,
+				job_id: jobIds,
+			};
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching pre-selection test: " + err.message };
 		}
 	}
 }

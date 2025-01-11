@@ -233,6 +233,15 @@ companyRouter.get(
 	)
 );
 
+companyRouter.get(
+	"/viewpretestbyIdhead/:testId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
+	preSelectionTestController.getPreSelectionTestByIdHead.bind(
+		preSelectionTestController
+	)
+);
+
 //GET TEST BY PreTest ID RIZKY ADDTIION NEW
 companyRouter.get(
 	"/viewtestbyPretestId/:testId",

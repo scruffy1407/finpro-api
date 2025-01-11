@@ -42,7 +42,7 @@ export class CompanyService {
 		}
 
 		const companyId = company.company_id;
-
+		console.log(validatedData);
 		return this.prisma.jobPost.create({
 			data: {
 				job_title: validatedData.job_title,

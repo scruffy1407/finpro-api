@@ -7,7 +7,7 @@ interface ResultPreSelection {
 	applicationId: number;
 	completion_score?: number;
 	completion_date?: Date;
-	completion_status?: string; 
+	completion_status?: string;
 	created_at: Date;
 	isRefreshed?: boolean;
 }
@@ -18,7 +18,7 @@ interface Application {
 	jobId: number;
 	resume?: string;
 	expected_salary?: Decimal;
-	application_status?: string; 
+	application_status?: string;
 	created_at: Date;
 	updated_at?: Date;
 }
@@ -98,9 +98,9 @@ export class ApplyTestService {
 				},
 			});
 
-			if (existingResult) {
-				return "You have already joined this pre-selection test.";
-			}
+			// if (existingResult) {
+			// 	return "You have already joined this pre-selection test.";
+			// }
 
 			// Step 1: Create an application with `onTest` status
 			const application = await this.prisma.application.create({
@@ -154,7 +154,7 @@ export class ApplyTestService {
 	}: {
 		token: string;
 		jobId: number;
-	}): Promise<{ questions: any[] } | string> {
+	}): Promise<{ questions: any[]; duration: number; testId: number } | string> {
 		try {
 			const decodedToken = await this.authUtils.decodeToken(token);
 			if (!decodedToken || !decodedToken.user_id) {
@@ -212,7 +212,11 @@ export class ApplyTestService {
 				return "No questions found for this pre-selection test.";
 			}
 
-			return { questions };
+			return {
+				questions,
+				duration: preSelectionTest.duration,
+				testId: preSelectionTest.test_id,
+			};
 		} catch (error) {
 			const err = error as Error;
 			console.error("Error fetching pre-selection questions:", err.message);
@@ -478,6 +482,148 @@ export class ApplyTestService {
 		} catch (error) {
 			const err = error as Error;
 			console.error("Error updating test result:", err.message);
+			return `Error: ${err.message}`;
+		}
+	}
+
+	async getTestTime({
+		applicationId,
+		token,
+	}: {
+		applicationId: number;
+		token: string;
+	}): Promise<{ startDate: Date; endDate: Date } | string> {
+		try {
+			// Decode the token for verification
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return "Invalid token or user ID not found.";
+			}
+
+			// Fetch the application based on applicationId
+			const application = await this.prisma.application.findUnique({
+				where: { application_id: applicationId },
+			});
+
+			if (!application) {
+				return "Application not found.";
+			}
+
+			// Fetch the ResultPreSelection based on applicationId
+			const resultPreSelection = await this.prisma.resultPreSelection.findFirst(
+				{
+					where: { applicationId },
+				}
+			);
+
+			if (!resultPreSelection) {
+				return "ResultPreSelection not found for the provided applicationId.";
+			}
+
+			// Ensure both start_date and end_date are available
+			const { start_date: startDate, end_date: endDate } = resultPreSelection;
+
+			if (!startDate || !endDate) {
+				return "Start date or end date not available for this test.";
+			}
+
+			// Return the start and end date
+			return {
+				startDate,
+				endDate,
+			};
+		} catch (error) {
+			const err = error as Error;
+			console.error("Error fetching test start and end date:", err.message);
+			return `Error: ${err.message}`;
+		}
+	}
+
+	async updateCompletionScore({
+		applicationId,
+		token,
+		testId,
+		answers,
+	}: {
+		applicationId: number;
+		token: string;
+		testId: number;
+		answers: { question_id: number; chosen_answer: string }[];
+	}): Promise<
+		| {
+				updatedResult: ResultPreSelection;
+				score: number;
+				totalQuestions: number;
+		  }
+		| string
+	> {
+		try {
+			// Decode the token for verification
+			const decodedToken = await this.authUtils.decodeToken(token);
+			if (!decodedToken || !decodedToken.user_id) {
+				return "Invalid token or user ID not found";
+			}
+
+			// Fetch the ResultPreSelection entry for the applicationId
+			const resultPreSelection = await this.prisma.resultPreSelection.findFirst(
+				{
+					where: { applicationId },
+				}
+			);
+
+			if (!resultPreSelection) {
+				return "ResultPreSelection not found for the provided applicationId.";
+			}
+
+			// Fetch the questions for the pre-selection test
+			const questions = await this.prisma.testQuestion.findMany({
+				where: { testId },
+			});
+
+			if (!questions || questions.length === 0) {
+				return "No questions found for this test.";
+			}
+
+			// Validate the answers for the questions in the test
+			const questionIds = questions.map((q) => q.question_id);
+			const invalidAnswers = answers.filter(
+				(a) => !questionIds.includes(a.question_id)
+			);
+			if (invalidAnswers.length > 0) {
+				return "Some answers are invalid or do not belong to this test.";
+			}
+
+			// Calculate the score based on the answers
+			let score = 0;
+			questions.forEach((question) => {
+				const userAnswer = answers.find(
+					(a) => a.question_id === question.question_id
+				);
+				if (
+					userAnswer &&
+					userAnswer.chosen_answer === question.correct_answer
+				) {
+					score += 4; // Assuming correct answers earn 4 points
+				}
+			});
+
+			// Update only the score in ResultPreSelection
+			const updatedResult = await this.prisma.resultPreSelection.update({
+				where: { completion_id: resultPreSelection.completion_id },
+				data: {
+					completion_score: score,
+				},
+			});
+
+			// Return the updated result and the calculated score
+			return {
+				updatedResult,
+				score,
+				totalQuestions: questions.length,
+			};
+		} catch (error) {
+			const err = error as Error;
+			console.error("Error updating completion score:", err.message);
 			return `Error: ${err.message}`;
 		}
 	}
