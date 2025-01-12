@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import cron from "node-cron";
 import fs from "fs";
 import path from "path";
+import { sendEmailVerification } from "../config/nodeMailer";
 
 export class ResendEmailService {
   private prisma: PrismaClient;
@@ -57,7 +58,8 @@ export class ResendEmailService {
         },
       });
 
-      await this.sendEmail(email, resetToken);
+      // await this.sendEmail(email, resetToken);
+      await sendEmailVerification(email, resetToken);
 
       return { success: true };
     } catch (error) {
@@ -79,11 +81,11 @@ export class ResendEmailService {
 
     const htmlTemplate = fs.readFileSync(
       path.join(__dirname, "../../src/config/views/verifyEmail.html"),
-      "utf8"
+      "utf8",
     );
     const htmlContent = htmlTemplate.replace(
       "{{verificationLink}}",
-      verificationLink
+      verificationLink,
     );
 
     await transporter.sendMail({

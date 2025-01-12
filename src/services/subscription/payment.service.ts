@@ -434,6 +434,7 @@ export class PaymentService {
         };
       }
 
+      // Update subscription after payment
       const updateSubscription = await this.prisma.jobHunterSubscription.update(
         {
           where: {
@@ -450,6 +451,17 @@ export class PaymentService {
           },
         },
       );
+
+      // Update user data after payment
+      await this.prisma.jobHunter.update({
+        where: {
+          job_hunter_id: jobhunterId,
+        },
+        data: {
+          cv_generated_count: 0,
+          assesment_count: 0,
+        },
+      });
       return {
         success: {
           success: true,

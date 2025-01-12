@@ -66,7 +66,7 @@ export class AuthService {
     let baseUser;
 
     const resetToken = await this.AuthUtils.generateResetToken(
-      validatedData.email
+      validatedData.email,
     );
     try {
       baseUser = await this.prisma.baseUsers.create({
@@ -89,7 +89,7 @@ export class AuthService {
     if (role === RoleType.jobhunter) {
       const jobHunter = await this.createJobHunter(
         baseUser,
-        validatedData.name
+        validatedData.name,
       );
       if (!jobHunter.success) {
         await this.prisma.baseUsers.delete({
@@ -118,7 +118,7 @@ export class AuthService {
     } else if (role === RoleType.developer) {
       const developer = await this.createDeveloper(
         baseUser,
-        validatedData.name
+        validatedData.name,
       );
       if (!developer.success) {
         await this.prisma.baseUsers.delete({
@@ -399,7 +399,7 @@ export class AuthService {
         user.user_id,
         user.role_type,
         user.verified,
-        company_id
+        company_id,
       );
 
     await this.prisma.baseUsers.update({
@@ -431,7 +431,7 @@ export class AuthService {
       const accessToken = jwt.sign(
         { id: user.user_id, role: user.role_type },
         JWT_SECRET,
-        { expiresIn: "3d" }
+        { expiresIn: "3d" },
       );
 
       return { success: true, accessToken };
@@ -466,7 +466,7 @@ export class AuthService {
   async refreshAccessToken(
     user_id: number,
     user_role: RoleType,
-    token: string
+    token: string,
   ) {
     const user = await this.prisma.baseUsers.findUnique({
       where: {
@@ -489,7 +489,7 @@ export class AuthService {
     const accessToken = await this.AuthUtils.generateAccessToken(
       user_id,
       user_role,
-      user.verified
+      user.verified,
     );
 
     await this.prisma.baseUsers.update({
@@ -579,10 +579,50 @@ export class AuthService {
         };
       }
     }
-
     return {
       success: false,
       message: "error",
+    };
+  }
+
+  async reVerifyUser(userId: number) {
+    const user = await this.prisma.baseUsers.findUnique({
+      where: {
+        user_id: userId,
+      },
+    });
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    if (user.verified) {
+      return {
+        success: false,
+        message: "User already verified",
+      };
+    }
+
+    const resetToken = await this.AuthUtils.generateResetToken(user.email);
+    console.log("RESET TOKEN", resetToken);
+
+    await this.prisma.baseUsers.update({
+      where: {
+        user_id: userId,
+      },
+      data: {
+        verification_token: resetToken,
+      },
+    });
+
+    return {
+      success: true,
+      user: {
+        email: user.email,
+        verification_token: resetToken,
+      },
     };
   }
 }

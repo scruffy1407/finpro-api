@@ -129,6 +129,7 @@ router.post(
   "/job-hunter/review",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
+  authMiddleware.authorizeVerifyEmail.bind(authMiddleware),
   reviewController.createReview.bind(reviewController),
 );
 router.get(
@@ -143,6 +144,7 @@ router.post(
   "/job-hunter/subscription/:subscriptionId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
+  authMiddleware.authorizeVerifyEmail.bind(authMiddleware),
   paymentController.createOrder.bind(paymentController),
 );
 
@@ -154,6 +156,7 @@ router.post(
   "/job-hunter/verify-payment/:orderId",
   authMiddleware.authenticateJwt.bind(authMiddleware),
   authMiddleware.authorizeRole("jobhunter"),
+  authMiddleware.authorizeVerifyEmail,
   paymentController.vefifyPayment.bind(paymentController),
 );
 router.get(
