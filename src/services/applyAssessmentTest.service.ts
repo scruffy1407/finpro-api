@@ -103,6 +103,30 @@ export class ApplyAssessmentTestService {
 				return "No mentioned Assessment Test available";
 			}
 
+			// Check if the user has completed this skill assessment before with a "failed" status
+			const lastCompletion =
+				await this.prisma.skillAsessmentCompletion.findFirst({
+					where: {
+						skillAssessmentId: skill_assessment_id,
+						jobHunterId: jobHunter.job_hunter_id,
+						completion_status: "failed",
+					},
+					orderBy: {
+						completion_date: "desc", // Get the latest completion record
+					},
+				});
+
+			if (lastCompletion) {
+				const currentDate = new Date();
+				const lastEndDate = new Date(lastCompletion.end_date);
+				const daysPassed =
+					(currentDate.getTime() - lastEndDate.getTime()) / (1000 * 3600 * 24);
+
+				if (daysPassed < 7) {
+					return `You can retake this test in ${7 - Math.floor(daysPassed)} days.`;
+				}
+			}
+
 			// const existingResult =
 			// 	await this.prisma.skillAsessmentCompletion.findFirst({
 			// 		where: {
@@ -158,11 +182,11 @@ export class ApplyAssessmentTestService {
 	}: {
 		token: string;
 		skill_assessment_id: number;
-	}): Promise<{ questions: any[] } | string> {
+	}): Promise<{ questions: any[]; duration: number; testId: number } | string> {
 		try {
 			const decodedToken = await this.authUtils.decodeToken(token);
 			if (!decodedToken || !decodedToken.user_id) {
-				return "Invalid tokeb or user ID not found";
+				return "Invalid token or user ID not found";
 			}
 
 			const jobHunter = await this.prisma.jobHunter.findUnique({
@@ -188,7 +212,7 @@ export class ApplyAssessmentTestService {
 			});
 
 			if (!areonTest) {
-				return "current status is not on-Going it is either completed as pass or fail";
+				return "Current status is not ongoing; it is either completed as pass or fail";
 			}
 
 			const questions = await this.prisma.skillAsessmentQuestion.findMany({
@@ -210,10 +234,22 @@ export class ApplyAssessmentTestService {
 				return "No questions found for this pre-selection test.";
 			}
 
-			return { questions };
+			// Return the questions, duration, and testId
+			return {
+				questions: questions.map((q) => ({
+					question_id: q.skill_assessment_question_id,
+					question: q.question,
+					answer_1: q.answer_1,
+					answer_2: q.answer_2,
+					answer_3: q.answer_3,
+					answer_4: q.answer_4,
+				})),
+				duration: assessmentTest.duration, // Include the duration from the assessment
+				testId: assessmentTest.skill_assessment_id, // Include the skillAssessmentId
+			};
 		} catch (error) {
 			const err = error as Error;
-			return `Error fetchinq questions: ${err.message}`;
+			return `Error fetching questions: ${err.message}`;
 		}
 	}
 
@@ -374,13 +410,20 @@ export class ApplyAssessmentTestService {
 			if (!skillAssessment) {
 				return "Skill Assessment not found.";
 			}
+			const jobHunter = await this.prisma.jobHunter.findUnique({
+				where: { userId: decodedToken.user_id },
+			});
+
+			if (!jobHunter) {
+				return "Job hunter not found";
+			}
 
 			// Fetch the completion record for the given skill assessment and user
 			const completionRecord =
 				await this.prisma.skillAsessmentCompletion.findFirst({
 					where: {
 						skillAssessmentId,
-						jobHunterId: decodedToken.user_id, // Assuming the user ID from token is the jobHunterId
+						jobHunterId: jobHunter.job_hunter_id, // Use job_hunter_id here
 					},
 				});
 
