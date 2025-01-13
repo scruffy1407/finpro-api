@@ -142,6 +142,8 @@ export class AuthService {
           email: baseUser.email,
           name: name,
           password: baseUser.password,
+          photo:
+            "https://res.cloudinary.com/dgnce1xzd/image/upload/v1736786905/dummyProfile_bbwzus.png",
           baseUser: {
             connect: { user_id: baseUser.user_id },
           },
@@ -170,6 +172,7 @@ export class AuthService {
       await this.prisma.company.create({
         data: {
           company_name: companyName,
+          logo: "https://res.cloudinary.com/dgnce1xzd/image/upload/v1734781490/orwyxtvz6a1zzwa6wk4j.png",
           baseUser: {
             connect: { user_id: baseUser.user_id },
           },

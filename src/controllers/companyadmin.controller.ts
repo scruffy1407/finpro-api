@@ -92,6 +92,37 @@ export class CompanyAdminController {
     }
   }
 
+  // async getJobApplicants(req: Request, res: Response) {
+  //   const { jobId } = req.params;
+  //   const token = req.headers.authorization?.split(" ")[1] as string;
+  //   const decodedToken = await this.authUtils.decodeToken(token as string);
+  //   const { get } = req.query;
+  //
+  //   if (!decodedToken?.user_id) {
+  //     res.status(400).json({ success: false, message: "User ID is missing." });
+  //   } else {
+  //     try {
+  //       const applicants = await this.companyAdminService.getJobApplicants(
+  //         Number(jobId),
+  //         Number(decodedToken?.user_id),
+  //         get as string,
+  //       );
+  //       if (applicants.success) {
+  //         res.status(200).json({ status: res.statusCode, data: applicants });
+  //       } else {
+  //         res
+  //           .status(401)
+  //           .json({ success: res.statusCode, message: applicants.message });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching applicants:", error);
+  //       res
+  //         .status(500)
+  //         .json({ success: false, message: "Failed to fetch applicants." });
+  //     }
+  //   }
+  // }
+
   async getJobApplicants(req: Request, res: Response) {
     const { jobId } = req.params;
     const token = req.headers.authorization?.split(" ")[1] as string;
