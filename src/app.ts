@@ -46,7 +46,7 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL as string,
-      "https://217b-2001-448a-2002-4b62-9d35-e7ea-db1c-bcc.ngrok-free.app", // NGROK ONLY
+      "https://4690-103-94-171-214.ngrok-free.app", // NGROK ONLY
     ],
     credentials: true,
   }),
