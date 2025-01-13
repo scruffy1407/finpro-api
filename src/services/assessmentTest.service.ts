@@ -554,5 +554,51 @@ export class AssessmentTestService {
 		}
 	}
 
+	async getSkillAssessmentCompletionByJobHunterId(
+		jobHunterId: number
+	): Promise<any> {
+		try {
+			// Fetch skill assessment completion records for the given job hunter
+			const completions = await this.prisma.skillAsessmentCompletion.findMany({
+				where: { jobHunterId },
+				include: {
+					skillAssessment: true, // Include related skill assessment details
+				},
+			});
+
+			if (!completions || completions.length === 0) {
+				return {
+					status: "error",
+					message:
+						"No skill assessment completion records found for this job hunter.",
+				};
+			}
+
+			// Format the response to include relevant details
+			const formattedCompletions = completions.map((completion) => ({
+				completionId: completion.skill_assessment_completion_id,
+				skillAssessmentId: completion.skillAssessmentId,
+				skillAssessmentName: completion.skillAssessment.skill_assessment_name,
+				completionStatus: completion.completion_status,
+				completionScore: completion.completion_score,
+				completionDate: completion.completion_date,
+				startDate: completion.start_date,
+				endDate: completion.end_date,
+				isRefreshed: completion.isRefreshed,
+			}));
+
+			return {
+				status: "success",
+				data: formattedCompletions,
+			};
+		} catch (error) {
+			const err = error as Error;
+			return {
+				status: "error",
+				message: `Error fetching skill assessment completion records: ${err.message}`,
+			};
+		}
+	}
+
 	
 }

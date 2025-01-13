@@ -42,9 +42,8 @@ export class CVController {
     }
     try {
       const userId = Number(decodedToken.user_id);
-      const { remaining } = await this.cvService.canGenerateCV(userId);
 
-      res.status(200).send({ success: true, remaining });
+      res.status(200).send({ success: true });
     } catch (error) {
       console.error(error);
       res.status(500).send({ success: false, message: "Failed to fetch CV quota." });
@@ -60,24 +59,16 @@ export class CVController {
     }
     try {
       const userId = Number(decodedToken.user_id);
-      const { canGenerate, remaining } = await this.cvService.canGenerateCV(userId);
-      if (!canGenerate) {
-        res.status(403).send({
-          success: false,
-          message: "CV generation limit reached.",
-          remaining,
-        });
-        return;
-      }
-      await this.cvService.incrementCVCount(userId);
+      await this.cvService.canGenerateCV(userId);
+  
       res.status(200).send({
         success: true,
         message: "CV generated successfully.",
-        remaining: remaining - 1,
       });
     } catch (error) {
       console.error(error);
       res.status(500).send({ success: false, message: "Failed to generate CV." });
     }
   }
+  
 }

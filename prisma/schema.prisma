@@ -86,16 +86,17 @@ model Developer {
 }
 
 model WorkExperience {
-  work_experience_id Int      @id @default(autoincrement())
+  work_experience_id Int       @id @default(autoincrement())
   jobHunterId        Int
   companyId          Int
   job_title          String
   company_name       String
   job_description    String
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
-  start_date         DateTime @default(now())
-  end_date           DateTime @default(now())
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  start_date         DateTime  @default(now())
+  end_date           DateTime? @default(now())
+  currently_working  Boolean   @default(false)
 
   jobHunter JobHunter   @relation(fields: [jobHunterId], references: [job_hunter_id])
   company   Company     @relation(fields: [companyId], references: [company_id])
@@ -363,8 +364,8 @@ model JobPost {
   applyJob    Application[]
   jobWishlist JobWishlist[]
 
-  company          Company          @relation(fields: [companyId], references: [company_id])
-  category         Category         @relation(fields: [categoryId], references: [category_id])
+  company          Company           @relation(fields: [companyId], references: [company_id])
+  category         Category          @relation(fields: [categoryId], references: [category_id])
   preSelectionTest PreSelectionTest? @relation(fields: [preSelectionTestId], references: [test_id])
 
   @@schema("Company")
