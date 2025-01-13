@@ -77,6 +77,70 @@ export class CompanyAdmin {
     });
   }
 
+  // async getJobApplicants(jobId: number, userId: number, fetchType: string) {
+  //   try {
+  //     const companyId = await this.getCompanyId(userId);
+  //
+  //     if (!companyId) {
+  //       console.error("No company found for this user.");
+  //       return {
+  //         success: false,
+  //         message: "No company found for this user",
+  //       };
+  //     }
+  //
+  //     const job = await this.prisma.jobPost.findUnique({
+  //       where: {
+  //         job_id: jobId,
+  //       },
+  //     });
+  //     if (!job) {
+  //       return {
+  //         success: false,
+  //         message: "Job not available",
+  //       };
+  //     }
+  //
+  //     if (job.companyId !== companyId) {
+  //       return {
+  //         success: false,
+  //         message: "User not authorize to access this job",
+  //       };
+  //     }
+  //
+  //     const whereCondition: any = {
+  //       jobId: jobId,
+  //     };
+  //
+  //     if (fetchType === "interview") {
+  //       whereCondition.application_status = "interview";
+  //     } else if (fetchType === "accepted") {
+  //       whereCondition.application_status = "accepted";
+  //     } else if (fetchType === "rejected") {
+  //       whereCondition.application_status = "rejected";
+  //     }
+  //
+  //     const applicants = await this.prisma.application.findMany({
+  //       where: whereCondition,
+  //       include: {
+  //         jobHunter: {
+  //           select: {
+  //             job_hunter_id: true,
+  //             name: true,
+  //             email: true,
+  //             resume: true,
+  //           },
+  //         },
+  //         interview: true,
+  //       },
+  //     });
+  //     return { success: true, applicants };
+  //   } catch (error) {
+  //     console.error("Error fetching job applicants:", error);
+  //     return { success: false, message: "Error fetching job applicants" };
+  //   }
+  // }
+
   async getJobApplicants(jobId: number, userId: number, fetchType: string) {
     try {
       const companyId = await this.getCompanyId(userId);
@@ -133,9 +197,9 @@ export class CompanyAdmin {
               jobHunterSubscription: {
                 select: {
                   subscriptionId: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           interview: true,
         },
@@ -143,16 +207,15 @@ export class CompanyAdmin {
           {
             jobHunter: {
               jobHunterSubscription: {
-                subscriptionId: 'desc',
-              }
-            }
+                subscriptionId: "desc",
+              },
+            },
           },
           {
-            created_at: 'desc',
-          }
-        ]
+            created_at: "desc",
+          },
+        ],
       });
-  
       return { success: true, applicants };
     } catch (error) {
       console.error("Error fetching job applicants:", error);

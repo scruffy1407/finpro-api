@@ -251,6 +251,45 @@ class ApplyJobController {
       });
     }
   }
+
+  async getDetailApplicant(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token);
+    const { applicantId } = req.query;
+
+    if (!decodedToken) {
+      res.status(400).send({
+        status: res.statusCode,
+        message: "Invalid Token",
+      });
+      return;
+    } else {
+      try {
+        const response = await this.applyJobService.getDetailApplicant(
+          decodedToken.user_id,
+          Number(applicantId),
+        );
+        if (response.success) {
+          res.status(200).send({
+            status: res.statusCode,
+            data: response.jobHunterDetail,
+          });
+          return;
+        } else {
+          res.status(400).send({
+            status: res.statusCode,
+            message: response.message,
+          });
+          return;
+        }
+      } catch (e) {
+        res.status(500).send({
+          status: res.statusCode,
+          message: e,
+        });
+      }
+    }
+  }
 }
 
 export default new ApplyJobController();

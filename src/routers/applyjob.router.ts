@@ -51,5 +51,11 @@ applyJobRouter.get(
   authMiddleware.authenticateJwt.bind(authMiddleware),
   applyJobController.verifyApplyJob.bind(applyJobController),
 );
+applyJobRouter.get(
+  "/applicant-detail",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authMiddleware.authorizeRole("company").bind(authMiddleware),
+  applyJobController.getDetailApplicant.bind(applyJobController),
+);
 
 export default applyJobRouter;

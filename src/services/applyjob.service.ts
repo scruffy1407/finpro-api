@@ -11,7 +11,7 @@ export class ApplyJob {
   }
 
   async uploadResumeToDropbox(
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ): Promise<string | undefined> {
     try {
       const tokenManager = DropboxTokenManager.getInstance();
@@ -35,7 +35,7 @@ export class ApplyJob {
   async applyJob(
     data: Application,
     file: Express.Multer.File,
-    accessToken: string
+    accessToken: string,
   ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
@@ -130,7 +130,7 @@ export class ApplyJob {
     limit: number = 6,
     offset: number = 0,
     userId: number,
-    status?: string
+    status?: string,
   ) {
     try {
       const user = await this.prisma.baseUsers.findUnique({
@@ -337,5 +337,83 @@ export class ApplyJob {
         message: "Failed to verify",
       };
     }
+  }
+
+  async getDetailApplicant(userId: number, applicantId: number) {
+    const userRequest = await this.prisma.baseUsers.findUnique({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        company: true,
+      },
+    });
+
+    if (!userRequest) {
+      return {
+        success: false,
+        message: "Company not found",
+      };
+    }
+    const applicant = await this.prisma.application.findUnique({
+      where: {
+        application_id: applicantId,
+      },
+      include: {
+        jobPost: true,
+      },
+    });
+
+    if (!applicant) {
+      return {
+        success: false,
+        message: "Applicant Not Found",
+      };
+    }
+
+    const companyId = applicant.jobPost.companyId;
+    if (companyId !== userRequest.company[0].company_id) {
+      return {
+        success: false,
+        message: "User not authorized to access this applicant",
+      };
+    }
+
+    const jobHunterDetail = await this.prisma.jobHunter.findUnique({
+      where: {
+        job_hunter_id: applicant.jobHunterId,
+      },
+      select: {
+        name: true,
+        dob: true,
+        gender: true,
+        email: true,
+        photo: true,
+        location_city: true,
+        location_province: true,
+        summary: true,
+        workExperience: true,
+        // Take only the latest education record
+        education: {
+          orderBy: {
+            graduation_date: "desc",
+          },
+          take: 3,
+        },
+        skillAssessmentCompletion: true,
+      },
+    });
+
+    if (!jobHunterDetail) {
+      return {
+        success: false,
+        message: "User Not found",
+      };
+    }
+
+    return {
+      success: true,
+      jobHunterDetail,
+    };
   }
 }
