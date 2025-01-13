@@ -29,6 +29,7 @@ companyRouter.post(
   "/job",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   companyController.createJob.bind(companyController),
 );
 
@@ -37,6 +38,7 @@ companyRouter.put(
   "/delete/job/:jobId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   companyController.deleteJob.bind(companyController), // Controller method
 );
 
@@ -45,6 +47,7 @@ companyRouter.put(
   "/job/:jobId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   authorizeJobPostOwner, // Authorization middleware to check if the logged-in company owns the job post
   companyController.updateJob.bind(companyController), // Controller method
 );
@@ -78,6 +81,7 @@ companyRouter.post(
   "/createpretest",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   preSelectionTestController.createPreSelectionTest.bind(
     preSelectionTestController,
   ),
@@ -100,6 +104,7 @@ companyRouter.delete(
   "/deletepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   authorizeJobTestOwner,
   preSelectionTestController.deletePreSelectionTest.bind(
     preSelectionTestController,
@@ -112,6 +117,7 @@ companyRouter.put(
   "/updatepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   preSelectionTestController.updatePreSelectionTest.bind(
     preSelectionTestController,
   ),
@@ -120,6 +126,7 @@ companyRouter.put(
   "/softdeletepretest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   preSelectionTestController.softDeletePreSelectionTest.bind(
     preSelectionTestController,
   ),
@@ -129,6 +136,7 @@ companyRouter.post(
   "/createtest/:testId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   preSelectionTestController.createTest.bind(preSelectionTestController),
 );
 
@@ -136,6 +144,7 @@ companyRouter.put(
   "/updatetest/:testId", // Adding both testId and questionId as route params
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   // authorizeQuestionOwner, // Ensure the company owns the specific question before allowing updat
   preSelectionTestController.updateTest.bind(preSelectionTestController),
 );
@@ -173,6 +182,7 @@ companyRouter.put(
   "/applications/",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   companyAdminController.updateApplicationStatus.bind(companyAdminController),
 );
 
@@ -180,8 +190,8 @@ companyRouter.put(
 companyRouter.post(
   "/application/interview",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware), // Authentication middleware
-  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware), // Authorization middleware
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   validateInterviewData,
   interviewController.setInterviewSchedule.bind(interviewController),
 );
@@ -257,6 +267,7 @@ companyRouter.put(
   "/job/:jobId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   companyAdminController.deleteJob.bind(companyController),
 );
 
@@ -264,11 +275,14 @@ companyRouter.put(
   "/job/:jobId/status",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   companyAdminController.toggleJobStatus.bind(companyController),
 );
 
 companyRouter.get(
   "/jobstatus/:jobId",
+  authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+  authJwtMiddleware.authorizeRole("company").bind(authJwtMiddleware),
   companyAdminController.getJobStatus.bind(companyController),
 );
 

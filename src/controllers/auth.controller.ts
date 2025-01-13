@@ -124,7 +124,7 @@ export class AuthController {
       const result = await this.authService.register(
         { email, phone_number, name, password, user_role },
         user_role,
-        bearerToken
+        bearerToken,
       );
 
       if (!result.success) {
@@ -135,7 +135,7 @@ export class AuthController {
       } else {
         sendEmailVerification(
           result.user?.email as string,
-          result.user?.verification_token as string
+          result.user?.verification_token as string,
         )
           .then(() => {
             res.status(200).send({
@@ -268,7 +268,7 @@ export class AuthController {
         const response = await this.authService.refreshAccessToken(
           decodedToken.user_id,
           decodedToken.role_type as RoleType,
-          token as string
+          token as string,
         );
         if (response.success) {
           res.status(200).send({
@@ -299,7 +299,7 @@ export class AuthController {
       try {
         const response = await this.authService.validateToken(
           decodedToken.user_id,
-          decodedToken.role_type as RoleType
+          decodedToken.role_type as RoleType,
         );
         if (response.success) {
           res.status(200).send({
@@ -318,6 +318,40 @@ export class AuthController {
           message: e,
         });
       }
+    }
+  }
+
+  async reVerifyEmail(req: Request, res: Response) {
+    const token = req.headers.authorization?.split(" ")[1] as string;
+    const decodedToken = await this.authUtils.decodeToken(token as string);
+
+    if (!decodedToken) {
+      res.status(404).send("No token found.");
+    } else {
+      try {
+        const response = await this.authService.reVerifyUser(
+          decodedToken.user_id,
+        );
+        console.log("RESPOSE", response);
+        if (response.success) {
+          sendEmailVerification(
+            response.user?.email as string,
+            response.user?.verification_token as string,
+          )
+            .then(() => {
+              res.status(200).send({
+                status: res.status,
+                message: "Email sent successfully",
+              });
+            })
+            .catch((err) => {
+              res.status(400).send({
+                status: res.status,
+                message: err.message,
+              });
+            });
+        }
+      } catch (e) {}
     }
   }
 }

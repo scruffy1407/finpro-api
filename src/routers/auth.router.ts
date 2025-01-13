@@ -67,5 +67,10 @@ authRouter.post(
   "/refresh-token",
   authController.refreshAccessToken.bind(authController),
 );
+authRouter.post(
+  "/re-verify-email",
+  authMiddleware.authenticateJwt.bind(authMiddleware),
+  authController.reVerifyEmail.bind(authController),
+);
 
 export default authRouter;

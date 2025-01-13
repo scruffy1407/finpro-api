@@ -10,21 +10,22 @@ cvRouter.get(
   "/cv",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter"),
-  cvController.getCVData.bind(cvController)
+  cvController.getCVData.bind(cvController),
 );
 
 cvRouter.get(
   "/cvquota",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter"),
-  cvController.getCVQuota.bind(cvController)
+  cvController.getCVQuota.bind(cvController),
 );
 
 cvRouter.post(
   "/cvgenerate",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter"),
-  cvController.generateCV.bind(cvController)
+  authJwtMiddleware.authorizeVerifyEmail,
+  cvController.generateCV.bind(cvController),
 );
 
 export default cvRouter;

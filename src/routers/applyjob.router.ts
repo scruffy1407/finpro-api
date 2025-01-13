@@ -9,9 +9,10 @@ const authMiddleware = new AuthJwtMiddleware();
 
 applyJobRouter.post(
   "/apply",
-  upload.single("resume"),
   authMiddleware.authenticateJwt.bind(authMiddleware),
-
+  authMiddleware.authorizeRole("jobhunter").bind(authMiddleware),
+  authMiddleware.authorizeVerifyEmail.bind(authMiddleware),
+  upload.single("resume"),
   applyJobController.applyJob,
 );
 

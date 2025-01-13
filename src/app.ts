@@ -36,7 +36,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 3,
     },
-  })
+  }),
 );
 
 app.use(passport.initialize());
@@ -46,10 +46,10 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL as string,
-      "https://4de4-2001-448a-2002-26e4-4844-65ac-bd25-7408.ngrok-free.app", // NGROK ONLY
+      "https://4690-103-94-171-214.ngrok-free.app", // NGROK ONLY
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());

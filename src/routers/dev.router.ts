@@ -54,7 +54,7 @@ devRouter.put(
 );
 
 devRouter.post(
-	"/joinassessment",
+	"/joinassessment/:skill_assessment_id",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	applyAssessmentTestController.joinAssessmentTest.bind(
@@ -89,5 +89,7 @@ devRouter.get(
 	authJwtMiddleware.authorizeRole("developer").bind(authJwtMiddleware),
 	assessmentTestController.getQuestAssessById.bind(assessmentTestController)
 );
+
+
 
 export default devRouter;
