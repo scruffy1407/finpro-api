@@ -29,7 +29,7 @@ export class CVService {
 
   async canGenerateCV(
     userId: number
-  ): Promise<{ canGenerate: boolean; remaining: number }> {
+  ): Promise<{ canGenerate: boolean }> {
     try {
       const user = await this.prisma.jobHunter.findUnique({
         where: { userId },
@@ -37,54 +37,25 @@ export class CVService {
           jobHunterSubscription: { include: { subscriptionTable: true } },
         },
       });
-
+  
       if (!user) {
-        console.error(`User is not found`);
-        return { canGenerate: false, remaining: 0 };
+        console.error(`User not found`);
+        return { canGenerate: false };
+      }
+  
+      const subscriptionId = user.jobHunterSubscription?.subscriptionId ?? null;
+      
+      if (subscriptionId === 1) {
+        return { canGenerate: false };
       }
 
-      const subscriptionActive =
-        user.jobHunterSubscription?.subscription_active ?? false;
-
-      if (!subscriptionActive) {
-        return {
-          canGenerate: false,
-          remaining: 0,
-        };
-      }
-
-      const subscriptionType =
-        user.jobHunterSubscription?.subscriptionTable?.subscription_type;
-      const cvGeneratedCount = user.cv_generated_count ?? 0;
-
-      let limit = 0;
-
-      switch (subscriptionType) {
-        case "free":
-          limit = 0;
-          break;
-        case "standard":
-          limit = 2;
-          break;
-        case "professional":
-          limit = Infinity;
-          break;
-        default:
-          limit = 0;
-      }
-
-      const remaining =
-        limit === Infinity ? Infinity : Math.max(0, limit - cvGeneratedCount);
-
-      return {
-        canGenerate: remaining > 0,
-        remaining,
-      };
+      return { canGenerate: true };
     } catch (error) {
       console.error("Error checking CV generation eligibility:", error);
-      return { canGenerate: false, remaining: 0 };
+      return { canGenerate: false };
     }
   }
+  
 
   async incrementCVCount(userId: number): Promise<void> {
     try {

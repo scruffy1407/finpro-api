@@ -144,7 +144,7 @@ export class CompanyAdmin {
   async getJobApplicants(jobId: number, userId: number, fetchType: string) {
     try {
       const companyId = await this.getCompanyId(userId);
-
+  
       if (!companyId) {
         console.error("No company found for this user.");
         return {
@@ -152,7 +152,7 @@ export class CompanyAdmin {
           message: "No company found for this user",
         };
       }
-
+  
       const job = await this.prisma.jobPost.findUnique({
         where: {
           job_id: jobId,
@@ -164,18 +164,18 @@ export class CompanyAdmin {
           message: "Job not available",
         };
       }
-
+  
       if (job.companyId !== companyId) {
         return {
           success: false,
           message: "User not authorized to access this job",
         };
       }
-
+  
       const whereCondition: any = {
         jobId: jobId,
       };
-
+  
       if (fetchType === "interview") {
         whereCondition.application_status = "interview";
       } else if (fetchType === "accepted") {
@@ -216,13 +216,12 @@ export class CompanyAdmin {
           },
         ],
       });
-
       return { success: true, applicants };
     } catch (error) {
       console.error("Error fetching job applicants:", error);
       return { success: false, message: "Error fetching job applicants" };
     }
-  }
+  }  
 
   async getApplicationDetails(applicationId: number, userId: number) {
     const companyId = await this.getCompanyId(userId);

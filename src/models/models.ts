@@ -133,6 +133,7 @@ export interface WorkingExperience {
 	jobDescription: string;
 	startDate: Date;
 	endDate: Date;
+	currentlyWorking: boolean;
 }
 
 export interface EducationData {

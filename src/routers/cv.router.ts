@@ -24,7 +24,7 @@ cvRouter.post(
   "/cvgenerate",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter"),
-  authJwtMiddleware.authorizeVerifyEmail,
+  authJwtMiddleware.authorizeVerifyEmail.bind(authJwtMiddleware),
   cvController.generateCV.bind(cvController),
 );
 
