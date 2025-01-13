@@ -50,7 +50,7 @@ export class ApplyAssessmentTestController {
 	}
 
 	async getAssessmentQuestions(req: Request, res: Response): Promise<void> {
-		const { skill_assessment_id } = req.body;
+		const { skill_assessment_id } = req.params; // Extract from params
 		const token = req.headers.authorization?.split(" ")[1]; // Assuming Bearer token format
 
 		if (!skill_assessment_id || !token) {
@@ -60,10 +60,19 @@ export class ApplyAssessmentTestController {
 			return;
 		}
 
+		const skillAssessmentIdNumber = Number(skill_assessment_id); // Convert string to number
+
+		if (isNaN(skillAssessmentIdNumber)) {
+			res.status(400).json({
+				message: "Invalid skill_assessment_id, must be a number",
+			});
+			return;
+		}
+
 		try {
 			const result =
 				await this.applyAssessmentTestService.getAssessmentQuestions({
-					skill_assessment_id,
+					skill_assessment_id: skillAssessmentIdNumber,
 					token,
 				});
 
@@ -76,7 +85,9 @@ export class ApplyAssessmentTestController {
 			// Successful retrieval of questions
 			res.status(200).json({
 				message: "Successfully fetched assessment questions",
-				data: result.questions,
+				questions: result.questions, // Directly include questions array at top level
+				duration: result.duration, // Include the duration
+				testId: result.testId, // Include the testId
 			});
 		} catch (error) {
 			const err = error as Error;

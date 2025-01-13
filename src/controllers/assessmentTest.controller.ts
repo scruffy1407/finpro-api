@@ -283,33 +283,45 @@ export class AssessmentTestController {
 		}
 	}
 
-	// public getExistingAssessmentQuestionsCount = async (
-	// 	req: Request,
-	// 	res: Response
-	// ): Promise<void> => {
-	// 	const { preSelectionTestId } = req.params;
+	public async getCompletionByJobHunterId(
+		req: Request,
+		res: Response
+	): Promise<void> {
+		try {
+			const { jobHunterId } = req.params;
 
-	// 	if (!preSelectionTestId) {
-	// 		// If no preSelectionTestId provided, respond with a 400 error
-	// 		res.status(400).json({ error: "preSelectionTestId is required" });
-	// 		return;
-	// 	}
+			if (!jobHunterId) {
+				res.status(400).json({ error: "Job hunter ID is required." });
+				return;
+			}
 
-	// 	try {
-	// 		// Call the service method to get the existing questions count
-	// 		const questionCount =
-	// 			await this.assessmentTestService.getExistingAssessmentQuestionsCount(
-	// 				parseInt(preSelectionTestId)
-	// 			);
+			const jobHunterIdInt = parseInt(jobHunterId as string, 10);
 
-	// 		// Return the count in the response
-	// 		res.status(200).json({ count: questionCount });
-	// 	} catch (error) {
-	// 		console.error(
-	// 			"Error fetching existing assessment questions count:",
-	// 			error
-	// 		);
-	// 		res.status(500).json({ error: "Internal Server Error" });
-	// 	}
-	// };
+			if (isNaN(jobHunterIdInt)) {
+				res.status(400).json({ error: "Invalid job hunter ID." });
+				return;
+			}
+
+			const result =
+				await this.assessmentTestService.getSkillAssessmentCompletionByJobHunterId(
+					jobHunterIdInt
+				);
+
+			if (result.error) {
+				res.status(404).json({ error: result.error });
+				return;
+			}
+
+			res.status(200).json({
+				message: "Skill assessment completion data retrieved successfully.",
+				data: result.data,
+			});
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({
+				error: "An unexpected error occurred.",
+				details: err.message,
+			});
+		}
+	}
 }

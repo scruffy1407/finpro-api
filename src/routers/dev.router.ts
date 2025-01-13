@@ -63,7 +63,7 @@ devRouter.post(
 );
 
 devRouter.get(
-	"/getassessmentquest",
+	"/getassessmentquest/:skill_assessment_id",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	applyAssessmentTestController.getAssessmentQuestions.bind(
@@ -90,6 +90,13 @@ devRouter.get(
 	assessmentTestController.getQuestAssessById.bind(assessmentTestController)
 );
 
-
+devRouter.get(
+	"/getcompletionByJobHunterId/:jobHunterId",
+	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
+	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
+	assessmentTestController.getCompletionByJobHunterId.bind(
+		assessmentTestController
+	)
+);
 
 export default devRouter;
