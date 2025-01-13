@@ -139,7 +139,7 @@ export class CompanyAdminController {
           get as string,
         );
         if (applicants.success) {
-          res.status(200).json({ status: res.statusCode, data: applicants.applicants });
+          res.status(200).json({ status: res.statusCode, data: applicants });
         } else {
           res
             .status(401)
