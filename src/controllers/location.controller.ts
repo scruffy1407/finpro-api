@@ -80,7 +80,7 @@ export class LocationController {
     const searchString: string = req.query.q as string;
     try {
       const response = await this.locationService.searchLocation(
-        searchString as string
+        searchString as string,
       );
 
       if (response.success) {
@@ -96,4 +96,51 @@ export class LocationController {
       });
     }
   }
+
+  async getDetailLocation(req: Request, res: Response) {
+    const cityId = Number(req.params.cityId);
+    try {
+      const response = await this.locationService.getDetailLocation(cityId);
+
+      if (response?.success) {
+        res.status(200).send({
+          status: 200,
+          data: response.data,
+        });
+      } else {
+        res.status(404).send({
+          status: 404,
+          message: response?.message || "Location details not found",
+        });
+      }
+    } catch (e: any) {
+      res.status(500).send({
+        status: 500,
+        message: "An internal server error occurred",
+        detail: e.message,
+      });
+    }
+  }
+
+  // async fetchingDateLocation(req: Request, res: Response) {
+  //   try {
+  //     const response = await this.locationService.updateCityLatLng();
+  //     if (response.success) {
+  //       res.status(200).send({
+  //         status: 200,
+  //         data: response.updatedCities,
+  //       });
+  //     } else {
+  //       res.status(400).send({
+  //         status: 400,
+  //         data: response.errors,
+  //       });
+  //     }
+  //   } catch (e) {
+  //     res.status(500).send({
+  //       status: 500,
+  //       message: "An internal server error occurred",
+  //     });
+  //   }
+  // }
 }

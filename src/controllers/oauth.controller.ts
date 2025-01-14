@@ -68,7 +68,7 @@ export class OauthController {
         //           return;
         //         }
         res.redirect(
-          `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
+          `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
         );
         return;
       }
