@@ -218,8 +218,6 @@ export class JobHunterService {
           resultPreSelection: true,
         },
       });
-
-      console.log(validateData);
       if (validateData.length === 0) {
         return {
           success: true,

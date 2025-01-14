@@ -609,7 +609,6 @@ export class AuthService {
     }
 
     const resetToken = await this.AuthUtils.generateResetToken(user.email);
-    console.log("RESET TOKEN", resetToken);
 
     await this.prisma.baseUsers.update({
       where: {

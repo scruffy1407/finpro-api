@@ -30,10 +30,7 @@ export class DeveloperService {
           message: "Role type not allowed",
         };
       }
-
       const whereConditions: any = {};
-
-      console.log("SUBS FILTER", subscriptionId);
 
       if (subscriptionId) {
         const checkSubs = await this.prisma.subscriptionTable.findUnique({
@@ -95,7 +92,7 @@ export class DeveloperService {
         },
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
       return {
         success: false,
         message: e,

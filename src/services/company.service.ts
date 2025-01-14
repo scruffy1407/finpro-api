@@ -283,8 +283,6 @@ export class CompanyService {
 
       const jobSlice = jobsWithDistance.slice(0, 31);
 
-      console.log("MY JOBBB", jobsWithDistance);
-
       // Shuffle and take the first 6 jobs
       const randomJobs = shuffle(jobSlice).slice(0, 6);
 

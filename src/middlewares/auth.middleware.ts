@@ -56,7 +56,6 @@ export class AuthJwtMiddleware {
   async authorizeVerifyEmail(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization?.split(" ")[1] as string;
     const decodedToken = await this.authUtils.decodeToken(token as string);
-    console.log(decodedToken);
 
     if (!decodedToken) {
       res.status(404).send("No token found.");

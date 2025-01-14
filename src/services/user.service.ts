@@ -76,7 +76,6 @@ export class CompanyService {
   }
 
   async updateCompanyDetail(user_id: number, updateData: CompanyGeneralInfo) {
-    console.log("UPDATE DATA", updateData);
     try {
       const company = await this.prisma.baseUsers.findUnique({
         where: {
@@ -133,7 +132,7 @@ export class CompanyService {
         user: updatedUser,
       };
     } catch (e) {
-      console.log(e);
+      console.error(e)
       return {
         success: false,
         message: "Cannot update the company or user",

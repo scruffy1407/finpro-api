@@ -332,7 +332,6 @@ export class AuthController {
         const response = await this.authService.reVerifyUser(
           decodedToken.user_id,
         );
-        console.log("RESPOSE", response);
         if (response.success) {
           sendEmailVerification(
             response.user?.email as string,
