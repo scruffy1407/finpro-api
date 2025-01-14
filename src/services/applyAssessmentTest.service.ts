@@ -85,11 +85,13 @@ export class ApplyAssessmentTestService {
 			const subscriptionType = subscription.subscriptionTable.subscription_type;
 			const currentAssessmentCount = jobHunter.assesment_count ?? 0; // Default to 0 if null
 
+			if (subscriptionType === "free") {
+				return "You must upgrade your subscription to join this assessment test.";
+			}
 			if (subscriptionType === "standard" && currentAssessmentCount >= 2) {
-				return "Standard subscription allows joining up to 2 assessments only.";
+				return "Standard subscription allows joining up to 2 assessments only. Please Upgrade your Subscription";
 			} else if (
 				subscriptionType !== "professional" &&
-				subscriptionType !== "free" &&
 				subscriptionType !== "standard"
 			) {
 				return "Invalid subscription type.";
@@ -298,10 +300,7 @@ export class ApplyAssessmentTestService {
 				return "End date not available. Unable to proceed with the test.";
 			}
 
-			const currentTime = new Date();
-			if (currentTime > skillAsessmentCompletion.end_date) {
-				return "Test time has expired. You can no longer submit your answers.";
-			}
+
 			const questions = await this.prisma.skillAsessmentQuestion.findMany({
 				where: { skillAssessmentId },
 			});
