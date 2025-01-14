@@ -131,10 +131,14 @@ export class CompanyController {
 				job_space,
 			} = req.body;
 
+			const modifiedPreSelectionTestId = selection_test_active
+				? preSelectionTestId
+				: null;
+
 			// Prepare the job data for service
 			const jobPostData = {
 				job_title,
-				preSelectionTestId,
+				preSelectionTestId: modifiedPreSelectionTestId,
 				categoryId,
 				selection_test_active,
 				salary_show,
@@ -367,50 +371,70 @@ export class CompanyController {
 				message: e,
 			});
 		}
+    
+    //FAREL FIXING
+    async nearestJobs(req: Request, res: Response) {
+    const { lat, lang } = req.query;
+
+    try {
+      const response = await this.companyService.nearestJobs(
+        Number(lat),
+        Number(lang),
+      );
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          data: response.data,
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          message: response.message,
+        });
+      }
+    } catch (e: any) {
+      res.status(500).send({
+        status: res.statusCode,
+        message: e.message || "Internal server error",
+      });
+    }
+  }
 	}
+
+ async getCompanyList(req: Request, res: Response) {
+    const {
+      page = 1,
+      limit = 12,
+      companyName,
+      companyCity,
+      companyProvince,
+      hasJob = false,
+    } = req.query;
+    try {
+      const response = await this.companyService.getCompanyList(
+        companyName as string,
+        companyCity as string,
+        companyProvince as string,
+        Number(limit),
+        Number(page),
+      );
+      if (response.success) {
+        res.status(200).send({
+          status: res.statusCode,
+          data: response.data,
+          message: response.message,
+        });
+      } else {
+        res.status(400).send({
+          status: res.statusCode,
+          message: response.message || "No Response",
+        });
+      }
+    } catch (e) {
+      res.status(500).send({
+        status: res.statusCode,
+        message: e,
+      });
+    }
+  }
 }
-
-//Back-Up for getJobPost :
-
-// async getJobPosts(req: Request, res: Response): Promise<void> {
-//  try {
-//      // Get page and limit from query parameters
-//      const page = parseInt(req.query.page as string) || 1; // Default to page 1
-//      const limit = parseInt(req.query.limit as string) || 15; // Default to 15 posts per page
-
-//      // Call the service method to get the job posts
-//      const result = await this.companyService.getJobPosts(page, limit);
-
-//      // Send response
-//      res.status(200).json(result);
-//  } catch (error) {
-//      res
-//          .status(500)
-//          .json({ error: "An error occurred while fetching job posts" });
-//  }
-// }
-
-//getJobpost backup2
-
-// async getJobPosts(req: Request, res: Response): Promise<void> {
-//  const { page = 1, limit = 15, job_title, categoryId } = req.query;
-
-//  try {
-//      // Call the service method with the appropriate parameters
-//      const jobPosts = await this.companyService.getJobPosts(
-//          Number(page), // Page number (default is 1)
-//          Number(limit), // Limit per page (default is 15)
-//          job_title as string, // Job title filter (optional)
-//          categoryId ? Number(categoryId) : undefined // Category filter (optional)
-//      );
-
-//      // Return the result to the client
-//      res.json(jobPosts);
-//  } catch (err) {
-//      const error = err as Error;
-//      // In case of any errors, send a 500 response with the error message
-//      res
-//          .status(500)
-//          .json({ error: "Error fetching job posts: " + error.message });
-//  }
-// }

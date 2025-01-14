@@ -1,208 +1,295 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  companyDetailResponse,
-  JobPost,
-  reviewResponse,
+	companyDetailResponse,
+	JobPost,
+	reviewResponse,
 } from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
+import getDistance from "geolib/es/getDistance";
+import { shuffle } from "lodash";
 
 export class CompanyService {
-  private prisma: PrismaClient;
-  private authUtils: AuthUtils;
+	private prisma: PrismaClient;
+	private authUtils: AuthUtils;
 
-  constructor() {
-    this.prisma = new PrismaClient();
-    this.authUtils = new AuthUtils();
-  }
+	constructor() {
+		this.prisma = new PrismaClient();
+		this.authUtils = new AuthUtils();
+	}
 
-  async createJob(data: JobPost, token: string) {
-    const validatedData = jobSchema.parse(data);
+	async createJob(data: JobPost, token: string) {
+		const validatedData = jobSchema.parse(data);
 
-    const decodedToken = await this.authUtils.decodeToken(token);
-    if (!decodedToken || !decodedToken.user_id) {
-      return "Invalid token or companyId not found";
-    }
-    const userId = decodedToken.user_id;
-    const company = await this.prisma.company.findFirst({
-      where: {
-        userId: userId,
-      },
+		const decodedToken = await this.authUtils.decodeToken(token);
+		if (!decodedToken || !decodedToken.user_id) {
+			return "Invalid token or companyId not found";
+		}
+		const userId = decodedToken.user_id;
+		const company = await this.prisma.company.findFirst({
+			where: {
+				userId: userId,
+			},
 
-      select: { company_id: true },
-    });
+			select: { company_id: true },
+		});
 
-    if (!company) {
-      return "company Id is not found";
-    }
+		if (!company) {
+			return "company Id is not found";
+		}
 
-    const companyId = company.company_id;
-    return this.prisma.jobPost.create({
-      data: {
-        job_title: validatedData.job_title,
-        companyId: companyId,
-        preSelectionTestId: validatedData.preSelectionTestId,
-        categoryId: validatedData.categoryId,
-        selection_text_active: validatedData.selection_test_active,
-        salary_show: validatedData.salary_show,
-        salary_min: validatedData.salary_min,
-        salary_max: validatedData.salary_max,
-        job_description: validatedData.job_description,
-        job_experience_min: validatedData.job_experience_min,
-        job_experience_max: validatedData.job_experience_max,
-        expired_date: validatedData.expired_date,
-        status: validatedData.status,
-        job_type: validatedData.job_type,
-        job_space: validatedData.job_space,
-      },
-    });
-  }
+		const companyId = company.company_id;
+		return this.prisma.jobPost.create({
+			data: {
+				job_title: validatedData.job_title,
+				companyId: companyId,
+				preSelectionTestId: validatedData.preSelectionTestId,
+				categoryId: validatedData.categoryId,
+				selection_text_active: validatedData.selection_test_active,
+				salary_show: validatedData.salary_show,
+				salary_min: validatedData.salary_min,
+				salary_max: validatedData.salary_max,
+				job_description: validatedData.job_description,
+				job_experience_min: validatedData.job_experience_min,
+				job_experience_max: validatedData.job_experience_max,
+				expired_date: validatedData.expired_date,
+				status: validatedData.status,
+				job_type: validatedData.job_type,
+				job_space: validatedData.job_space,
+			},
+		});
+	}
 
-  async deleteJob(jobId: number): Promise<string> {
+	async deleteJob(jobId: number): Promise<string> {
+		try {
+			const jobPost = await this.prisma.jobPost.findUnique({
+				where: { job_id: jobId },
+			});
+
+			if (!jobPost) {
+				return "Job post not found.";
+			}
+			const currentDate = new Date();
+			const isExpired = jobPost.expired_date < currentDate;
+			if (isExpired) {
+				await this.prisma.jobPost.update({
+					where: { job_id: jobId },
+					data: {
+						deleted: true,
+						status: false,
+						updated_at: new Date(),
+					},
+				});
+				return "Job post marked as deleted successfully.";
+			}
+			const applications = await this.prisma.application.findMany({
+				where: {
+					jobId: jobId,
+				},
+			});
+
+			if (applications.length > 0) {
+				return "Cannot delete job post. It has related applications.";
+			}
+			await this.prisma.jobPost.update({
+				where: { job_id: jobId },
+				data: {
+					deleted: true,
+					status: false,
+					updated_at: new Date(),
+				},
+			});
+			return "Job post deleted successfully.";
+		} catch (error) {
+			const err = error as Error;
+			return "Error deleting job post: " + err.message;
+		}
+	}
+
+	async updateJob(jobId: number, data: JobPost) {
+		try {
+			const validatedData = jobSchema.parse(data);
+			const existingJobPost = await this.prisma.jobPost.findUnique({
+				where: {
+					job_id: jobId,
+				},
+			});
+
+			if (!existingJobPost) {
+				return "Job post not found";
+			}
+			const relatedApplications = await this.prisma.application.findMany({
+				where: {
+					jobId: jobId,
+				},
+			});
+			if (relatedApplications.length > 0) {
+				return this.prisma.jobPost.update({
+					where: {
+						job_id: jobId,
+					},
+					data: {
+						expired_date: validatedData.expired_date,
+					},
+				});
+			}
+			if (validatedData.selection_test_active === false) {
+				validatedData.preSelectionTestId = null; // Set to null when inactive
+			}
+			return this.prisma.jobPost.update({
+				where: {
+					job_id: jobId,
+				},
+				data: {
+					job_title: validatedData.job_title,
+					preSelectionTestId: validatedData.preSelectionTestId,
+					categoryId: validatedData.categoryId,
+					selection_text_active: validatedData.selection_test_active,
+					salary_show: validatedData.salary_show,
+					salary_min: validatedData.salary_min,
+					salary_max: validatedData.salary_max,
+					job_description: validatedData.job_description,
+					job_experience_min: validatedData.job_experience_min,
+					job_experience_max: validatedData.job_experience_max,
+					expired_date: validatedData.expired_date,
+					status: validatedData.status,
+					job_type: validatedData.job_type,
+					job_space: validatedData.job_space,
+				},
+			});
+		} catch (error) {
+			const err = error as Error;
+			return "Error updating job post: " + err.message;
+		}
+	}
+
+	async jobNewLanding(): Promise<any> {
+		try {
+			const latestJobPosts = await this.prisma.jobPost.findMany({
+				where: {
+					status: true,
+					deleted: false,
+					expired_date: {
+						gte: new Date(),
+					},
+				},
+				orderBy: {
+					created_at: "desc",
+				},
+				take: 3,
+				select: {
+					companyId: true,
+					job_id: true,
+					job_title: true,
+					salary_min: true,
+					salary_max: true,
+					created_at: true,
+					job_type: true,
+					job_space: true,
+					job_experience_min: true,
+					job_experience_max: true,
+					salary_show: true,
+					company: {
+						select: {
+							logo: true,
+							company_name: true,
+							company_city: true,
+						},
+					},
+				},
+			});
+			return latestJobPosts;
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching latest job posts: " + err.message };
+		}
+	}
+
+  async nearestJobs(userLat: number, userLong: number) {
     try {
-      const jobPost = await this.prisma.jobPost.findUnique({
-        where: { job_id: jobId },
-      });
-
-      if (!jobPost) {
-        return "Job post not found.";
-      }
-      const currentDate = new Date();
-      const isExpired = jobPost.expired_date < currentDate;
-      if (isExpired) {
-        await this.prisma.jobPost.update({
-          where: { job_id: jobId },
-          data: {
-            deleted: true,
-            status: false,
-            updated_at: new Date(),
-          },
-        });
-        return "Job post marked as deleted successfully.";
-      }
-      const applications = await this.prisma.application.findMany({
+      // Fetch all job posts along with their company locations
+      const jobs = await this.prisma.jobPost.findMany({
         where: {
-          jobId: jobId,
-        },
-      });
-
-      if (applications.length > 0) {
-        return "Cannot delete job post. It has related applications.";
-      }
-      await this.prisma.jobPost.update({
-        where: { job_id: jobId },
-        data: {
-          deleted: true,
-          status: false,
-          updated_at: new Date(),
-        },
-      });
-      return "Job post deleted successfully.";
-    } catch (error) {
-      const err = error as Error;
-      return "Error deleting job post: " + err.message;
-    }
-  }
-
-  async updateJob(jobId: number, data: JobPost) {
-    try {
-      const validatedData = jobSchema.parse(data);
-      const existingJobPost = await this.prisma.jobPost.findUnique({
-        where: {
-          job_id: jobId,
-        },
-      });
-
-      if (!existingJobPost) {
-        return "Job post not found";
-      }
-      const relatedApplications = await this.prisma.application.findMany({
-        where: {
-          jobId: jobId,
-        },
-      });
-      if (relatedApplications.length > 0) {
-        return this.prisma.jobPost.update({
-          where: {
-            job_id: jobId,
-          },
-          data: {
-            expired_date: validatedData.expired_date,
-          },
-        });
-      }
-      if (validatedData.selection_test_active === false) {
-        validatedData.preSelectionTestId = 0;
-      }
-      return this.prisma.jobPost.update({
-        where: {
-          job_id: jobId,
-        },
-        data: {
-          job_title: validatedData.job_title,
-          preSelectionTestId: validatedData.preSelectionTestId,
-          categoryId: validatedData.categoryId,
-          selection_text_active: validatedData.selection_test_active,
-          salary_show: validatedData.salary_show,
-          salary_min: validatedData.salary_min,
-          salary_max: validatedData.salary_max,
-          job_description: validatedData.job_description,
-          job_experience_min: validatedData.job_experience_min,
-          job_experience_max: validatedData.job_experience_max,
-          expired_date: validatedData.expired_date,
-          status: validatedData.status,
-          job_type: validatedData.job_type,
-          job_space: validatedData.job_space,
-        },
-      });
-    } catch (error) {
-      const err = error as Error;
-      return "Error updating job post: " + err.message;
-    }
-  }
-
-  async jobNewLanding(): Promise<any> {
-    try {
-      const latestJobPosts = await this.prisma.jobPost.findMany({
-        where: {
-          status: true,
+          status: true, // Only fetch active job posts
           deleted: false,
-          expired_date: {
-            gte: new Date(),
-          },
         },
-        orderBy: {
-          created_at: "desc",
-        },
-        take: 3,
         select: {
-          companyId: true,
           job_id: true,
           job_title: true,
-          salary_min: true,
-          salary_max: true,
-          created_at: true,
-          job_type: true,
+          job_description: true,
           job_space: true,
+          job_type: true,
           job_experience_min: true,
           job_experience_max: true,
+          salary_min: true,
+          salary_max: true,
           salary_show: true,
+          created_at: true,
           company: {
             select: {
-              logo: true,
+              company_id: true,
               company_name: true,
-              company_city: true,
+              latitude: true,
+              longitude: true,
+              logo: true,
             },
           },
         },
       });
-      return latestJobPosts;
-    } catch (error) {
-      const err = error as Error;
-      return { error: "Error fetching latest job posts: " + err.message };
+
+      if (!jobs || jobs.length === 0) {
+        return {
+          success: false,
+          message: "No jobs found",
+        };
+      }
+
+      // Filter and sort jobs based on distance
+      const jobsWithDistance = jobs
+        .map((job) => {
+          const { latitude, longitude } = job.company;
+
+          if (latitude !== null && longitude !== null) {
+            const distance = getDistance(
+              { latitude: userLat, longitude: userLong },
+              {
+                latitude: parseFloat(latitude.toString()),
+                longitude: parseFloat(longitude.toString()),
+              },
+            );
+
+            return {
+              ...job,
+              company: { ...job.company },
+              distance, // Distance in meters
+            };
+          }
+          return null; // Exclude jobs with missing geolocation
+        })
+        .filter((job) => job !== null) // Remove null entries
+        .sort((a, b) => a!.distance - b!.distance); // Sort by distance (nearest first);
+
+      const jobSlice = jobsWithDistance.slice(0, 31);
+
+      console.log("MY JOBBB", jobsWithDistance);
+
+      // Shuffle and take the first 6 jobs
+      const randomJobs = shuffle(jobSlice).slice(0, 6);
+
+      return {
+        success: true,
+        data: randomJobs,
+      };
+    } catch (error: any) {
+      console.error("Error fetching nearest jobs:", error.message);
+      return {
+        success: false,
+        message: "An error occurred while fetching nearest jobs.",
+      };
+    } finally {
+      await this.prisma.$disconnect();
     }
   }
-
   async getJobPosts(
     page: number = 1,
     limit: number = 15,
@@ -213,7 +300,7 @@ export class CompanyService {
     dateRange?: string,
     sortOrder?: string,
     companyCity?: string,
-    companyProvince?: string
+    companyProvince?: string,
   ) {
     try {
       const whereConditions: any = {
@@ -224,140 +311,139 @@ export class CompanyService {
         },
       };
 
-      if (job_title) {
-        whereConditions.job_title = {
-          contains: job_title,
-          mode: "insensitive",
-        };
-      }
+			if (job_title) {
+				whereConditions.job_title = {
+					contains: job_title,
+					mode: "insensitive",
+				};
+			}
 
-      if (categoryId) {
-        whereConditions.categoryId = categoryId;
-      }
-      if (jobType || jobSpace) {
-        whereConditions.job_type = jobType;
-        whereConditions.job_space = jobSpace;
-      }
+			if (categoryId) {
+				whereConditions.categoryId = categoryId;
+			}
+			if (jobType || jobSpace) {
+				whereConditions.job_type = jobType;
+				whereConditions.job_space = jobSpace;
+			}
 
-      if (companyCity || companyProvince) {
-        whereConditions.company = {
-          ...(companyCity && { company_city: companyCity }),
-          ...(companyProvince && { company_province: companyProvince }),
-        };
-      }
-      if (dateRange === "last7days") {
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-        whereConditions.created_at = {
-          gte: last7Days,
-        };
-      } else if (dateRange === "thisMonth") {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        whereConditions.created_at = {
-          gte: startOfMonth,
-        };
-      } else if (dateRange === "thisYear") {
-        const startOfYear = new Date();
-        startOfYear.setMonth(0);
-        startOfYear.setDate(1);
-        whereConditions.created_at = {
-          gte: startOfYear,
-        };
-      }
-      const totalJobPosts = await this.prisma.jobPost.count({
-        where: whereConditions,
-      });
-      const totalPages = Math.ceil(totalJobPosts / limit);
-      if (page > totalPages) {
-        return {
-          data: [],
-          currentPage: page,
-          totalPages: totalPages,
-          totalJobPosts: totalJobPosts,
-          message: "No posts available for this page.",
-        };
-      }
-      const skip = (page - 1) * limit;
-      const orderBy: any = [];
-      if (sortOrder === "asc") {
-        orderBy.push({ job_title: "asc" });
-      } else if (sortOrder === "desc") {
-        orderBy.push({ job_title: "desc" });
-      } else {
-        orderBy.push({ created_at: "desc" });
-      }
-      const jobPosts = await this.prisma.jobPost.findMany({
-        where: whereConditions,
-        skip: skip,
-        take: limit,
-        orderBy: orderBy,
-        select: {
-          companyId: true,
-          job_id: true,
-          job_title: true,
-          salary_min: true,
-          salary_max: true,
-          created_at: true,
-          job_type: true,
-          job_space: true,
-          salary_show: true,
-          job_experience_min: true,
-          job_experience_max: true,
-          company: {
-            select: {
-              logo: true,
-              company_name: true,
-              company_city: true,
-              company_province: true,
-            },
-          },
-        },
-      });
-      return {
-        data: jobPosts,
-        currentPage: page,
-        totalPages: totalPages,
-        totalJobPosts: totalJobPosts,
-      };
-    } catch (error) {
-      const err = error as Error;
-      return { error: "Error fetching job posts: " + err.message };
-    }
-  }
+			if (companyCity || companyProvince) {
+				whereConditions.company = {
+					...(companyCity && { company_city: companyCity }),
+					...(companyProvince && { company_province: companyProvince }),
+				};
+			}
+			if (dateRange === "last7days") {
+				const last7Days = new Date();
+				last7Days.setDate(last7Days.getDate() - 7);
+				whereConditions.created_at = {
+					gte: last7Days,
+				};
+			} else if (dateRange === "thisMonth") {
+				const startOfMonth = new Date();
+				startOfMonth.setDate(1);
+				whereConditions.created_at = {
+					gte: startOfMonth,
+				};
+			} else if (dateRange === "thisYear") {
+				const startOfYear = new Date();
+				startOfYear.setMonth(0);
+				startOfYear.setDate(1);
+				whereConditions.created_at = {
+					gte: startOfYear,
+				};
+			}
+			const totalJobPosts = await this.prisma.jobPost.count({
+				where: whereConditions,
+			});
+			const totalPages = Math.ceil(totalJobPosts / limit);
+			if (page > totalPages) {
+				return {
+					data: [],
+					currentPage: page,
+					totalPages: totalPages,
+					totalJobPosts: totalJobPosts,
+					message: "No posts available for this page.",
+				};
+			}
+			const skip = (page - 1) * limit;
+			const orderBy: any = [];
+			if (sortOrder === "asc") {
+				orderBy.push({ job_title: "asc" });
+			} else if (sortOrder === "desc") {
+				orderBy.push({ job_title: "desc" });
+			} else {
+				orderBy.push({ created_at: "desc" });
+			}
+			const jobPosts = await this.prisma.jobPost.findMany({
+				where: whereConditions,
+				skip: skip,
+				take: limit,
+				orderBy: orderBy,
+				select: {
+					companyId: true,
+					job_id: true,
+					job_title: true,
+					salary_min: true,
+					salary_max: true,
+					created_at: true,
+					job_type: true,
+					job_space: true,
+					salary_show: true,
+					job_experience_min: true,
+					job_experience_max: true,
+					company: {
+						select: {
+							logo: true,
+							company_name: true,
+							company_city: true,
+							company_province: true,
+						},
+					},
+				},
+			});
+			return {
+				data: jobPosts,
+				currentPage: page,
+				totalPages: totalPages,
+				totalJobPosts: totalJobPosts,
+			};
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching job posts: " + err.message };
+		}
+	}
 
-  async getJobPostDetail(jobId: number): Promise<any> {
-    try {
-      const jobPostDetail = await this.prisma.jobPost.findUnique({
-        where: { job_id: jobId },
-        include: {
-          company: {
-            select: {
-              company_id: true,
-              company_name: true,
-              company_description: true,
-              logo: true,
-              company_city: true,
-              company_province: true,
-              address_details: true,
-              company_industry: true,
-              company_size: true,
-              review: true,
-            },
-          },
-          category: {
-            select: {
-              category_name: true,
-            },
-          },
-          preSelectionTest: {
-            select: {
-              test_name: true,
-            },
-          },
-        },
-      });
-
+	async getJobPostDetail(jobId: number): Promise<any> {
+		try {
+			const jobPostDetail = await this.prisma.jobPost.findUnique({
+				where: { job_id: jobId },
+				include: {
+					company: {
+						select: {
+							company_id: true,
+							company_name: true,
+							company_description: true,
+							logo: true,
+							company_city: true,
+							company_province: true,
+							address_details: true,
+							company_industry: true,
+							company_size: true,
+							review: true,
+						},
+					},
+					category: {
+						select: {
+							category_name: true,
+						},
+					},
+					preSelectionTest: {
+						select: {
+							test_name: true,
+						},
+					},
+				},
+			});
       if (!jobPostDetail) {
         return { message: "Job post not found" };
       }
@@ -365,6 +451,8 @@ export class CompanyService {
         where: {
           categoryId: jobPostDetail.categoryId,
           job_id: { not: jobId },
+          status: true,
+          deleted: false,
         },
         take: 3,
         select: {
@@ -388,39 +476,41 @@ export class CompanyService {
         },
       });
 
-      return { jobPostDetail, relatedJobPosts };
-    } catch (error) {
-      const err = error as Error;
-      return { error: "Error fetching job post detail: " + err.message };
-    }
-  }
+			return { jobPostDetail, relatedJobPosts };
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching job post detail: " + err.message };
+		}
+	}
 
-  async getCategory() {
-    try {
-      const categories = await this.prisma.category.findMany({
-        select: {
-          category_name: true,
-          category_id: true,
-        },
-      });
-      return categories;
-    } catch (error) {
-      const err = error as Error;
-      return { error: "somethin wrong with the category id : " + err.message };
-    }
-  }
+	async getCategory() {
+		try {
+			const categories = await this.prisma.category.findMany({
+				select: {
+					category_name: true,
+					category_id: true,
+				},
+			});
+			return categories;
+		} catch (error) {
+			const err = error as Error;
+			return { error: "somethin wrong with the category id : " + err.message };
+		}
+	}
 
-  async getDetailCompanyPage(companyId: number) {
-    try {
-      const company = await this.prisma.company.findUnique({
-        where: {
-          company_id: companyId,
-        },
-
+	async getDetailCompanyPage(companyId: number) {
+		try {
+			const company = await this.prisma.company.findUnique({
+				where: {
+					company_id: companyId,
+				},
         include: {
           jobPost: {
             where: {
               status: true,
+            },
+            orderBy: {
+              created_at: "desc",
             },
           },
           _count: {
@@ -472,6 +562,7 @@ export class CompanyService {
               companyId: job.companyId,
               preSelectionTestId: job.preSelectionTestId,
               expired_date: job.expired_date,
+              created_at: job.created_at,
             };
           }),
           listReview: company.review.map((review): reviewResponse => {
@@ -488,28 +579,27 @@ export class CompanyService {
             };
           }),
         };
-
-        return {
-          success: true,
-          companyResponse,
-          count: company._count,
-        };
-      }
-    } catch (e) {
-      return {
-        success: false,
-        message: "Something went wrong, failed to find company",
-      };
-    }
-  }
-
+				return {
+					success: true,
+					companyResponse,
+					count: company._count,
+				};
+			}
+		} catch (e) {
+			return {
+				success: false,
+				message: "Something went wrong, failed to find company",
+			};
+		}
+	}
+  
   async getCompanyList(
     companyName?: string,
     companyCity?: string,
     companyProvince?: string,
     limit: number = 6,
     page: number = 1,
-    hasJob: boolean = false
+    hasJob: boolean = false,
   ) {
     const whereConditions: any = {};
     if (companyName) {
