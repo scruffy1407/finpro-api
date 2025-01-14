@@ -11,7 +11,7 @@ export class ApplyJob {
   }
 
   async uploadResumeToDropbox(
-    file: Express.Multer.File,
+    file: Express.Multer.File
   ): Promise<string | undefined> {
     try {
       const tokenManager = DropboxTokenManager.getInstance();
@@ -19,7 +19,7 @@ export class ApplyJob {
       const dbx = new Dropbox({ accessToken });
 
       const dropboxResponse = await dbx.filesUpload({
-        path: `/resumes/${Date.now()}-${file.originalname}}`,
+        path: `/resumes/${Date.now()}-${file.originalname}`,
         contents: file.buffer,
       });
       const sharedLinkResponse = await dbx.sharingCreateSharedLinkWithSettings({
@@ -35,7 +35,7 @@ export class ApplyJob {
   async applyJob(
     data: Application,
     file: Express.Multer.File,
-    accessToken: string,
+    accessToken: string
   ) {
     try {
       const jobHunter = await this.prisma.jobHunter.findFirst({
@@ -130,7 +130,7 @@ export class ApplyJob {
     limit: number = 6,
     offset: number = 0,
     userId: number,
-    status?: string,
+    status?: string
   ) {
     try {
       const user = await this.prisma.baseUsers.findUnique({
@@ -274,6 +274,12 @@ export class ApplyJob {
         where: { job_hunter_id: user?.jobHunter[0].job_hunter_id },
         include: {
           jobWishlist: {
+            where: {
+              jobPost: {
+                status: true,
+                deleted: false,
+              },
+            },
             include: {
               jobPost: {
                 include: { company: true },
