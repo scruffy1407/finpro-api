@@ -105,6 +105,20 @@ export class ApplyAssessmentTestService {
 				return "No mentioned Assessment Test available";
 			}
 
+			// Check if the user already has an ongoing assessment for the same test
+			const ongoingCompletion =
+				await this.prisma.skillAsessmentCompletion.findFirst({
+					where: {
+						skillAssessmentId: skill_assessment_id,
+						jobHunterId: jobHunter.job_hunter_id,
+						completion_status: "ongoing", // Check for ongoing status
+					},
+				});
+
+			if (ongoingCompletion) {
+				return "You already have an ongoing assessment for this test. Please complete it before starting a new one.";
+			}
+
 			// Check if the user has completed this skill assessment before with a "failed" status
 			const lastCompletion =
 				await this.prisma.skillAsessmentCompletion.findFirst({
@@ -299,7 +313,6 @@ export class ApplyAssessmentTestService {
 			if (!skillAsessmentCompletion.end_date) {
 				return "End date not available. Unable to proceed with the test.";
 			}
-
 
 			const questions = await this.prisma.skillAsessmentQuestion.findMany({
 				where: { skillAssessmentId },
