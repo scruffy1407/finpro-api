@@ -229,6 +229,8 @@ export class CompanyService {
             select: {
               company_id: true,
               company_name: true,
+			  company_province: true,
+			  company_city: true,
               latitude: true,
               longitude: true,
               logo: true,
