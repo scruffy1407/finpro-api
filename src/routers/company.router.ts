@@ -58,6 +58,12 @@ companyRouter.get(
 	companyController.jobNewLanding.bind(companyController)
 );
 
+//Get the Nearest Job Post for Landing-Page
+companyRouter.get(
+  "/nearest-job",
+  companyController.nearestJobs.bind(companyController),
+);
+
 //get the Job post for Job-List Page
 companyRouter.get(
 	"/jobPosts",

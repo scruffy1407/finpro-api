@@ -6,6 +6,8 @@ import {
 } from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
+import getDistance from "geolib/es/getDistance";
+import { shuffle } from "lodash";
 
 export class CompanyService {
 	private prisma: PrismaClient;
@@ -203,26 +205,111 @@ export class CompanyService {
 		}
 	}
 
-	async getJobPosts(
-		page: number = 1,
-		limit: number = 15,
-		job_title?: string,
-		categoryId?: number,
-		jobType?: string,
-		jobSpace?: string,
-		dateRange?: string,
-		sortOrder?: string,
-		companyCity?: string,
-		companyProvince?: string
-	) {
-		try {
-			const whereConditions: any = {
-				status: true,
-				deleted: false,
-				expired_date: {
-					gte: new Date(),
-				},
-			};
+  async nearestJobs(userLat: number, userLong: number) {
+    try {
+      // Fetch all job posts along with their company locations
+      const jobs = await this.prisma.jobPost.findMany({
+        where: {
+          status: true, // Only fetch active job posts
+          deleted: false,
+        },
+        select: {
+          job_id: true,
+          job_title: true,
+          job_description: true,
+          job_space: true,
+          job_type: true,
+          job_experience_min: true,
+          job_experience_max: true,
+          salary_min: true,
+          salary_max: true,
+          salary_show: true,
+          created_at: true,
+          company: {
+            select: {
+              company_id: true,
+              company_name: true,
+              latitude: true,
+              longitude: true,
+              logo: true,
+            },
+          },
+        },
+      });
+
+      if (!jobs || jobs.length === 0) {
+        return {
+          success: false,
+          message: "No jobs found",
+        };
+      }
+
+      // Filter and sort jobs based on distance
+      const jobsWithDistance = jobs
+        .map((job) => {
+          const { latitude, longitude } = job.company;
+
+          if (latitude !== null && longitude !== null) {
+            const distance = getDistance(
+              { latitude: userLat, longitude: userLong },
+              {
+                latitude: parseFloat(latitude.toString()),
+                longitude: parseFloat(longitude.toString()),
+              },
+            );
+
+            return {
+              ...job,
+              company: { ...job.company },
+              distance, // Distance in meters
+            };
+          }
+          return null; // Exclude jobs with missing geolocation
+        })
+        .filter((job) => job !== null) // Remove null entries
+        .sort((a, b) => a!.distance - b!.distance); // Sort by distance (nearest first);
+
+      const jobSlice = jobsWithDistance.slice(0, 31);
+
+      console.log("MY JOBBB", jobsWithDistance);
+
+      // Shuffle and take the first 6 jobs
+      const randomJobs = shuffle(jobSlice).slice(0, 6);
+
+      return {
+        success: true,
+        data: randomJobs,
+      };
+    } catch (error: any) {
+      console.error("Error fetching nearest jobs:", error.message);
+      return {
+        success: false,
+        message: "An error occurred while fetching nearest jobs.",
+      };
+    } finally {
+      await this.prisma.$disconnect();
+    }
+  }
+  async getJobPosts(
+    page: number = 1,
+    limit: number = 15,
+    job_title?: string,
+    categoryId?: number,
+    jobType?: string,
+    jobSpace?: string,
+    dateRange?: string,
+    sortOrder?: string,
+    companyCity?: string,
+    companyProvince?: string,
+  ) {
+    try {
+      const whereConditions: any = {
+        status: true,
+        deleted: false,
+        expired_date: {
+          gte: new Date(),
+        },
+      };
 
 			if (job_title) {
 				whereConditions.job_title = {
@@ -357,37 +444,37 @@ export class CompanyService {
 					},
 				},
 			});
-
-			if (!jobPostDetail) {
-				return { message: "Job post not found" };
-			}
-			const relatedJobPosts = await this.prisma.jobPost.findMany({
-				where: {
-					categoryId: jobPostDetail.categoryId,
-					job_id: { not: jobId },
-					deleted: false,
-				},
-				take: 3,
-				select: {
-					job_id: true,
-					job_title: true,
-					salary_min: true,
-					salary_max: true,
-					job_experience_min: true,
-					job_experience_max: true,
-					salary_show: true,
-					created_at: true,
-					job_type: true,
-					job_space: true,
-					company: {
-						select: {
-							logo: true,
-							company_name: true,
-							company_city: true,
-						},
-					},
-				},
-			});
+      if (!jobPostDetail) {
+        return { message: "Job post not found" };
+      }
+      const relatedJobPosts = await this.prisma.jobPost.findMany({
+        where: {
+          categoryId: jobPostDetail.categoryId,
+          job_id: { not: jobId },
+          status: true,
+          deleted: false,
+        },
+        take: 3,
+        select: {
+          job_id: true,
+          job_title: true,
+          salary_min: true,
+          salary_max: true,
+          job_experience_min: true,
+          job_experience_max: true,
+          salary_show: true,
+          created_at: true,
+          job_type: true,
+          job_space: true,
+          company: {
+            select: {
+              logo: true,
+              company_name: true,
+              company_city: true,
+            },
+          },
+        },
+      });
 
 			return { jobPostDetail, relatedJobPosts };
 		} catch (error) {
@@ -417,79 +504,81 @@ export class CompanyService {
 				where: {
 					company_id: companyId,
 				},
+        include: {
+          jobPost: {
+            where: {
+              status: true,
+            },
+            orderBy: {
+              created_at: "desc",
+            },
+          },
+          _count: {
+            select: {
+              review: true,
+              jobPost: {
+                where: {
+                  status: true,
+                },
+              },
+            },
+          },
+          review: true,
+          baseUser: true,
+        },
+      });
 
-				include: {
-					jobPost: {
-						where: {
-							status: true,
-						},
-					},
-					_count: {
-						select: {
-							review: true,
-							jobPost: {
-								where: {
-									status: true,
-								},
-							},
-						},
-					},
-					review: true,
-					baseUser: true,
-				},
-			});
-
-			if (!company) {
-				return {
-					success: false,
-					message: "Cannot find company",
-				};
-			} else {
-				const companyResponse: companyDetailResponse = {
-					logo: company.logo as string,
-					email: company.baseUser.email,
-					addressDetail: company.address_details as string,
-					companyDescription: company.company_description as string,
-					companyIndustry: company.company_industry as string,
-					companyCity: company.company_city as string,
-					companySize: company.company_size as string,
-					companyName: company.company_name,
-					companyProvince: company.company_province as string,
-					companyId: company.company_id,
-					listJob: company.jobPost.map((job): JobPost => {
-						return {
-							job_id: job.job_id,
-							job_title: job.job_title,
-							job_description: job.job_description,
-							salary_min: job.salary_min.toNumber(),
-							salary_max: job.salary_max ? job.salary_max.toNumber() : 0,
-							salary_show: job.salary_show,
-							job_experience_max: job.job_experience_max as number,
-							job_experience_min: job.job_experience_min as number,
-							job_space: job.job_space,
-							job_type: job.job_type,
-							status: job.status,
-							catergoryId: job.categoryId,
-							companyId: job.companyId,
-							preSelectionTestId: job.preSelectionTestId,
-							expired_date: job.expired_date,
-						};
-					}),
-					listReview: company.review.map((review): reviewResponse => {
-						return {
-							companyId: review.companyId,
-							reviewId: review.review_id,
-							careerPathRating: review.career_path_rating,
-							culturalRating: review.cultural_rating,
-							facilityRating: review.facility_rating,
-							reviewDescription: review.review_description,
-							reviewTitle: review.review_title,
-							jobunterId: review.jobHunterId,
-							workLifeBalanceRating: review.work_balance_rating,
-						};
-					}),
-				};
-
+      if (!company) {
+        return {
+          success: false,
+          message: "Cannot find company",
+        };
+      } else {
+        const companyResponse: companyDetailResponse = {
+          logo: company.logo as string,
+          email: company.baseUser.email,
+          addressDetail: company.address_details as string,
+          companyDescription: company.company_description as string,
+          companyIndustry: company.company_industry as string,
+          companyCity: company.company_city as string,
+          companySize: company.company_size as string,
+          companyName: company.company_name,
+          companyProvince: company.company_province as string,
+          companyId: company.company_id,
+          listJob: company.jobPost.map((job): JobPost => {
+            return {
+              job_id: job.job_id,
+              job_title: job.job_title,
+              job_description: job.job_description,
+              salary_min: job.salary_min.toNumber(),
+              salary_max: job.salary_max ? job.salary_max.toNumber() : 0,
+              salary_show: job.salary_show,
+              job_experience_max: job.job_experience_max as number,
+              job_experience_min: job.job_experience_min as number,
+              job_space: job.job_space,
+              job_type: job.job_type,
+              status: job.status,
+              catergoryId: job.categoryId,
+              companyId: job.companyId,
+              preSelectionTestId: job.preSelectionTestId,
+              expired_date: job.expired_date,
+              created_at: job.created_at,
+            };
+          }),
+          listReview: company.review.map((review): reviewResponse => {
+            return {
+              companyId: review.companyId,
+              reviewId: review.review_id,
+              careerPathRating: review.career_path_rating,
+              culturalRating: review.cultural_rating,
+              facilityRating: review.facility_rating,
+              reviewDescription: review.review_description,
+              reviewTitle: review.review_title,
+              jobunterId: review.jobHunterId,
+              workLifeBalanceRating: review.work_balance_rating,
+            };
+          }),
+        };
 				return {
 					success: true,
 					companyResponse,
@@ -503,84 +592,84 @@ export class CompanyService {
 			};
 		}
 	}
-
-	async getCompanyList(
-		companyName?: string,
-		companyCity?: string,
-		companyProvince?: string,
-		limit: number = 6,
-		page: number = 1,
-		hasJob: boolean = false
-	) {
-		const whereConditions: any = {};
-		if (companyName) {
-			whereConditions.company_name = {
-				contains: companyName,
-				mode: "insensitive",
-			};
-		}
-		if (companyCity) {
-			whereConditions.company_city = companyCity;
-		}
-		if (companyProvince) {
-			whereConditions.company_province = companyProvince;
-		}
-		if (hasJob) {
-		}
-		try {
-			const totalCompany = await this.prisma.company.count({
-				where: whereConditions,
-			});
-			const totalPages = Math.ceil(totalCompany / limit);
-			if (page > totalPages) {
-				return {
-					success: true,
-					data: {
-						listCompany: [],
-						currentPage: page,
-						totalPages: totalPages,
-						totalCompany,
-					},
-					message: "No posts available for this page.",
-				};
-			}
-			const skip = (page - 1) * limit;
-			const listCompany = await this.prisma.company.findMany({
-				where: whereConditions,
-				skip: skip,
-				take: limit,
-				select: {
-					company_id: true,
-					logo: true,
-					company_name: true,
-					company_city: true,
-					company_province: true,
-					_count: {
-						select: {
-							jobPost: {
-								where: {
-									status: true,
-								},
-							},
-						},
-					},
-				},
-			});
-			return {
-				success: true,
-				data: {
-					listCompany,
-					currentPage: page,
-					totalPages,
-					totalCompany,
-				},
-				message: "Get Company List.",
-			};
-		} catch (e) {
-			return {
-				success: false,
-				message: "Failed to fetch company",
-			};
-		}
-	}
+  
+  async getCompanyList(
+    companyName?: string,
+    companyCity?: string,
+    companyProvince?: string,
+    limit: number = 6,
+    page: number = 1,
+    hasJob: boolean = false,
+  ) {
+    const whereConditions: any = {};
+    if (companyName) {
+      whereConditions.company_name = {
+        contains: companyName,
+        mode: "insensitive",
+      };
+    }
+    if (companyCity) {
+      whereConditions.company_city = companyCity;
+    }
+    if (companyProvince) {
+      whereConditions.company_province = companyProvince;
+    }
+    if (hasJob) {
+    }
+    try {
+      const totalCompany = await this.prisma.company.count({
+        where: whereConditions,
+      });
+      const totalPages = Math.ceil(totalCompany / limit);
+      if (page > totalPages) {
+        return {
+          success: true,
+          data: {
+            listCompany: [],
+            currentPage: page,
+            totalPages: totalPages,
+            totalCompany,
+          },
+          message: "No posts available for this page.",
+        };
+      }
+      const skip = (page - 1) * limit;
+      const listCompany = await this.prisma.company.findMany({
+        where: whereConditions,
+        skip: skip,
+        take: limit,
+        select: {
+          company_id: true,
+          logo: true,
+          company_name: true,
+          company_city: true,
+          company_province: true,
+          _count: {
+            select: {
+              jobPost: {
+                where: {
+                  status: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      return {
+        success: true,
+        data: {
+          listCompany,
+          currentPage: page,
+          totalPages,
+          totalCompany,
+        },
+        message: "Get Company List.",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to fetch company",
+      };
+    }
+  }
 }

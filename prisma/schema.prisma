@@ -479,6 +479,8 @@ model city {
   province   province    @relation(fields: [provinceId], references: [province_id])
   jobHunter  JobHunter[]
   company    Company[]
+  lat        String?
+  lang       String?
 
   @@schema("Location")
 }
