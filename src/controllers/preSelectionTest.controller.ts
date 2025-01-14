@@ -41,30 +41,34 @@ export class PreSelectionTestController {
 		}
 	}
 
-	async deletePreSelectionTest(req: Request, res: Response): Promise<void> {
-		const { testId } = req.params;
+  async deletePreSelectionTest(req: Request, res: Response): Promise<void> {
+    const { testId } = req.params;
 
-		if (!testId) {
-			res.status(400).json({ message: "Test ID is required" });
-		}
+    if (!testId) {
+        res.status(400).json({ message: "Test ID is required" });
+        return; 
+    }
 
-		try {
-			const result = await this.preSelectionTestService.deletePreSelectionTest(
-				Number(testId)
-			);
+    try {
+        const result = await this.preSelectionTestService.deletePreSelectionTest(Number(testId));
 
-			if (typeof result === "string") {
-				res.status(400).json({ message: result });
-			}
-			res.status(200).json({
-				message: "Pre-selection test deleted successfully",
-				updatedPreSelectionTest: result,
-			});
-		} catch (error) {
-			const err = error as Error;
-			res.status(500).json({ message: `Error: ${err.message}` });
-		}
-	}
+        if (typeof result === "string") {
+            res.status(400).json({ message: result });
+            return; 
+        }
+
+
+        res.status(200).json({
+            message: "Pre-selection test deleted successfully",
+            updatedPreSelectionTest: result,
+        });
+    } catch (error) {
+        const err = error as Error;
+
+        res.status(500).json({ message: `Error: ${err.message}` });
+        return; 
+    }
+}
 
 	async updatePreSelectionTest(req: Request, res: Response): Promise<void> {
 		try {
@@ -318,7 +322,7 @@ export class PreSelectionTestController {
 				return;
 			}
 			res.status(200).json({
-				message: "Pre-selection test soft deleted successfully",
+				message: "Pre-selection test deleted successfully",
 				updatedPreSelectionTest: result,
 			});
 		} catch (error) {

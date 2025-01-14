@@ -79,27 +79,37 @@ export class ApplyTestService {
 				return `The following fields are missing in your profile: ${missingFields.join(", ")}. Please complete your profile before joining the pre-selection test.`;
 			}
 
-			// Check if the user has previously failed the test and whether 7 days have passed since the last failure
 			const lastResult = await this.prisma.resultPreSelection.findFirst({
 				where: {
 					application: {
 						jobHunterId: jobHunterId,
 						jobId: jobId,
 					},
-					completion_status: "failed", // Look for failed tests only
+					completion_status: "failed", 
 				},
 				orderBy: {
-					completion_date: "desc", // Sort by most recent
+					completion_date: "desc", 
 				},
 			});
 
 			if (lastResult) {
-				const currentDate = new Date();
-				const sevenDaysAgo = new Date(currentDate); // Create a new Date object
-				sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // Subtract 7 days from the new object
 
-				if (lastResult.completion_date > sevenDaysAgo) {
-					return "You cannot join the pre-selection test again until 7 days have passed since your last failure.";
+				if (!lastResult.end_date) {
+					return "Error: Last result's end date is missing or null.";
+				}
+
+				const currentDate = new Date();
+				const lastEndDate = new Date(lastResult.end_date); 
+
+				if (isNaN(lastEndDate.getTime())) {
+					return "Error: Last result's end date is invalid.";
+				}
+
+				const daysPassed =
+					(currentDate.getTime() - lastEndDate.getTime()) / (1000 * 3600 * 24);
+
+				if (daysPassed < 7) {
+					return `You cannot join the pre-selection test again until 7 days have passed since your last failure. Please wait ${7 - Math.floor(daysPassed)} day(s).`;
 				}
 			}
 
