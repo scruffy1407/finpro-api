@@ -86,14 +86,13 @@ export class CompanyController {
       const result = await this.companyService.deleteJob(jobId);
 
       // If deletion was successful, return a success message
-      if (
-        result === "Job post deleted successfully." ||
-        "Job post deleted successfully."
-      ) {
-        res.status(200).json({ message: result });
+      if (result.success) {
+        res
+          .status(200)
+          .json({ status: res.statusCode, message: result.message });
       } else {
         // If there were related applications, return an error message
-        res.status(400).json({ error: result });
+        res.status(400).json({ status: res.statusCode, error: result.message });
       }
     } catch (error) {
       const err = error as Error;
@@ -156,7 +155,7 @@ export class CompanyController {
       // Call the service to update the job post
       const updatedJobPost = await this.companyService.updateJob(
         jobId,
-        jobPostData
+        jobPostData,
       );
 
       // If job post was updated, return it
@@ -222,7 +221,7 @@ export class CompanyController {
         dateRange as string, // Date range filter (optional)
         sortOrder as "asc" | "desc", // Sort order for alphabetical sorting or date sorting
         companyCity as string,
-        companyProvince as string
+        companyProvince as string,
       );
 
       // Return the result to the client
@@ -314,7 +313,7 @@ export class CompanyController {
     try {
       const companyId = req.params.companyId;
       const response = await this.companyService.getDetailCompanyPage(
-        Number(companyId)
+        Number(companyId),
       );
       if (response.success) {
         res.status(200).send({
@@ -351,7 +350,7 @@ export class CompanyController {
         companyCity as string,
         companyProvince as string,
         Number(limit),
-        Number(page)
+        Number(page),
       );
       if (response.success) {
         res.status(200).send({
@@ -416,7 +415,7 @@ export class CompanyController {
     try {
       const response = await this.companyService.nearestJobs(
         Number(lat),
-        Number(lang)
+        Number(lang),
       );
       if (response.success) {
         res.status(200).send({
