@@ -365,6 +365,8 @@ export class CompanyService {
         where: {
           categoryId: jobPostDetail.categoryId,
           job_id: { not: jobId },
+          status: true,
+          deleted: false,
         },
         take: 3,
         select: {

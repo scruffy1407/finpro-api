@@ -2,14 +2,18 @@ import { Request, Response } from "express";
 import { PrismaClient, RegisterBy, RoleType } from "@prisma/client";
 import { AuthUtils } from "../utils/auth.utils";
 import { GoogleProfile } from "../models/models";
+import { AuthService } from "../services/auth.service";
 import passport from "passport";
 
 const prisma = new PrismaClient();
 
 export class OauthController {
   private authUtils: AuthUtils;
+  private authService: AuthService;
+
   constructor() {
     this.authUtils = new AuthUtils();
+    this.authService = new AuthService();
     this.googleCallback = this.googleCallback.bind(this);
   }
 
@@ -52,17 +56,17 @@ export class OauthController {
             ? `${process.env.CLIENT_URL}/auth/login/company`
             : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
 
-//         if (user && user.role_type !== role_type) {
-//           const target =
-//             role_type === RoleType.jobhunter
-//               ? `${process.env.CLIENT_URL}/auth/login/company`
-//               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
+        //         if (user && user.role_type !== role_type) {
+        //           const target =
+        //             role_type === RoleType.jobhunter
+        //               ? `${process.env.CLIENT_URL}/auth/login/company`
+        //               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
 
-//           res.redirect(
-//             `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
-//           );
-//           return;
-//         }
+        //           res.redirect(
+        //             `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
+        //           );
+        //           return;
+        //         }
         res.redirect(
           `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
         );
@@ -90,6 +94,8 @@ export class OauthController {
         const photo = profile.photos?.[0]?.value;
 
         if (role_type === RoleType.jobhunter) {
+          const jobHunterSubscription =
+            await this.authService.createJobHunterSubscription();
           await prisma.jobHunter.create({
             data: {
               userId: user.user_id,
@@ -97,7 +103,8 @@ export class OauthController {
               email: email,
               photo: photo,
               password: "",
-              jobHunterSubscriptionId: 1,
+              jobHunterSubscriptionId:
+                jobHunterSubscription.job_hunter_subscription_id,
             },
           });
         }
@@ -117,7 +124,7 @@ export class OauthController {
         await this.authUtils.generateLoginToken(
           user.user_id,
           role_type,
-          user.verified,
+          user.verified
         );
 
       await prisma.baseUsers.update({
@@ -129,7 +136,7 @@ export class OauthController {
         },
       });
       res.redirect(
-        `${process.env.CLIENT_URL}/auth/googlecookies?access_token=${accessToken}&refresh_token=${refreshToken}`,
+        `${process.env.CLIENT_URL}/auth/googlecookies?access_token=${accessToken}&refresh_token=${refreshToken}`
       );
     } catch (error) {
       console.error("Error handling callback:", error);
