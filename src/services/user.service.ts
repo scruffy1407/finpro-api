@@ -76,7 +76,7 @@ export class CompanyService {
   }
 
   async updateCompanyDetail(user_id: number, updateData: CompanyGeneralInfo) {
-    const { companyId } = updateData;
+    console.log("UPDATE DATA", updateData);
     try {
       const company = await this.prisma.baseUsers.findUnique({
         where: {
@@ -94,28 +94,28 @@ export class CompanyService {
         };
       }
 
-      if (company?.company[0].company_id !== companyId) {
-        return {
-          success: false,
-          message: "User are not authorized to update",
-        };
-      }
+      const findCity = await this.prisma.city.findUnique({
+        where: {
+          city_id: updateData.cityId,
+        },
+      });
+
       const [updatedCompany, updatedUser] = await this.prisma.$transaction([
         this.prisma.company.update({
           where: {
-            company_id: companyId,
+            company_id: company.company[0].company_id,
           },
           data: {
             company_name: updateData.company_name,
             address_details: updateData.address_details,
             company_description: updateData.company_description,
-            company_industry: updateData.company_industry,
-            company_size: updateData.company_size,
+            company_industry: updateData.company_industry || null,
+            company_size: updateData.company_size || null,
             company_province: updateData.company_province,
             company_city: updateData.company_city,
             cityId: updateData.cityId,
-            longitude: null,
-            latitude: null,
+            longitude: Number(findCity?.lang as string) || null,
+            latitude: Number(findCity?.lat as string) || null,
           },
         }),
         this.prisma.baseUsers.update({
@@ -133,6 +133,7 @@ export class CompanyService {
         user: updatedUser,
       };
     } catch (e) {
+      console.log(e);
       return {
         success: false,
         message: "Cannot update the company or user",
@@ -160,7 +161,7 @@ export class CompanyService {
       }
       const uploadImage = await this.userService.uploadImage(
         company.role_type,
-        updateData.image
+        updateData.image,
       );
       if (!uploadImage.success) {
         return {
@@ -208,7 +209,7 @@ export class CompanyService {
             value: company.company_id,
             label: company.company_name,
           };
-        }
+        },
       );
       return {
         success: true,

@@ -6,6 +6,8 @@ import {
 } from "../models/models";
 import { jobSchema } from "../validators/company.validator";
 import { AuthUtils } from "../utils/auth.utils";
+import getDistance from "geolib/es/getDistance";
+import { shuffle } from "lodash";
 
 export class CompanyService {
   private prisma: PrismaClient;
@@ -203,6 +205,91 @@ export class CompanyService {
     }
   }
 
+  async nearestJobs(userLat: number, userLong: number) {
+    try {
+      // Fetch all job posts along with their company locations
+      const jobs = await this.prisma.jobPost.findMany({
+        where: {
+          status: true, // Only fetch active job posts
+          deleted: false,
+        },
+        select: {
+          job_id: true,
+          job_title: true,
+          job_description: true,
+          job_space: true,
+          job_type: true,
+          job_experience_min: true,
+          job_experience_max: true,
+          salary_min: true,
+          salary_max: true,
+          salary_show: true,
+          created_at: true,
+          company: {
+            select: {
+              company_id: true,
+              company_name: true,
+              latitude: true,
+              longitude: true,
+              logo: true,
+            },
+          },
+        },
+      });
+
+      if (!jobs || jobs.length === 0) {
+        return {
+          success: false,
+          message: "No jobs found",
+        };
+      }
+
+      // Filter and sort jobs based on distance
+      const jobsWithDistance = jobs
+        .map((job) => {
+          const { latitude, longitude } = job.company;
+
+          if (latitude !== null && longitude !== null) {
+            const distance = getDistance(
+              { latitude: userLat, longitude: userLong },
+              {
+                latitude: parseFloat(latitude.toString()),
+                longitude: parseFloat(longitude.toString()),
+              },
+            );
+
+            return {
+              ...job,
+              company: { ...job.company },
+              distance, // Distance in meters
+            };
+          }
+          return null; // Exclude jobs with missing geolocation
+        })
+        .filter((job) => job !== null) // Remove null entries
+        .sort((a, b) => a!.distance - b!.distance); // Sort by distance (nearest first);
+
+      const jobSlice = jobsWithDistance.slice(0, 31);
+
+      console.log("MY JOBBB", jobsWithDistance);
+
+      // Shuffle and take the first 6 jobs
+      const randomJobs = shuffle(jobSlice).slice(0, 6);
+
+      return {
+        success: true,
+        data: randomJobs,
+      };
+    } catch (error: any) {
+      console.error("Error fetching nearest jobs:", error.message);
+      return {
+        success: false,
+        message: "An error occurred while fetching nearest jobs.",
+      };
+    } finally {
+      await this.prisma.$disconnect();
+    }
+  }
   async getJobPosts(
     page: number = 1,
     limit: number = 15,
@@ -213,7 +300,7 @@ export class CompanyService {
     dateRange?: string,
     sortOrder?: string,
     companyCity?: string,
-    companyProvince?: string
+    companyProvince?: string,
   ) {
     try {
       const whereConditions: any = {
@@ -422,6 +509,9 @@ export class CompanyService {
             where: {
               status: true,
             },
+            orderBy: {
+              created_at: "desc", // Sort jobPost by created_at in descending order (newest first)
+            },
           },
           _count: {
             select: {
@@ -472,6 +562,7 @@ export class CompanyService {
               companyId: job.companyId,
               preSelectionTestId: job.preSelectionTestId,
               expired_date: job.expired_date,
+              created_at: job.created_at,
             };
           }),
           listReview: company.review.map((review): reviewResponse => {
@@ -509,7 +600,7 @@ export class CompanyService {
     companyProvince?: string,
     limit: number = 6,
     page: number = 1,
-    hasJob: boolean = false
+    hasJob: boolean = false,
   ) {
     const whereConditions: any = {};
     if (companyName) {

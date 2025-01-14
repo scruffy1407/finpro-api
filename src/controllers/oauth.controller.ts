@@ -52,19 +52,19 @@ export class OauthController {
             ? `${process.env.CLIENT_URL}/auth/login/company`
             : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
 
-//         if (user && user.role_type !== role_type) {
-//           const target =
-//             role_type === RoleType.jobhunter
-//               ? `${process.env.CLIENT_URL}/auth/login/company`
-//               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
+        //         if (user && user.role_type !== role_type) {
+        //           const target =
+        //             role_type === RoleType.jobhunter
+        //               ? `${process.env.CLIENT_URL}/auth/login/company`
+        //               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
 
-//           res.redirect(
-//             `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
-//           );
-//           return;
-//         }
+        //           res.redirect(
+        //             `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
+        //           );
+        //           return;
+        //         }
         res.redirect(
-          `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
+          `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
         );
         return;
       }
