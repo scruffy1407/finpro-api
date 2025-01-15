@@ -232,6 +232,7 @@ model Payment {
 
 model SkillAssessment {
   skill_assessment_id   Int      @id @default(autoincrement())
+  skill_assessment_unique_id Int? @unique  
   developerId           Int
   skill_assessment_name String
   skill_badge           String
@@ -396,6 +397,7 @@ model Application {
 // Pre-Selection Test
 model PreSelectionTest {
   test_id       Int      @id @default(autoincrement())
+  test_unique_id Int? @unique
   companyId     Int      @default(1)
   test_name     String
   image         String

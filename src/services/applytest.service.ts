@@ -79,27 +79,45 @@ export class ApplyTestService {
 				return `The following fields are missing in your profile: ${missingFields.join(", ")}. Please complete your profile before joining the pre-selection test.`;
 			}
 
+			// Check if there's an ongoing test for the specific testId (preSelectionTest)
+			const ongoingTest = await this.prisma.resultPreSelection.findFirst({
+				where: {
+					application: {
+						jobHunterId: jobHunterId,
+						jobId: jobId,
+					},
+					completion_status: "ongoing",
+				},
+			});
+
+			if (ongoingTest) {
+				
+				// Assert the type if necessary (modify this based on actual data structure)
+		
+					return `You cannot join this test again while your previous test is still ongoing.`;
+				
+			}
+
 			const lastResult = await this.prisma.resultPreSelection.findFirst({
 				where: {
 					application: {
 						jobHunterId: jobHunterId,
 						jobId: jobId,
 					},
-					completion_status: "failed", 
+					completion_status: "failed",
 				},
 				orderBy: {
-					completion_date: "desc", 
+					completion_date: "desc",
 				},
 			});
 
 			if (lastResult) {
-
 				if (!lastResult.end_date) {
 					return "Error: Last result's end date is missing or null.";
 				}
 
 				const currentDate = new Date();
-				const lastEndDate = new Date(lastResult.end_date); 
+				const lastEndDate = new Date(lastResult.end_date);
 
 				if (isNaN(lastEndDate.getTime())) {
 					return "Error: Last result's end date is invalid.";
