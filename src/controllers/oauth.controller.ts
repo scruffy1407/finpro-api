@@ -42,6 +42,22 @@ export class OauthController {
     }
 
     try {
+      const email = profile.emails[0].value;
+      const existingUser = await prisma.baseUsers.findUnique({
+        where: { email },
+      });
+  
+      if (existingUser) {
+        if (existingUser.register_by !== RegisterBy.google) {
+          console.error(
+            `User with email ${email} already exists with another login method.`
+          );
+          res.redirect(`${process.env.CLIENT_URL}/?FAILED_LOGIN_GOOGLE=true`);
+          
+return;
+        }
+      }
+
       let user = await prisma.baseUsers.findUnique({
         where: {
           google_id: profile.id,
@@ -50,28 +66,16 @@ export class OauthController {
       const role_type =
         roleFromState === "company" ? RoleType.company : RoleType.jobhunter;
 
-      if (user && user.role_type !== role_type) {
-        const target =
-          role_type === RoleType.jobhunter
-            ? `${process.env.CLIENT_URL}/auth/login/company`
-            : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
-
-        //         if (user && user.role_type !== role_type) {
-        //           const target =
-        //             role_type === RoleType.jobhunter
-        //               ? `${process.env.CLIENT_URL}/auth/login/company`
-        //               : `${process.env.CLIENT_URL}/auth/login/jobhunter`;
-
-        //           res.redirect(
-        //             `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
-        //           );
-        //           return;
-        //         }
-        res.redirect(
-          `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`,
-        );
-        return;
-      }
+        if (user && user.role_type !== role_type) {
+          const target = role_type === RoleType.jobhunter 
+            ? "/" 
+            : "/dashboard/company";
+          
+          res.redirect(
+            `${process.env.CLIENT_URL}/redirect?target=${encodeURIComponent(target)}&role=${role_type}`
+          );
+          return;
+        }        
 
       if (!user) {
         const email = profile.emails[0].value;

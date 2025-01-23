@@ -19,6 +19,34 @@ export class AssessmentTestService {
 		this.userService = new UserService();
 	}
 
+async generateUniqueId(): Promise<number> {
+		try {
+			let uniqueId: number;
+			let isUnique = false;
+
+			// Loop until a unique ID is found
+			do {
+				// Generate a random 6-digit number
+				uniqueId = Math.floor(100000 + Math.random() * 900000);
+
+				// Check if the unique ID already exists in the database
+				const existingRecord = await this.prisma.skillAssessment.findFirst({
+					where: { skill_assessment_unique_id: uniqueId },
+				});
+
+				// If no record is found, it's unique
+				if (!existingRecord) {
+					isUnique = true;
+				}
+			} while (!isUnique);
+
+			return uniqueId;
+		} catch (error) {
+			const err = error as Error;
+			throw new Error(`Failed to generate a unique ID: ${err.message}`);
+		}
+	}
+
 	async createAssessmentTest({
 		skill_assessment_name,
 		skill_badge,
@@ -76,9 +104,12 @@ export class AssessmentTestService {
 				}
 			}
 
+const uniqueId = await this.generateUniqueId();
+
 			const assessmentTest = await this.prisma.skillAssessment.create({
 				data: {
-					skill_assessment_name: skill_assessment_name,
+skill_assessment_unique_id: uniqueId,					
+skill_assessment_name: skill_assessment_name,
 					skill_badge: uploadedBadgeUrl,
 					passing_grade: passing_grade,
 					duration: duration,
@@ -600,5 +631,75 @@ export class AssessmentTestService {
 		}
 	}
 
+async getSkillAssessmentListHomePage(
+		limit: number = 6,
+		offset: number = 0,
+		name?: string,
+		sortOrder?: string
+	) {
+		try {
+			// Construct filter conditions
+			const whereConditions: any = {
+				deleted: false,
+				skillAssessmentQuestion: {
+					some: {}, // Ensure there's at least one related SkillAssessmentQuestion
+				},
+			};
+
+			if (name) {
+				whereConditions.skill_assessment_name = {
+					contains: name, // Partial match on name
+					mode: "insensitive", // Case-insensitive search
+				};
+			}
+
+			// Construct sorting criteria
+			const orderBy: any[] = [];
+			if (sortOrder === "asc") {
+				orderBy.push({ skill_assessment_name: "asc" }); // Alphabetical sorting A-Z
+			} else if (sortOrder === "desc") {
+				orderBy.push({ skill_assessment_name: "desc" }); // Alphabetical sorting Z-A
+			} else {
+				orderBy.push({ created_at: "desc" }); // Default sorting by newest first
+			}
+
+			// Fetch skill assessments
+			const skillAssessments = await this.prisma.skillAssessment.findMany({
+				where: whereConditions,
+				skip: offset,
+				take: limit,
+				orderBy: orderBy,
+				select: {
+					skill_assessment_id: true,
+skill_assessment_unique_id: true,
+					skill_assessment_name: true,
+					skill_badge: true,
+					passing_grade: true,
+					duration: true,
+					created_at: true,
+					updated_at: true,
+				},
+			});
+
+			// Get the total count of skill assessments
+			const totalCount = await this.prisma.skillAssessment.count({
+				where: whereConditions,
+			});
+
+			// Return results with pagination info
+			return {
+				data: skillAssessments,
+				pagination: {
+					offset,
+					limit,
+					totalCount,
+					hasMore: offset + limit < totalCount, // Determine if more data is available
+				},
+			};
+		} catch (error) {
+			const err = error as Error;
+			return { error: "Error fetching skill assessments: " + err.message };
+		}
+	}
 	
 }

@@ -8,11 +8,11 @@ export class ApplyAssessmentTestController {
 		this.applyAssessmentTestService = new ApplyAssessmentTestService();
 	}
 	async joinAssessmentTest(req: Request, res: Response): Promise<void> {
-		const { skill_assessment_id } = req.params; // Retrieve skill_assessment_id from params
+		const { skill_assessment_idUnq } = req.params; // Retrieve skill_assessment_id from params
 		const token = req.headers.authorization?.split(" ")[1] || ""; // Assuming Bearer token format
 
 		// Validate input
-		if (!skill_assessment_id || !token) {
+		if (!skill_assessment_idUnq || !token) {
 			res.status(400).json({
 				message: "Missing skill_assessment_id or authorization token",
 			});
@@ -21,7 +21,7 @@ export class ApplyAssessmentTestController {
 
 		try {
 			const result = await this.applyAssessmentTestService.joinAssessmentTest({
-				skill_assessment_id: parseInt(skill_assessment_id, 10), // Convert param to number
+				skill_assessment_idUnq: parseInt(skill_assessment_idUnq), // Convert param to number
 				token,
 			});
 
@@ -50,21 +50,21 @@ export class ApplyAssessmentTestController {
 	}
 
 	async getAssessmentQuestions(req: Request, res: Response): Promise<void> {
-		const { skill_assessment_id } = req.params; // Extract from params
+		const { skill_assessment_idUnq } = req.params; // Extract from params
 		const token = req.headers.authorization?.split(" ")[1]; // Assuming Bearer token format
 
-		if (!skill_assessment_id || !token) {
+		if (!skill_assessment_idUnq || !token) {
 			res.status(400).json({
-				message: "Missing skill_assessment_id or authorization token",
+				message: "Missing skill_assessment_iUnq or authorization token",
 			});
 			return;
 		}
 
-		const skillAssessmentIdNumber = Number(skill_assessment_id); // Convert string to number
+		const skillAssessmentIdNumber = Number(skill_assessment_idUnq); // Convert string to number
 
 		if (isNaN(skillAssessmentIdNumber)) {
 			res.status(400).json({
-				message: "Invalid skill_assessment_id, must be a number",
+				message: "Invalid skill_assessment_idUnq, must be a number",
 			});
 			return;
 		}
@@ -72,7 +72,7 @@ export class ApplyAssessmentTestController {
 		try {
 			const result =
 				await this.applyAssessmentTestService.getAssessmentQuestions({
-					skill_assessment_id: skillAssessmentIdNumber,
+					skill_assessment_idUnq: skillAssessmentIdNumber,
 					token,
 				});
 
@@ -153,10 +153,10 @@ export class ApplyAssessmentTestController {
 		req: Request,
 		res: Response
 	): Promise<void> => {
-		const { skillAssessmentId } = req.params;
+		const { skillAssessmentIdUnq } = req.params;
 
 		// Parse skillAssessmentId to an integer
-		const skillAssessmentIdParsed = parseInt(skillAssessmentId, 10);
+		const skillAssessmentIdParsed = parseInt(skillAssessmentIdUnq);
 
 		if (isNaN(skillAssessmentIdParsed)) {
 			res.status(400).json({ error: "Invalid skillAssessmentId provided." });
@@ -176,7 +176,7 @@ export class ApplyAssessmentTestController {
 			// Call the service method to get skill assessment time
 			const result =
 				await this.applyAssessmentTestService.getSkillAssessmentTime({
-					skillAssessmentId: parseInt(skillAssessmentId),
+					skillAssessmentIdUnq: parseInt(skillAssessmentIdUnq),
 					token,
 				});
 
@@ -201,9 +201,9 @@ export class ApplyAssessmentTestController {
 		res: Response
 	): Promise<void> {
 		try {
-			const { skillAssessmentId } = req.params;
+			const { skillAssessmentIdUnq } = req.params;
 
-			if (!skillAssessmentId) {
+			if (!skillAssessmentIdUnq) {
 				res.status(400).json({ error: "Skill Assessment ID is required" });
 				return;
 			}
@@ -221,7 +221,7 @@ export class ApplyAssessmentTestController {
 			const result =
 				await this.applyAssessmentTestService.getSkillAssessmentById(
 					token,
-					Number(skillAssessmentId)
+					Number(skillAssessmentIdUnq)
 				);
 
 			if (typeof result === "string" || result?.error) {

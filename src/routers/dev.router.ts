@@ -41,6 +41,13 @@ devRouter.get(
   ),
 );
 
+devRouter.get(
+  "/getassessmenttesthomepage",
+  assessmentTestController.getSkillAssessmentListHomePage.bind(
+    assessmentTestController,
+  ),
+);
+
 devRouter.post(
   "/createquest/:skillAssessmentId",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
@@ -58,7 +65,7 @@ devRouter.put(
 );
 
 devRouter.post(
-  "/joinassessment/:skill_assessment_id",
+  "/joinassessment/:skill_assessment_idUnq",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
   applyAssessmentTestController.joinAssessmentTest.bind(
@@ -67,7 +74,7 @@ devRouter.post(
 );
 
 devRouter.get(
-  "/getassessmentquest/:skill_assessment_id",
+  "/getassessmentquest/:skill_assessment_idUnq",
   authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
   authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
   applyAssessmentTestController.getAssessmentQuestions.bind(

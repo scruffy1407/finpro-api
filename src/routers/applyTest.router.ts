@@ -60,7 +60,7 @@ applyTestRouter.post(
 );
 
 applyTestRouter.get(
-	"/getassesstesttime/:skillAssessmentId",
+	"/getassesstesttime/:skillAssessmentIdUnq",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	applyAssessmentTestController.getSkillAssessmentTime.bind(
@@ -69,7 +69,7 @@ applyTestRouter.get(
 );
 
 applyTestRouter.get(
-	"/getskillassessmentbyid/:skillAssessmentId",
+	"/getskillassessmentbyid/:skillAssessmentIdUnq",
 	authJwtMiddleware.authenticateJwt.bind(authJwtMiddleware),
 	authJwtMiddleware.authorizeRole("jobhunter").bind(authJwtMiddleware),
 	applyAssessmentTestController.getSkillAssessmentById.bind(

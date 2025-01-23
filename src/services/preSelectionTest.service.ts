@@ -555,6 +555,8 @@ export class PreSelectionTestService {
 			const preSelectionTest = await this.prisma.preSelectionTest.findUnique({
 				where: {
 					test_id: testId,
+deleted: false,
+
 				},
 				select: {
 					test_id: true,

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { AssessmentTestService } from "../services/assessmentTest.service";
-import { type } from "os";
 
 export class AssessmentTestController {
 	private assessmentTestService: AssessmentTestService;
@@ -167,7 +166,39 @@ export class AssessmentTestController {
 		}
 	}
 
-	async createQuestions(req: Request, res: Response): Promise<void> {
+ async getSkillAssessmentListHomePage(
+		req: Request,
+		res: Response
+	): Promise<void> {
+		try {
+			const limit = parseInt(req.query.limit as string) || 6;
+			const offset = parseInt(req.query.offset as string) || 0;
+			const name = req.query.name as string | undefined;
+			const sortOrder = req.query.sortOrder as string | undefined;
+
+			const result =
+				await this.assessmentTestService.getSkillAssessmentListHomePage(
+					limit,
+					offset,
+					name,
+					sortOrder
+				);
+
+			if (result.error) {
+				res.status(500).json({ error: result.error });
+				return
+			}
+			res.status(200).json(result);
+		} catch (error) {
+			const err = error as Error;
+			res.status(500).json({
+				error: "An unexpected error occurred: " + err.message,
+			});
+		}
+	}	
+
+
+async createQuestions(req: Request, res: Response): Promise<void> {
 		const { skillAssessmentId } = req.params;
 		const { questions } = req.body;
 

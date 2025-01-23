@@ -45,10 +45,10 @@ export class ApplyAssessmentTestService {
 	}
 
 	async joinAssessmentTest({
-		skill_assessment_id,
+		skill_assessment_idUnq,
 		token,
 	}: {
-		skill_assessment_id: number;
+		skill_assessment_idUnq: number;
 		token: string;
 	}): Promise<
 		| string
@@ -98,8 +98,14 @@ export class ApplyAssessmentTestService {
 			}
 
 			const assessmentTest = await this.prisma.skillAssessment.findUnique({
-				where: { skill_assessment_id: skill_assessment_id },
+				where: { skill_assessment_unique_id: skill_assessment_idUnq },
 			});
+
+			if (!assessmentTest || !assessmentTest.skill_assessment_id) {
+				return "No valid skill assessment ID found.";
+			}
+
+			const skill_assessment_id = assessmentTest.skill_assessment_id;
 
 			if (!assessmentTest) {
 				return "No mentioned Assessment Test available";
@@ -193,11 +199,11 @@ export class ApplyAssessmentTestService {
 	}
 
 	async getAssessmentQuestions({
-		skill_assessment_id,
+		skill_assessment_idUnq,
 		token,
 	}: {
 		token: string;
-		skill_assessment_id: number;
+		skill_assessment_idUnq: number;
 	}): Promise<{ questions: any[]; duration: number; testId: number } | string> {
 		try {
 			const decodedToken = await this.authUtils.decodeToken(token);
@@ -214,11 +220,23 @@ export class ApplyAssessmentTestService {
 			}
 			const jobHunterId = jobHunter.job_hunter_id;
 			const assessmentTest = await this.prisma.skillAssessment.findUnique({
-				where: { skill_assessment_id: skill_assessment_id },
+				where: { skill_assessment_unique_id: skill_assessment_idUnq },
 			});
 
 			if (!assessmentTest) {
 				return "No mentioned AssessementTest available";
+			}
+
+			const ongoingTest = await this.prisma.skillAsessmentCompletion.findFirst({
+				where: {
+					skillAssessmentId: assessmentTest.skill_assessment_id,
+					jobHunterId: jobHunterId,
+					completion_status: "ongoing",
+				},
+			});
+
+			if (!ongoingTest) {
+				return "No ongoing assessment found for this user and skill assessment.";
 			}
 
 			const areonTest = await this.prisma.skillAsessmentCompletion.findFirst({
@@ -232,7 +250,11 @@ export class ApplyAssessmentTestService {
 			}
 
 			const questions = await this.prisma.skillAsessmentQuestion.findMany({
-				where: { skillAssessmentId: skill_assessment_id },
+				where: {
+					skillAssessment: {
+						skill_assessment_unique_id: skill_assessment_idUnq, // Match by unique ID in the related table
+					},
+				},
 				select: {
 					skill_assessment_question_id: true,
 					question: true,
@@ -303,7 +325,13 @@ export class ApplyAssessmentTestService {
 			}
 			const skillAsessmentCompletion =
 				await this.prisma.skillAsessmentCompletion.findFirst({
-					where: { skillAssessmentId, jobHunterId },
+					where: {
+						skillAssessment: { skill_assessment_unique_id: skillAssessmentId },
+						jobHunterId,
+					},
+					include: {
+						skillAssessment: true, // Optional: Include related data from SkillAssessment
+					},
 				});
 
 			if (!skillAsessmentCompletion) {
@@ -315,7 +343,9 @@ export class ApplyAssessmentTestService {
 			}
 
 			const questions = await this.prisma.skillAsessmentQuestion.findMany({
-				where: { skillAssessmentId },
+				where: {
+					skillAssessmentId: skillAsessmentCompletion.skillAssessmentId,
+				},
 			});
 
 			if (!questions || questions.length === 0) {
@@ -345,7 +375,7 @@ export class ApplyAssessmentTestService {
 				}
 			});
 			const assessmentTest = await this.prisma.skillAssessment.findUnique({
-				where: { skill_assessment_id: skillAssessmentId },
+				where: { skill_assessment_unique_id: skillAssessmentId },
 			});
 
 			if (!assessmentTest) {
@@ -401,10 +431,10 @@ export class ApplyAssessmentTestService {
 	}
 
 	async getSkillAssessmentTime({
-		skillAssessmentId,
+		skillAssessmentIdUnq,
 		token,
 	}: {
-		skillAssessmentId: number;
+		skillAssessmentIdUnq: number;
 		token: string;
 	}): Promise<{ startDate: Date; endDate: Date } | string> {
 		try {
@@ -416,7 +446,7 @@ export class ApplyAssessmentTestService {
 
 			// Check if the skill assessment exists
 			const skillAssessment = await this.prisma.skillAssessment.findUnique({
-				where: { skill_assessment_id: skillAssessmentId },
+				where: { skill_assessment_unique_id: skillAssessmentIdUnq },
 			});
 
 			if (!skillAssessment) {
@@ -434,8 +464,10 @@ export class ApplyAssessmentTestService {
 			const completionRecord =
 				await this.prisma.skillAsessmentCompletion.findFirst({
 					where: {
-						skillAssessmentId,
-						jobHunterId: jobHunter.job_hunter_id, // Use job_hunter_id here
+						skillAssessment: {
+							skill_assessment_unique_id: skillAssessmentIdUnq, // Match by unique ID in the related table
+						},
+						jobHunterId: jobHunter.job_hunter_id, // Match the job hunter ID
 					},
 				});
 
@@ -462,7 +494,7 @@ export class ApplyAssessmentTestService {
 
 	async getSkillAssessmentById(
 		token: string,
-		skillAssessmentId: number
+		skillAssessmentIdUnq: number
 	): Promise<any> {
 		try {
 			const decodedToken = await this.authUtils.decodeToken(token);
@@ -473,10 +505,12 @@ export class ApplyAssessmentTestService {
 
 			const skillAssessment = await this.prisma.skillAssessment.findUnique({
 				where: {
-					skill_assessment_id: skillAssessmentId,
+					skill_assessment_unique_id: skillAssessmentIdUnq,
+					deleted: false,
 				},
 				select: {
 					skill_assessment_id: true,
+					skill_assessment_unique_id: true,
 					skill_assessment_name: true,
 					skill_badge: true,
 					passing_grade: true,
@@ -495,6 +529,7 @@ export class ApplyAssessmentTestService {
 
 			return {
 				skill_assessment_id: skillAssessment.skill_assessment_id,
+				skill_assessment_unique_id: skillAssessment.skill_assessment_unique_id,
 				skill_assessment_name: skillAssessment.skill_assessment_name,
 				skill_badge: skillAssessment.skill_badge,
 				passing_grade: skillAssessment.passing_grade,
