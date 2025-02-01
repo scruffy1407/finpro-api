@@ -231,16 +231,16 @@ model Payment {
 // Skill Assessment
 
 model SkillAssessment {
-  skill_assessment_id   Int      @id @default(autoincrement())
-  skill_assessment_unique_id Int? @unique  
-  developerId           Int
-  skill_assessment_name String
-  skill_badge           String
-  passing_grade         Int      @default(75)
-  duration              Int      @default(30)
-  deleted               Boolean  @default(false)
-  created_at            DateTime @default(now())
-  updated_at            DateTime @updatedAt
+  skill_assessment_id        Int      @id @default(autoincrement())
+  skill_assessment_unique_id Int?     @unique
+  developerId                Int
+  skill_assessment_name      String
+  skill_badge                String
+  passing_grade              Int      @default(75)
+  duration                   Int      @default(30)
+  deleted                    Boolean  @default(false)
+  created_at                 DateTime @default(now())
+  updated_at                 DateTime @updatedAt
 
   skillAssessmentQuestion  SkillAsessmentQuestion[]
   SkillAsessmentCompletion SkillAsessmentCompletion[]
@@ -396,16 +396,16 @@ model Application {
 
 // Pre-Selection Test
 model PreSelectionTest {
-  test_id       Int      @id @default(autoincrement())
-  test_unique_id Int? @unique
-  companyId     Int      @default(1)
-  test_name     String
-  image         String
-  passing_grade Int      @default(85)
-  duration      Int      @default(30)
-  deleted       Boolean  @default(false)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  test_id        Int      @id @default(autoincrement())
+  test_unique_id Int?     @unique
+  companyId      Int      @default(1)
+  test_name      String
+  image          String
+  passing_grade  Int      @default(85)
+  duration       Int      @default(30)
+  deleted        Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   jobPost       JobPost[]
   testQuestions TestQuestion[]
