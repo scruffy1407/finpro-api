@@ -42,7 +42,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-const allowedOrigins = ['https://pathway-job.vercel.app'];
+const allowedOrigins = [
+  "https://pathway-job.vercel.app",
+  "http://localhost:3000",
+];
 
 app.use(
   cors({
@@ -50,19 +53,19 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error("Not allowed by CORS"));
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://pathway-job.vercel.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "https://pathway-job.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(200);
 });
 

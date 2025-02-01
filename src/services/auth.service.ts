@@ -340,10 +340,10 @@ export class AuthService {
 
     let company_id = undefined;
 
-    let user = null;
+    let users = null;
 
     if (validatedData.user_role === RoleType.jobhunter) {
-      user = await this.prisma.baseUsers.findUnique({
+      users = await this.prisma.baseUsers.findUnique({
         where: { email: validatedData.email },
         include: {
           jobHunter: {
@@ -357,14 +357,14 @@ export class AuthService {
         },
       });
     } else if (validatedData.user_role === RoleType.company) {
-      user = await this.prisma.baseUsers.findUnique({
+      users = await this.prisma.baseUsers.findUnique({
         where: { email: validatedData.email },
         include: {
           company: true,
         },
       });
     } else if (validatedData.user_role === RoleType.developer) {
-      user = await this.prisma.baseUsers.findUnique({
+      users = await this.prisma.baseUsers.findUnique({
         where: { email: validatedData.email },
         include: {
           developers: true,
@@ -373,13 +373,13 @@ export class AuthService {
     }
 
     if (
-      !user ||
-      !(await bcrypt.compare(validatedData.password, user.password))
+      !users ||
+      !(await bcrypt.compare(validatedData.password, users.password))
     ) {
       return { success: false, message: "Invalid credentials" };
     }
 
-    if (user.register_by !== RegisterBy.email) {
+    if (users.register_by !== RegisterBy.email) {
       return {
         success: false,
         message: `This account was registered using email. Please use the appropriate login method.`,
@@ -390,7 +390,7 @@ export class AuthService {
       return { success: false, message: "Role type is required." };
     }
 
-    if (user.role_type !== validatedData.user_role) {
+    if (users.role_type !== validatedData.user_role) {
       return {
         success: false,
         message: "Please logged in using the appropriate role.",
@@ -399,9 +399,9 @@ export class AuthService {
 
     const { accessToken, refreshToken } =
       await this.AuthUtils.generateLoginToken(
-        user.user_id,
-        user.role_type,
-        user.verified,
+        users.user_id,
+        users.role_type,
+        users.verified,
         company_id,
       );
 
@@ -412,6 +412,8 @@ export class AuthService {
         refresh_token: refreshToken,
       },
     });
+    // Remove Password
+    const { password, ...user } = users;
 
     return { success: true, accessToken, refreshToken, user };
   }
@@ -509,7 +511,7 @@ export class AuthService {
 
   async validateToken(user_id: number, role_type: RoleType) {
     if (role_type === RoleType.company) {
-      const user = await this.prisma.baseUsers.findUnique({
+      const users = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
         },
@@ -517,12 +519,13 @@ export class AuthService {
           company: true,
         },
       });
-      if (!user) {
+      if (!users) {
         return {
           success: false,
           message: "User not found",
         };
       } else {
+        const { password, ...user } = users;
         return {
           success: true,
           data: user,
@@ -531,7 +534,7 @@ export class AuthService {
     }
 
     if (role_type === RoleType.jobhunter) {
-      const user = await this.prisma.baseUsers.findUnique({
+      const users = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
         },
@@ -547,12 +550,13 @@ export class AuthService {
         },
       });
 
-      if (!user) {
+      if (!users) {
         return {
           success: false,
           message: "User not found",
         };
       } else {
+        const { password, ...user } = users;
         return {
           success: true,
           data: user,
@@ -561,7 +565,7 @@ export class AuthService {
     }
 
     if (role_type === RoleType.developer) {
-      const user = await this.prisma.baseUsers.findUnique({
+      const users = await this.prisma.baseUsers.findUnique({
         where: {
           user_id: user_id,
         },
@@ -570,12 +574,13 @@ export class AuthService {
         },
       });
 
-      if (!user) {
+      if (!users) {
         return {
           success: false,
           message: "User not found",
         };
       } else {
+        const { password, ...user } = users;
         return {
           success: true,
           data: user,
