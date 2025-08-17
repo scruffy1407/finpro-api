@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/app.ts",
   "scripts": {
-    "build": "tsc && prisma generate",
+    "build": "tsc && cp -r src/config/views dist/config && prisma generate",
     "start": "ts-node src/app.ts",
     "dev": "ts-node src/app.ts",
     "start:prod": "node dist/app.js",
